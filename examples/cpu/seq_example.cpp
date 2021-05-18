@@ -19,6 +19,7 @@
 
 // seeding
 #include "algorithms/seeding/spacepoint_grouping.hpp"
+#include "algorithms/seeding/seed_finding.hpp"
 #include "csv/csv_io.hpp"
 
 #include <vecmem/memory/host_memory_resource.hpp>
@@ -138,6 +139,22 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 	// create internal spacepoints grouped in bins
 	traccc::spacepoint_grouping sg(config, grid_config);
 	auto internal_sp_per_event = sg(spacepoints_per_event);
+
+	// seed finding - doublet finding
+	traccc::seed_finding sf(config);
+	//auto seeds = sf(internal_sp_per_event);
+	
+	/*
+	traccc::doublet_finding df(config);
+	for (size_t i=0; i<internal_sp_per_event.headers.size(); ++i){
+	    traccc::bin_info& binfo = internal_sp_per_
+	    
+	    auto internal_sp = 
+	    
+	    auto doublets_per_event = df(internal_sp_per_event);
+
+	}
+       	*/
 	
         traccc::measurement_writer mwriter{std::string("event")+event_number+"-measurements.csv"};
 	for (size_t i=0; i<measurements_per_event.items.size(); ++i){
