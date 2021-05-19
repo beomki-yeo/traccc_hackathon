@@ -10,41 +10,61 @@
 
 #include <edm/internal_spacepoint.hpp>
 #include <edm/seed.hpp>
-#include <algorithms/seeding/detail/multiplet.hpp>
 #include <algorithms/seeding/detail/seeding_config.hpp>
 #include <algorithms/seeding/doublet_finding.hpp>
+#include <algorithms/seeding/transform_coordinates.hpp>
 
 namespace traccc{
+    
+struct seed_finding{
 
-    struct seed_finding{
-
-	seed_finding(const seedfinder_config& config)
-	    : m_df(config)
-	{}
+seed_finding(const seedfinder_config& config, const host_internal_spacepoint_container& isp_container):
+    m_doublet_finding(config, isp_container),
+    m_transform_coordinates(config, isp_container),
+    m_isp_container(isp_container)
+    {}
+    
+host_seed_collection operator()(){
+    host_seed_collection seed_collection;
+    this->operator()(seed_collection);
+    
+    return seed_collection;
+}
+        
+void operator()(host_seed_collection& seed_collection){
+    
+    // iterate over grid bins
+    for (size_t i=0; i<m_isp_container.headers.size(); ++i){
+	auto bin_location = m_isp_container.headers[i];
+	auto spM_collection = m_isp_container.items[i];
 	
-	host_seed_collection operator()(const host_internal_spacepoint_container& isp_container){
-	    host_seed_collection seed_collection;
-	    this->operator()(isp_container);
-
-	    return seed_collection;
-	}
-
-
-	void operator()(const host_internal_spacepoint_container& isp_container,
-			host_seed_collection& seed_collection){
-
-	    // iterate over bins
-	    for (size_t i=0; i<isp_container.headers.size(); ++i){
-		auto bin_location = isp_container.headers[i];
-		auto spM_collection = isp_container.items[i];
-				
-		// find doublets
-		//auto doublet_collection = m_df(isp_container, bin_location, spM_collection);
-	    }	    
-	}
-	
-    private:
-	seedfinder_config m_config;
-	doublet_finding m_df;
-    };
+	/// iterate over middle spacepoints
+	for (auto spM: spM_collection){
+	    
+	    /// 1. find doublets
+	    auto compat_id = m_doublet_finding(bin_location, spM);
+	    
+	    auto& compat_bottom_id = compat_id.first;
+	    auto& compat_top_id = compat_id.second;
+	    
+	    if (compat_bottom_id.empty() || compat_top_id.empty()){
+		continue;
+	    }
+	    
+	    /// 2. transform coordinates
+	    auto lin_circles_bottom = m_transform_coordinates(bin_location, compat_bottom_id, spM, true);
+	    auto lin_circles_top = m_transform_coordinates(bin_location, compat_top_id, spM, true);
+	    
+	    /// 3. find triplets
+	    
+	}		
+    }	    
+}
+    
+private:
+    seedfinder_config m_config;
+    const host_internal_spacepoint_container& m_isp_container;
+    doublet_finding m_doublet_finding;
+    transform_coordinates m_transform_coordinates;
+};
 } // namespace traccc
