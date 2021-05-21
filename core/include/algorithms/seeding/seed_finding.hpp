@@ -13,6 +13,7 @@
 #include <algorithms/seeding/detail/seeding_config.hpp>
 #include <algorithms/seeding/doublet_finding.hpp>
 #include <algorithms/seeding/transform_coordinates.hpp>
+#include <algorithms/seeding/triplet_finding.hpp>
 
 namespace traccc{
     
@@ -21,6 +22,7 @@ struct seed_finding{
 seed_finding(const seedfinder_config& config, const host_internal_spacepoint_container& isp_container):
     m_doublet_finding(config, isp_container),
     m_transform_coordinates(config, isp_container),
+    m_triplet_finding(config, isp_container),
     m_isp_container(isp_container)
     {}
     
@@ -51,11 +53,14 @@ void operator()(host_seed_collection& seed_collection){
 		continue;
 	    }
 	    
-	    /// 2. transform coordinates
+	    /// 2. conformal transformation
 	    auto lin_circles_bottom = m_transform_coordinates(bin_location, compat_bottom_id, spM, true);
-	    auto lin_circles_top = m_transform_coordinates(bin_location, compat_top_id, spM, true);
+	    auto lin_circles_top = m_transform_coordinates(bin_location, compat_top_id, spM, false);
 	    
 	    /// 3. find triplets
+	    auto seeds = m_triplet_finding(lin_circles_bottom, lin_circles_top,
+					   compat_bottom_id, compat_top_id, spM);
+	    
 	    
 	}		
     }	    
@@ -66,5 +71,6 @@ private:
     const host_internal_spacepoint_container& m_isp_container;
     doublet_finding m_doublet_finding;
     transform_coordinates m_transform_coordinates;
+    triplet_finding m_triplet_finding;
 };
 } // namespace traccc
