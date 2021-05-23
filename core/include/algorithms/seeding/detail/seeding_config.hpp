@@ -17,7 +17,7 @@ using spacepoint_grid = grid<traccc::axis<AxisBoundaryType::Closed>,
 			     traccc::axis<AxisBoundaryType::Bound> >;
     
 struct seedfinder_config{
-
+    
     // Seed Cuts
     // lower cutoff for seeds in MeV
     // FIXME: Acts units

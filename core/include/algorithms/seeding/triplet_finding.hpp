@@ -9,7 +9,7 @@
 #pragma once
 
 #include <edm/internal_spacepoint.hpp>
-#include <algorithms/seeding/detail/definitions.hpp>
+#include <algorithms/seeding/detail/multiplet.hpp>
 
 namespace traccc{
 
