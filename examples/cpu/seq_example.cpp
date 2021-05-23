@@ -143,18 +143,10 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 	// seed finding
 	traccc::seed_finding sf(config, internal_sp_per_event);
 	auto seeds = sf();
-	
-	/*
-	traccc::doublet_finding df(config);
-	for (size_t i=0; i<internal_sp_per_event.headers.size(); ++i){
-	    traccc::bin_info& binfo = internal_sp_per_
-	    
-	    auto internal_sp = 
-	    
-	    auto doublets_per_event = df(internal_sp_per_event);
 
-	}
-       	*/
+	/*------------
+	     Writer
+	  ------------*/
 	
         traccc::measurement_writer mwriter{std::string("event")+event_number+"-measurements.csv"};
 	for (size_t i=0; i<measurements_per_event.items.size(); ++i){

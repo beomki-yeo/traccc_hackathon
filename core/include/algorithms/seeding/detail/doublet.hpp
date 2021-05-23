@@ -27,17 +27,23 @@ namespace traccc{
     };
 
     // Middle - Bottom or Middle - Top
-    struct doublet{
+    struct doublet{	
 	sp_location sp1;
 	sp_location sp2;
-	lin_circle circ;	
+	lin_circle lin;
     };
 
-    // Bottom - Middle - Top
-    struct triplet{
-	sp_location sp1;
-	sp_location sp2;
-	sp_location sp3;
-    };
+    /// Container of doublet belonging to one detector module
+    template< template< typename > class vector_t >
+    using doublet_collection = vector_t< doublet >;
+
+    /// Convenience declaration for the doublet collection type to use in host code
+    using host_doublet_collection
+    = doublet_collection< vecmem::vector >;
+
+    /// Convenience declaration for the doublet collection type to use in device code
+    using device_doublet_collection
+    = doublet_collection< vecmem::device_vector >;
+
     
 } // namespace traccc
