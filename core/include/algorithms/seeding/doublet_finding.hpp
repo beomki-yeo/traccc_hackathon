@@ -52,9 +52,7 @@ struct doublet_finding{
 
 	    for (size_t i=0; i<counts; ++i){
 		auto bin_idx = bottom_bin_indices[i];
-		if (bin_idx==-1) continue;
-		
-		//printf("hi %d %d %d %d \n", counts, i, bin_idx, m_isp_container.items[bin_idx].size());
+		if (bin_idx==-1) continue;	       
 		
 		for (size_t sp_idx=0; sp_idx < m_isp_container.items[bin_idx].size(); ++sp_idx){		    		    
 		    auto& spB = m_isp_container.items[bin_idx][sp_idx];

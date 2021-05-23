@@ -55,7 +55,6 @@ void operator()(host_seed_collection& seed_collection){
 	    n_doublets_mid_bot += doublets_mid_bot.size();
 	    n_doublets_mid_top += doublets_mid_top.size();
 
-	    //std::cout << doublets_mid_bot.size() << std::endl;
 	}
 
 	std::cout << i << ",   " << spM_collection.size() << ",   " << n_doublets_mid_bot << ",   " << n_doublets_mid_top << std::endl;

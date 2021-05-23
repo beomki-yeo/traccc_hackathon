@@ -132,9 +132,7 @@ namespace traccc {
 	    else {
 		neighbor.vector_indices[i] = vector_id;
 	    }
-	    //printf(" %d %d ", global_id, vector_id);
 	}
-	//printf("\n");
     }
     
     void fill_vector_id(host_internal_spacepoint_container& isp_container){

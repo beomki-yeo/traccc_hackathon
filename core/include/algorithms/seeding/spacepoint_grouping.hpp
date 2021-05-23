@@ -84,33 +84,7 @@ namespace traccc{
 	    // space points with delta r < rbin size can be out of order
 	    auto& headers = internal_sp_container.headers;
 	    auto& items = internal_sp_container.items;
-	    /*
-	    auto num_local_bins =  m_spgrid->numLocalBins();
 
-	    for (size_t i=0; i<num_local_bins[0]; ++i){ // Closed: [0, nBins-1]	  
-		for (size_t j=1; j<=num_local_bins[1]; ++j){ // Bound: [1,nBins]
-		    //printf("%d %d \n", i,j);
-		    auto local_bin = std::array<size_t,2>({i,j});
-		    auto global_bin = m_spgrid->globalBinFromLocalBins(local_bin);
-		    printf("%d \n", global_bin);
-		    auto bottom_indices = m_bottom_bin_finder->find_bins(local_bin[0], local_bin[1], m_spgrid.get());
-		    auto top_indices = m_top_bin_finder->find_bins(local_bin[0], local_bin[1], m_spgrid.get());
-		    
-		    bin_information bin_info;
-		    bin_info.global_index = global_bin;
-		    bin_info.bottom_idx.counts = bottom_indices.size();
-		    bin_info.top_idx.counts = top_indices.size();
-
-		    std::copy(bottom_indices.begin(), bottom_indices.end(), &bin_info.bottom_idx.global_indices[0]);
-		    std::copy(top_indices.begin(), top_indices.end(), &bin_info.top_idx.global_indices[0]);
-		    
-		    headers.push_back(bin_info);
-		    items.push_back(vecmem::vector<internal_spacepoint<spacepoint>>());
-
-		    
-		}
-	    }	   
-	    */	    
 	    for (auto& rbin : rBins) {
 		for (auto& isp : rbin) {
 		    vector2 spLocation({isp.phi(), isp.z()});
@@ -121,13 +95,6 @@ namespace traccc{
 			
 			auto bottom_indices = m_bottom_bin_finder->find_bins(local_bin[0], local_bin[1], m_spgrid.get());
 			auto top_indices = m_top_bin_finder->find_bins(local_bin[0], local_bin[1], m_spgrid.get());
-
-
-			//for (auto idx: bottom_indices){
-			    //    printf("%d ", idx);
-			    //}
-			//printf("\n");
-
 			
 			bin_information bin_info;
 			bin_info.global_index = global_bin;
@@ -141,10 +108,8 @@ namespace traccc{
 			headers.push_back(bin_info);
 			items.push_back(vecmem::vector<internal_spacepoint<spacepoint>>());
 		    }
-		    
-		    
+		    		    
 		    auto location = find_vector_id_from_global_id(global_bin, headers);
-		    //printf("%d %d \n", location, global_bin);
 		    items.at(location).push_back(std::move(isp));    
 
 		}
