@@ -5,6 +5,7 @@
  * Mozilla Public License Version 2.0
  */
 
+// edm
 #include "edm/cell.hpp"
 #include "edm/cluster.hpp"
 #include "edm/measurement.hpp"
@@ -21,6 +22,10 @@
 
 // vecmem
 #include <vecmem/memory/host_memory_resource.hpp>
+
+// std
+#include <chrono>
+#include <iomanip>
 
 int seq_run(const std::string& detector_file, const std::string& hits_dir, unsigned int events)
 {
@@ -45,6 +50,9 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
     // Memory resource used by the EDM.
     vecmem::host_memory_resource resource;
 
+    // Elapsed time
+    float seeding_cpu(0);
+    
     // Loop over events
     for (unsigned int event = 0; event < events; ++event){
 
@@ -101,25 +109,31 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 	grid_config.deltaRMax = config.deltaRMax;
 	grid_config.cotThetaMax = config.cotThetaMax;
 
+	/*time*/ auto start_seeding_cpu = std::chrono::system_clock::now();
+	
 	// create internal spacepoints grouped in bins
 	traccc::spacepoint_grouping sg(config, grid_config);
 	auto internal_sp_per_event = sg(spacepoints_per_event);
-
+	
 	// seed finding
 	traccc::seed_finding sf(config, internal_sp_per_event);
 	auto seeds = sf();
+
+	/*time*/ auto end_seeding_cpu = std::chrono::system_clock::now();
+
+	/*time*/ std::chrono::duration<double> time_seeding_cpu = end_seeding_cpu - start_seeding_cpu; 
+	/*time*/ seeding_cpu += time_seeding_cpu.count();
 	
 	for (size_t i=0; i<internal_sp_per_event.headers.size(); ++i){
 	    n_internal_spacepoints+=internal_sp_per_event.items[i].size();
-	}
-
-	
+	}	
     }
 
     std::cout << "==> Statistics ... " << std::endl;
     std::cout << "- read    " <<  n_spacepoints << " spacepoints from " << n_modules << " modules" << std::endl;
     std::cout << "- created " <<  n_internal_spacepoints << " internal spacepoints" << std::endl;
-    
+    std::cout << "==> Elpased time ... " << std::endl;    
+    std::cout << "seeding_time       " << std::setw(10) << std::left << seeding_cpu     << std::endl;
     return 0;
 }
 

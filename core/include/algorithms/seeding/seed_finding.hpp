@@ -57,7 +57,7 @@ void operator()(host_seed_collection& seed_collection){
 
 	}
 
-	std::cout << i << ",   " << spM_collection.size() << ",   " << n_doublets_mid_bot << ",   " << n_doublets_mid_top << std::endl;
+	//std::cout << i << ",   " << spM_collection.size() << ",   " << n_doublets_mid_bot << ",   " << n_doublets_mid_top << std::endl;
     }
 }
     
