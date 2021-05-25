@@ -86,8 +86,10 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 	config.deltaRMax = 160.;	
 	config.collisionRegionMin = -250.;
 	config.collisionRegionMax = 250.;
-	config.zMin = -2800.;
-	config.zMax = 2800.;
+	//config.zMin = -2800.; // this value introduces redundant bins without any spacepoints
+	//config.zMax = 2800.;
+	config.zMin = -1186.;
+	config.zMax = 1186.;	
 	config.maxSeedsPerSpM = 5;
 	// 2.7 eta
 	config.cotThetaMax = 7.40627;
@@ -125,10 +127,41 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 	/*time*/ seeding_cpu += time_seeding_cpu.count();
 	
 	for (size_t i=0; i<internal_sp_per_event.headers.size(); ++i){
+	    //std::cout << i << "  " << internal_sp_per_event.items[i].size() << std::endl;
 	    n_internal_spacepoints+=internal_sp_per_event.items[i].size();
-	}	
-    }
+	}
 
+	/*------------
+	  Writer
+	  ------------*/
+
+        traccc::spacepoint_writer spwriter{std::string("event")+event_number+"-spacepoints.csv"};
+	for (size_t i=0; i<spacepoints_per_event.items.size(); ++i){
+	    auto spacepoints_per_module = spacepoints_per_event.items[i];
+            auto module = spacepoints_per_event.headers[i];
+	    
+            for (const auto& spacepoint : spacepoints_per_module){
+                const auto& pos = spacepoint.global;
+                spwriter.append({ module, pos[0], pos[1], pos[2], 0., 0., 0.});
+            }
+        }
+
+	traccc::internal_spacepoint_writer internal_spwriter{std::string("event")+event_number+"-internal_spacepoints.csv"};
+	for (size_t i=0; i<internal_sp_per_event.items.size(); ++i){
+	    auto internal_sp_per_bin = internal_sp_per_event.items[i];
+	    auto bin = internal_sp_per_event.headers[i].global_index;
+	    
+            for (const auto& internal_sp : internal_sp_per_bin){
+                const auto& x = internal_sp.m_x;
+                const auto& y = internal_sp.m_y;
+                const auto& z = internal_sp.m_z;
+		const auto& varR = internal_sp.m_varianceR;
+		const auto& varZ = internal_sp.m_varianceZ;		
+                internal_spwriter.append({ bin, x, y, z, varR, varZ });
+            }
+        }	
+    }
+    
     std::cout << "==> Statistics ... " << std::endl;
     std::cout << "- read    " <<  n_spacepoints << " spacepoints from " << n_modules << " modules" << std::endl;
     std::cout << "- created " <<  n_internal_spacepoints << " internal spacepoints" << std::endl;
