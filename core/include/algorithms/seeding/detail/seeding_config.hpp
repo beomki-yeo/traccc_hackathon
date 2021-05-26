@@ -118,5 +118,26 @@ struct spacepoint_grid_config {
     // maximum forward direction expressed as cot(theta)
     float cotThetaMax;
 };
+
+struct seedfilter_config {
+  // the allowed delta between two inverted seed radii for them to be considered
+  // compatible.
+  float deltaInvHelixDiameter = 0.00003;
+  // the impact parameters (d0) is multiplied by this factor and subtracted from
+  // weight
+  float impactWeightFactor = 1.;
+  // seed weight increased by this value if a compatible seed has been found.
+  float compatSeedWeight = 200.;
+  // minimum distance between compatible seeds to be considered for weight boost
+  float deltaRMin = 5.;
+  // in dense environments many seeds may be found per middle space point.
+  // only seeds with the highest weight will be kept if this limit is reached.
+  unsigned int maxSeedsPerSpM = 10;
+  // how often do you want to increase the weight of a seed for finding a
+  // compatible seed?
+  size_t compatSeedLimit = 2;
+  // Tool to apply experiment specific cuts on collected middle space points
+};
+
     
 } // namespace traccc

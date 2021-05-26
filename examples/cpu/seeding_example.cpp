@@ -42,10 +42,11 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
     auto surface_transforms = traccc::read_surfaces(sreader);
 
     // Output stats
+    uint64_t n_modules = 0;
     uint64_t n_spacepoints = 0;
     uint64_t n_internal_spacepoints = 0;
     uint64_t n_doublets = 0;
-    uint64_t n_modules = 0;
+    uint64_t n_seeds = 0;
     
     // Memory resource used by the EDM.
     vecmem::host_memory_resource resource;
@@ -120,7 +121,8 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 	// seed finding
 	traccc::seed_finding sf(config, internal_sp_per_event);
 	auto seeds = sf();
-
+	n_seeds+=seeds.size();
+	
 	/*time*/ auto end_seeding_cpu = std::chrono::system_clock::now();
 
 	/*time*/ std::chrono::duration<double> time_seeding_cpu = end_seeding_cpu - start_seeding_cpu; 
@@ -165,6 +167,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
     std::cout << "==> Statistics ... " << std::endl;
     std::cout << "- read    " <<  n_spacepoints << " spacepoints from " << n_modules << " modules" << std::endl;
     std::cout << "- created " <<  n_internal_spacepoints << " internal spacepoints" << std::endl;
+    std::cout << "- created " <<  n_seeds << " seeds" << std::endl;
     std::cout << "==> Elpased time ... " << std::endl;    
     std::cout << "seeding_time       " << std::setw(10) << std::left << seeding_cpu     << std::endl;
     return 0;

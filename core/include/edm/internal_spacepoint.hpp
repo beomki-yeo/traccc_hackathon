@@ -68,7 +68,18 @@ namespace traccc {
 	    m_varianceR = sp.m_varianceR;
 	    m_varianceZ = sp.m_varianceZ;
 	}
+	internal_spacepoint& operator=(const internal_spacepoint<spacepoint>& sp){
+	    m_x = sp.m_x;
+	    m_y = sp.m_y;
+	    m_z = sp.m_z;
+	    m_r = sp.m_r;
+	    m_varianceR = sp.m_varianceR;
+	    m_varianceZ = sp.m_varianceZ;
+	    return *this;
+	}
+	
 
+	
 	const float& x() const { return m_x; }
 	const float& y() const { return m_y; }
 	const float& z() const { return m_z; }

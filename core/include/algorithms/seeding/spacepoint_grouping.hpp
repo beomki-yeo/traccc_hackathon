@@ -106,7 +106,7 @@ namespace traccc{
 		    std::copy(top_indices.begin(), top_indices.end(), &bin_info.top_idx.global_indices[0]);			
 
 		    headers.push_back(bin_info);
-		    items.push_back(vecmem::vector<internal_spacepoint<spacepoint>>());		    
+		    items.push_back(vecmem::vector<internal_spacepoint<spacepoint>>());
 		}
 	    }
 	    

@@ -14,11 +14,15 @@ namespace traccc{
 
     // Bottom - Middle - Top
     struct triplet{
-	sp_location sp1;
-	sp_location sp2;
-	sp_location sp3;
-    };
-
+	sp_location sp1; // bottom
+	sp_location sp2; // middle
+	sp_location sp3; // top
+	scalar curvature;
+	scalar impact_parameter;
+	scalar weight;
+	scalar z_vertex;
+    };    
+    
     /// Container of triplet belonging to one detector module
     template< template< typename > class vector_t >
     using triplet_collection = vector_t< triplet >;
