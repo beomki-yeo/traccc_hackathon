@@ -312,6 +312,7 @@ namespace traccc {
 	    if (++read_hits >= max_hits){
 		break;
 	    }
+	    
 	}
 		
 	assert( result.items.size() == result.headers.size() );

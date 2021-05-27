@@ -15,7 +15,7 @@ namespace traccc{
 
 struct doublet_finding{
     
-    doublet_finding(const seedfinder_config& config, const host_internal_spacepoint_container& isp_container):
+    doublet_finding(seedfinder_config& config, const host_internal_spacepoint_container& isp_container):
 	m_config(config),
 	m_isp_container(isp_container)
     {}

@@ -29,15 +29,9 @@
 
 int seq_run(const std::string& detector_file, const std::string& hits_dir, unsigned int events)
 {
-    auto env_d_d = std::getenv("TRACCC_TEST_DATA_DIR");
-    if (env_d_d == nullptr)
-    {
-        throw std::ios_base::failure("Test data directory not found. Please set TRACCC_TEST_DATA_DIR.");
-    }
-    auto data_directory = std::string(env_d_d) + std::string("/");
-
+    
     // Read the surface transforms
-    std::string io_detector_file = data_directory + detector_file;
+    std::string io_detector_file = detector_file;
     traccc::surface_reader sreader(io_detector_file, {"geometry_id", "cx", "cy", "cz", "rot_xu", "rot_xv", "rot_xw", "rot_zu", "rot_zv", "rot_zw"});
     auto surface_transforms = traccc::read_surfaces(sreader);
 
@@ -62,7 +56,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
         std::string event_number = std::to_string(event);
         event_string.replace(event_string.size()-event_number.size(), event_number.size(), event_number);
 
-        std::string io_hits_file = data_directory+hits_dir+std::string("/event")+event_string+std::string("-hits.csv");
+        std::string io_hits_file = hits_dir+std::string("/event")+event_string+std::string("-hits.csv");
 	
         traccc::fatras_hit_reader hreader(io_hits_file, {"particle_id","geometry_id","tx","ty","tz","tt","tpx","tpy","tpz","te","deltapx","deltapy","deltapz","deltae","index"});
 	traccc::host_spacepoint_container spacepoints_per_event = traccc::read_hits(hreader, resource);
