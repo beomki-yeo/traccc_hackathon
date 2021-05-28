@@ -37,18 +37,16 @@ triplet_finding(seedfinder_config& config, const host_internal_spacepoint_contai
     }
     
 
-std::vector<triplet> operator()(const doublet mid_bot,
-				const std::vector<doublet>& doublets_mid_top){
-    std::vector<triplet> triplets;
+host_triplet_collection operator()(const doublet mid_bot,
+				   const host_doublet_collection& doublets_mid_top){
+    host_triplet_collection triplets;
     this->operator()(mid_bot, doublets_mid_top, triplets);
     return triplets;   
 }
     
 void operator()(const doublet mid_bot,
-		const std::vector<doublet>& doublets_mid_top,
-		//const host_doublet_collection doublets_mid_top,
-		std::vector<triplet>& triplets){
-		//host_triplet_collection& triplets){
+		const host_doublet_collection doublets_mid_top,
+		host_triplet_collection& triplets){
 
     auto& spM_idx = mid_bot.sp1;
     auto& spM = m_isp_container.items[spM_idx.bin_idx][spM_idx.sp_idx];
@@ -81,12 +79,10 @@ void operator()(const doublet mid_bot,
     // multiply the squared sigma onto the squared scattering
     scatteringInRegion2 *=
 	m_config.sigmaScattering * m_config.sigmaScattering;
-
-    //printf("%f \n", scatteringInRegion2);
     
     for (auto mid_top: doublets_mid_top){
-	auto& lt = mid_top.lin;
-
+	auto lt = mid_top.lin;
+	
 	// add errors of spB-spM and spM-spT pairs and add the correlation term
 	// for errors on spM
 	float error2 = lt.Er + ErB +
@@ -98,7 +94,7 @@ void operator()(const doublet mid_bot,
 	float error;
 	float dCotThetaMinusError2;
 	// if the error is larger than the difference in theta, no need to
-	// compare with scattering
+	// compare with scattering	
 	if (deltaCotTheta2 - error2 > 0) {
 	    deltaCotTheta = std::abs(deltaCotTheta);
 	    // if deltaTheta larger than the scattering for the lower pT cut, skip
@@ -156,14 +152,11 @@ void operator()(const doublet mid_bot,
 	// function
 	// (in contrast to having to solve a quadratic function in x/y plane)
 	float Im = std::abs((A - B * rM) * rM);
-
-	//printf("%f \n", Im);
 	
 	if (Im <= m_config.impactMax) {
 
 	    // inverse diameter is signed depending if the curvature is
-	    // positive/negative in phi
-	    
+	    // positive/negative in phi	    
 	    triplets.push_back({mid_bot.sp2, // bottom
 				mid_bot.sp1, // middle
 				mid_top.sp2, // top
@@ -171,13 +164,10 @@ void operator()(const doublet mid_bot,
 				Im,
 				Zob});
 
-	}	    
+	}
     }
-    /*
-    if (triplets.size() > 0){
-	std::cout << triplets.size() << std::endl;
-    }
-    */
+
+    
     for (size_t i=0; i<triplets.size(); ++i){
 	auto& current_triplet = triplets[i];
 	auto& spT_idx = current_triplet.sp3;
@@ -240,6 +230,7 @@ void operator()(const doublet mid_bot,
 	    }	   
 	}
     }
+
 }
     
 private:

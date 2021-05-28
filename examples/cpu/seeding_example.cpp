@@ -122,11 +122,10 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 	/*time*/ binning_cpu += time_binning_cpu.count();      
 	
 	// seed finding
-	traccc::atlas_cuts cuts(internal_sp_per_event);
-
 	/*time*/ auto start_seeding_cpu = std::chrono::system_clock::now();
+	traccc::atlas_cuts cuts(internal_sp_per_event);
 	
-	traccc::seed_finding sf(resource, config, internal_sp_per_event, &cuts);
+	traccc::seed_finding sf(config, internal_sp_per_event, &cuts);
 	auto seeds = sf();
 	
 	/*time*/ auto end_seeding_cpu = std::chrono::system_clock::now();
@@ -136,7 +135,6 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 	/*time*/ seeding_cpu += time_seeding_cpu.count();
 	
 	for (size_t i=0; i<internal_sp_per_event.headers.size(); ++i){
-	    //std::cout << i << "  " << internal_sp_per_event.items[i].size() << std::endl;
 	    n_internal_spacepoints+=internal_sp_per_event.items[i].size();
 	}
 
@@ -168,7 +166,22 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 		const auto& varZ = internal_sp.m_varianceZ;		
                 internal_spwriter.append({ bin, x, y, z, varR, varZ });
             }
+        }
+	
+	traccc::seed_writer sd_writer{std::string("event")+event_number+"-seeds.csv"};
+	for (size_t i=0; i<seeds.size(); ++i){
+	    auto weight = seeds[i].weight;
+	    auto z_vertex = seeds[i].z_vertex;
+	    auto spB = seeds[i].spB;
+	    auto spM = seeds[i].spM;
+	    auto spT = seeds[i].spT;
+
+	    sd_writer.append({weight,z_vertex,
+			      spB.m_x, spB.m_y, spB.m_z, spB.m_varianceR, spB.m_varianceZ,
+			      spM.m_x, spM.m_y, spM.m_z, spM.m_varianceR, spM.m_varianceZ,
+			      spT.m_x, spT.m_y, spT.m_z, spT.m_varianceR, spT.m_varianceZ});
         }	
+	
     }
     
     std::cout << "==> Statistics ... " << std::endl;

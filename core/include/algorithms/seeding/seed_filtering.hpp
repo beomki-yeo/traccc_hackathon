@@ -19,8 +19,7 @@ seed_filtering(const host_internal_spacepoint_container& isp_container,
      m_exp_cuts(exp_cuts)
     {}
     
-//void operator()(host_triplet_collection& triplets,
-void operator()(std::vector<triplet>& triplets,
+void operator()(host_triplet_collection& triplets,
 		host_seed_collection& seeds){
 
     host_seed_collection seeds_per_spM;
@@ -48,8 +47,6 @@ void operator()(std::vector<triplet>& triplets,
 	seeds_per_spM.push_back({spB,spM,spT,triplet.weight, triplet.z_vertex});
     }
 
-    //std::cout << seeds_per_spM.size() << std::endl;
-    
     // sort seeds based on their weights	
     std::sort(seeds_per_spM.begin(), seeds_per_spM.end(),
 	      [](seed& seed1, seed& seed2){

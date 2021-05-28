@@ -141,7 +141,7 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir, unsi
 	auto internal_sp_per_event = sg(spacepoints_per_event);
 
 	// seed finding
-	traccc::seed_finding sf(resource, config, internal_sp_per_event);
+	traccc::seed_finding sf(config, internal_sp_per_event);
 	auto seeds = sf();
 
 	/*------------

@@ -15,20 +15,17 @@ namespace traccc{
 
 struct doublet_finding{
     
-doublet_finding(vecmem::memory_resource& resource, seedfinder_config& config, const host_internal_spacepoint_container& isp_container):
-    m_resource(&resource),
+doublet_finding(seedfinder_config& config, const host_internal_spacepoint_container& isp_container):
     m_config(config),
     m_isp_container(isp_container)
     {}
     
-//host_doublet_collection operator()(const bin_information& bin_information,
-std::vector<doublet> operator()(const bin_information& bin_information,
-				const sp_location& spM_location,
-				bool bottom){
+host_doublet_collection operator()(const bin_information& bin_information,
+				   const sp_location& spM_location,
+				   bool bottom){
 
-    //host_doublet_collection doublets;
-    //host_doublet_collection doublets(m_resource);
-    std::vector<doublet> doublets;
+    host_doublet_collection doublets;
+
     this->operator()(bin_information,
 		     spM_location,
 		     doublets,
@@ -39,8 +36,7 @@ std::vector<doublet> operator()(const bin_information& bin_information,
     
 void operator()(const bin_information& bin_information,
 		const sp_location& spM_location,
-		//host_doublet_collection& doublets,
-		std::vector<doublet>& doublets,
+		host_doublet_collection& doublets,
 		bool bottom){
     const auto& spM = m_isp_container.items[spM_location.bin_idx][spM_location.sp_idx];
     float rM = spM.radius();

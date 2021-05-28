@@ -44,9 +44,6 @@ void atlas_cuts::seedWeight(triplet& aTriplet) const {
 	weight = 200;
     }
 
-    //printf("%f \n", aTriplet.weight);
-    //printf("%f %f %f\n", spB.radius(), spT.radius(), weight);
-    
     aTriplet.weight += weight;
     return;
 }
@@ -67,12 +64,10 @@ host_seed_collection atlas_cuts::cutPerMiddleSP(const host_seed_collection& seed
 	size_t itLength = std::min(seeds.size(), size_t(5));
 	// don't cut first element
 	for (size_t i = 1; i < itLength; i++) {
-	    //printf("%f ",seeds[i].weight);
 	    if(seeds[i].weight > 200. || seeds[i].spB.radius() > 43. ){
 		newSeeds.push_back(std::move(seeds[i]));
 	    }
 	}
-	//std::cout << std::endl;
 	return newSeeds;	
     }
     return seeds;

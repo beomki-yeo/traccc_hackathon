@@ -103,13 +103,29 @@ namespace traccc {
     scalar x, y, z;
     scalar var_x, var_y, var_z;
 
-    // geometry_id,hit_id,channel0,channel1,timestamp,value
     DFE_NAMEDTUPLE(csv_spacepoint, geometry_id, x, y, z, var_x, var_y, var_z);
 
   };
 
   using spacepoint_writer = dfe::NamedTupleCsvWriter<csv_spacepoint>;
 
+    struct csv_seed{
+	scalar weight;
+	scalar z_vertex;
+	scalar x_b, y_b, z_b;
+	scalar varR_b, varZ_b;
+	scalar x_m, y_m, z_m;
+	scalar varR_m, varZ_m;	
+	scalar x_t, y_t, z_t;	
+	scalar varR_t, varZ_t;
+
+	DFE_NAMEDTUPLE(csv_seed, weight, z_vertex,
+		       x_b, y_b, z_b, varR_b, varZ_b,
+		       x_m, y_m, z_m, varR_m, varZ_m,
+		       x_t, y_t, z_t, varR_t, varZ_t);
+    };
+
+    using seed_writer = dfe::NamedTupleCsvWriter<csv_seed>;
   struct csv_surface {
 
     uint64_t geometry_id = 0;
