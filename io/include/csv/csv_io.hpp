@@ -295,7 +295,7 @@ namespace traccc {
 	while (hreader.read(iohit)){	    	    
 	    geometry_id geom_id = iohit.geometry_id;
 	    point3 position({iohit.tx, iohit.ty, iohit.tz});
-	    variance3 variance({0,0,0});	    
+	    variance3 variance({0,0,0});
 	    spacepoint sp({position,variance});
 
 	    auto it = std::find(result.headers.begin(),result.headers.end(),geom_id);

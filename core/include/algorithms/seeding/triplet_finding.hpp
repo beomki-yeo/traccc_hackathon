@@ -36,19 +36,28 @@ triplet_finding(seedfinder_config& config, const host_internal_spacepoint_contai
 	    std::pow(m_config.highland / m_config.pTPerHelixRadius, 2);	
     }
     
+
+std::vector<triplet> operator()(const doublet mid_bot,
+				const std::vector<doublet>& doublets_mid_top){
+    std::vector<triplet> triplets;
+    this->operator()(mid_bot, doublets_mid_top, triplets);
+    return triplets;   
+}
     
 void operator()(const doublet mid_bot,
-		const host_doublet_collection doublets_mid_top,
-		host_triplet_collection& triplets){
+		const std::vector<doublet>& doublets_mid_top,
+		//const host_doublet_collection doublets_mid_top,
+		std::vector<triplet>& triplets){
+		//host_triplet_collection& triplets){
 
-    auto spM_idx = mid_bot.sp1;
-    auto spM = m_isp_container.items[spM_idx.bin_idx][spM_idx.sp_idx];
+    auto& spM_idx = mid_bot.sp1;
+    auto& spM = m_isp_container.items[spM_idx.bin_idx][spM_idx.sp_idx];
     
     float rM = spM.radius();
     float zM = spM.z();
     float varianceRM = spM.varianceR();
     float varianceZM = spM.varianceZ();
-
+    
     auto lb = mid_bot.lin;
     float Zob = lb.Zo;
     float cotThetaB = lb.cotTheta;
@@ -72,9 +81,11 @@ void operator()(const doublet mid_bot,
     // multiply the squared sigma onto the squared scattering
     scatteringInRegion2 *=
 	m_config.sigmaScattering * m_config.sigmaScattering;
+
+    //printf("%f \n", scatteringInRegion2);
     
     for (auto mid_top: doublets_mid_top){
-	auto lt = mid_top.lin;
+	auto& lt = mid_top.lin;
 
 	// add errors of spB-spM and spM-spT pairs and add the correlation term
 	// for errors on spM
@@ -145,6 +156,8 @@ void operator()(const doublet mid_bot,
 	// function
 	// (in contrast to having to solve a quadratic function in x/y plane)
 	float Im = std::abs((A - B * rM) * rM);
+
+	//printf("%f \n", Im);
 	
 	if (Im <= m_config.impactMax) {
 
@@ -156,10 +169,15 @@ void operator()(const doublet mid_bot,
 				mid_top.sp2, // top
 				B/std::sqrt(S2),
 				Im,
-				Zob});	    
+				Zob});
+
 	}	    
     }
-
+    /*
+    if (triplets.size() > 0){
+	std::cout << triplets.size() << std::endl;
+    }
+    */
     for (size_t i=0; i<triplets.size(); ++i){
 	auto& current_triplet = triplets[i];
 	auto& spT_idx = current_triplet.sp3;
@@ -180,7 +198,7 @@ void operator()(const doublet mid_bot,
 	    if (i == j) {
 		continue;
 	    }
-	    auto& other_triplet = triplets[i];
+	    auto& other_triplet = triplets[j];
 	    auto& other_spT_idx = other_triplet.sp3;		    
 	    auto& other_spT = m_isp_container.items[other_spT_idx.bin_idx][other_spT_idx.sp_idx];
 	    // compared top SP should have at least deltaRMin distance

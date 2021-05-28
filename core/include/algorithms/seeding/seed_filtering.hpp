@@ -19,7 +19,8 @@ seed_filtering(const host_internal_spacepoint_container& isp_container,
      m_exp_cuts(exp_cuts)
     {}
     
-void operator()(host_triplet_collection& triplets,
+//void operator()(host_triplet_collection& triplets,
+void operator()(std::vector<triplet>& triplets,
 		host_seed_collection& seeds){
 
     host_seed_collection seeds_per_spM;
@@ -46,16 +47,34 @@ void operator()(host_triplet_collection& triplets,
 	
 	seeds_per_spM.push_back({spB,spM,spT,triplet.weight, triplet.z_vertex});
     }
+
+    //std::cout << seeds_per_spM.size() << std::endl;
     
     // sort seeds based on their weights	
     std::sort(seeds_per_spM.begin(), seeds_per_spM.end(),
 	      [](seed& seed1, seed& seed2){
-		  return (seed1.weight > seed2.weight);});
+		  if (seed1.weight != seed2.weight){
+		      return seed1.weight > seed2.weight;
+		  }
+		  else {
+		      float seed1_sum = 0;
+		      float seed2_sum = 0;
+		      seed1_sum += pow(seed1.spB.y(),2) + pow(seed1.spB.y(),2);
+		      seed1_sum += pow(seed1.spM.y(),2) + pow(seed1.spM.y(),2);	    
+		      seed1_sum += pow(seed1.spT.y(),2) + pow(seed1.spT.y(),2);
+
+		      seed2_sum += pow(seed2.spB.y(),2) + pow(seed2.spB.y(),2);
+		      seed2_sum += pow(seed2.spM.y(),2) + pow(seed2.spM.y(),2);
+		      seed2_sum += pow(seed2.spT.y(),2) + pow(seed2.spT.y(),2);
+		      
+		      return seed1_sum > seed2_sum;		      
+		  }
+	      });
     if (m_exp_cuts != nullptr){
 	seeds_per_spM = m_exp_cuts->cutPerMiddleSP(std::move(seeds_per_spM));
     }
     unsigned int maxSeeds = seeds_per_spM.size();
-    
+
     if (maxSeeds > m_filter_config.maxSeedsPerSpM) {
 	maxSeeds = m_filter_config.maxSeedsPerSpM + 1;
     }
@@ -75,7 +94,7 @@ void operator()(host_triplet_collection& triplets,
 private:    
     seedfilter_config m_filter_config;
     const host_internal_spacepoint_container& m_isp_container;
-    std::shared_ptr<experiment_cuts> m_exp_cuts;
+    experiment_cuts* m_exp_cuts;
 };
 
     

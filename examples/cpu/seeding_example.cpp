@@ -27,6 +27,9 @@
 #include <chrono>
 #include <iomanip>
 
+// custom
+#include "atlas_cuts.hpp"
+
 int seq_run(const std::string& detector_file, const std::string& hits_dir, unsigned int events)
 {
     
@@ -46,6 +49,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
     vecmem::host_memory_resource resource;
 
     // Elapsed time
+    float binning_cpu(0);
     float seeding_cpu(0);
     
     // Loop over events
@@ -105,20 +109,29 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 	grid_config.zMin = config.zMin;
 	grid_config.deltaRMax = config.deltaRMax;
 	grid_config.cotThetaMax = config.cotThetaMax;
+	
+	// create internal spacepoints grouped in bins
+	/*time*/ auto start_binning_cpu = std::chrono::system_clock::now();
+	
+	traccc::spacepoint_grouping sg(config, grid_config);
+	auto internal_sp_per_event = sg(spacepoints_per_event);
+
+	/*time*/ auto end_binning_cpu = std::chrono::system_clock::now();
+	/*time*/ std::chrono::duration<double> time_binning_cpu = end_binning_cpu - start_binning_cpu; 
+
+	/*time*/ binning_cpu += time_binning_cpu.count();      
+	
+	// seed finding
+	traccc::atlas_cuts cuts(internal_sp_per_event);
 
 	/*time*/ auto start_seeding_cpu = std::chrono::system_clock::now();
 	
-	// create internal spacepoints grouped in bins
-	traccc::spacepoint_grouping sg(config, grid_config);
-	auto internal_sp_per_event = sg(spacepoints_per_event);
-	
-	// seed finding
-	traccc::seed_finding sf(config, internal_sp_per_event);
+	traccc::seed_finding sf(resource, config, internal_sp_per_event, &cuts);
 	auto seeds = sf();
-	n_seeds+=seeds.size();
 	
 	/*time*/ auto end_seeding_cpu = std::chrono::system_clock::now();
-
+	n_seeds+=seeds.size();
+	
 	/*time*/ std::chrono::duration<double> time_seeding_cpu = end_seeding_cpu - start_seeding_cpu; 
 	/*time*/ seeding_cpu += time_seeding_cpu.count();
 	
@@ -162,8 +175,10 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
     std::cout << "- read    " <<  n_spacepoints << " spacepoints from " << n_modules << " modules" << std::endl;
     std::cout << "- created " <<  n_internal_spacepoints << " internal spacepoints" << std::endl;
     std::cout << "- created " <<  n_seeds << " seeds" << std::endl;
-    std::cout << "==> Elpased time ... " << std::endl;    
+    std::cout << "==> Elpased time ... " << std::endl;
+    std::cout << "binning_time       " << std::setw(10) << std::left << binning_cpu     << std::endl;
     std::cout << "seeding_time       " << std::setw(10) << std::left << seeding_cpu     << std::endl;
+	
     return 0;
 }
 

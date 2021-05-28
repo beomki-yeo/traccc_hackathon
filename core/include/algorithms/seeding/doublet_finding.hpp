@@ -15,48 +15,51 @@ namespace traccc{
 
 struct doublet_finding{
     
-    doublet_finding(seedfinder_config& config, const host_internal_spacepoint_container& isp_container):
-	m_config(config),
-	m_isp_container(isp_container)
+doublet_finding(vecmem::memory_resource& resource, seedfinder_config& config, const host_internal_spacepoint_container& isp_container):
+    m_resource(&resource),
+    m_config(config),
+    m_isp_container(isp_container)
     {}
     
-    host_doublet_collection operator()(
-	const bin_information& bin_information,
-	const sp_location& spM_location,
-	bool bottom){
-	
-	host_doublet_collection doublets;
-	
-	this->operator()(bin_information,
-			 spM_location,
-			 doublets,
-			 bottom);
-        
-	return doublets;
-    }
+//host_doublet_collection operator()(const bin_information& bin_information,
+std::vector<doublet> operator()(const bin_information& bin_information,
+				const sp_location& spM_location,
+				bool bottom){
+
+    //host_doublet_collection doublets;
+    //host_doublet_collection doublets(m_resource);
+    std::vector<doublet> doublets;
+    this->operator()(bin_information,
+		     spM_location,
+		     doublets,
+		     bottom);
     
-    void operator()(const bin_information& bin_information,
-		    const sp_location& spM_location,
-		    host_doublet_collection& doublets,
-		    bool bottom){
-	const auto& spM = m_isp_container.items[spM_location.bin_idx][spM_location.sp_idx];
-	float rM = spM.radius();
-	float zM = spM.z();
-	float varianceRM = spM.varianceR();
-	float varianceZM = spM.varianceZ();
-	
+    return doublets;
+}
+    
+void operator()(const bin_information& bin_information,
+		const sp_location& spM_location,
+		//host_doublet_collection& doublets,
+		std::vector<doublet>& doublets,
+		bool bottom){
+    const auto& spM = m_isp_container.items[spM_location.bin_idx][spM_location.sp_idx];
+    float rM = spM.radius();
+    float zM = spM.z();
+    float varianceRM = spM.varianceR();
+    float varianceZM = spM.varianceZ();
+    
 	if (bottom){
 
 	    auto& counts = bin_information.bottom_idx.counts;
 	    auto& bottom_bin_indices = bin_information.bottom_idx.vector_indices;
-
+	    
 	    for (size_t i=0; i<counts; ++i){
-		auto bin_idx = bottom_bin_indices[i];
-		if (bin_idx==-1) continue;	       
-		
-		for (size_t sp_idx=0; sp_idx < m_isp_container.items[bin_idx].size(); ++sp_idx){		    		    
-		    auto& spB = m_isp_container.items[bin_idx][sp_idx];
-		    
+		auto& bin_idx = bottom_bin_indices[i];
+		auto& spacepoints = m_isp_container.items[bin_idx];
+				
+		for (size_t sp_idx=0; sp_idx < spacepoints.size(); ++sp_idx){
+		    auto& spB = spacepoints[sp_idx];
+		    		    
 		    float rB = spB.radius();
 		    float deltaR = rM - rB;
 		    // if r-distance is too big, try next SP in bin
@@ -78,30 +81,31 @@ struct doublet_finding{
 			zOrigin > m_config.collisionRegionMax) {
 			continue;
 		    }	    
-
+		    
 		    sp_location spB_location = {bin_idx,sp_idx};
-		    lin_circle lin = transform_coordinates(spM,spB,bottom);
-		    doublets.push_back(doublet({spM_location, spB_location, lin}));
-		}
+		    lin_circle lin = transform_coordinates(spM,spB,bottom);	    
+		    doublets.push_back(doublet({spM_location,spB_location,lin}));
+		}		
 	    }	    
 	} // if bottom == true		
 	else if (!bottom){
-
+	    
 	    auto& counts = bin_information.top_idx.counts;
 	    auto& top_bin_indices = bin_information.top_idx.vector_indices;
 
 	    for (size_t i=0; i<counts; ++i){
-		auto bin_idx = top_bin_indices[i];
-		if (bin_idx==-1) continue;
 		
-		for (size_t sp_idx=0; sp_idx < m_isp_container.items[bin_idx].size(); ++sp_idx){
-		    auto& spT = m_isp_container.items[bin_idx][sp_idx];	    
-		    
+		auto& bin_idx = top_bin_indices[i];
+		auto& spacepoints = m_isp_container.items[bin_idx];
+		
+		for (size_t sp_idx=0; sp_idx < spacepoints.size(); ++sp_idx){
+		    auto& spT = spacepoints[sp_idx];
+  		    
 		    float rT = spT.radius();
 		    float deltaR = rT - rM;
 		    // this condition is the opposite of the condition for bottom SP
 		    if (deltaR < m_config.deltaRMin) {
-		    continue;
+			continue;
 		    }
 		    if (deltaR > m_config.deltaRMax) {
 			continue;
@@ -114,14 +118,15 @@ struct doublet_finding{
 		    float zOrigin = zM - rM * cotTheta;
 		    if (zOrigin < m_config.collisionRegionMin ||
 			zOrigin > m_config.collisionRegionMax) {
-		    continue;
+			continue;
 		    }
-
+		    
 		    sp_location spT_location = {bin_idx,sp_idx};
 		    lin_circle lin = transform_coordinates(spM,spT,bottom);
 		    doublets.push_back(doublet({spM_location, spT_location, lin}));
-		}
-	    }	
+		}		
+	    }
+	    	
 	} // if bottom == false	
     }
 
@@ -177,6 +182,7 @@ struct doublet_finding{
     }
     
 private:
+    vecmem::memory_resource* m_resource;
     seedfinder_config m_config;
     const host_internal_spacepoint_container& m_isp_container;    
 };
