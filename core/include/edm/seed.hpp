@@ -12,9 +12,9 @@
 namespace traccc{
 
     struct seed{
-	internal_spacepoint<spacepoint> spB;
-	internal_spacepoint<spacepoint> spM;
-	internal_spacepoint<spacepoint> spT;
+	spacepoint spB;
+	spacepoint spM;
+	spacepoint spT;
 	float weight;
 	float z_vertex;
 

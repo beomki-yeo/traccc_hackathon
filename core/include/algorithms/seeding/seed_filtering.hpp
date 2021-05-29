@@ -44,7 +44,8 @@ void operator()(host_triplet_collection& triplets,
 	auto spT_idx = triplet.sp3; 
 	auto spT = m_isp_container.items[spT_idx.bin_idx][spT_idx.sp_idx];
 	
-	seeds_per_spM.push_back({spB,spM,spT,triplet.weight, triplet.z_vertex});
+	seeds_per_spM.push_back({spB.m_sp,spM.m_sp,spT.m_sp,
+				 triplet.weight, triplet.z_vertex});
     }
 
     // sort seeds based on their weights	
@@ -56,13 +57,13 @@ void operator()(host_triplet_collection& triplets,
 		  else {
 		      float seed1_sum = 0;
 		      float seed2_sum = 0;
-		      seed1_sum += pow(seed1.spB.y(),2) + pow(seed1.spB.y(),2);
-		      seed1_sum += pow(seed1.spM.y(),2) + pow(seed1.spM.y(),2);	    
-		      seed1_sum += pow(seed1.spT.y(),2) + pow(seed1.spT.y(),2);
+		      seed1_sum += pow(seed1.spB.y(),2) + pow(seed1.spB.z(),2);
+		      seed1_sum += pow(seed1.spM.y(),2) + pow(seed1.spM.z(),2);	    
+		      seed1_sum += pow(seed1.spT.y(),2) + pow(seed1.spT.z(),2);
 
-		      seed2_sum += pow(seed2.spB.y(),2) + pow(seed2.spB.y(),2);
-		      seed2_sum += pow(seed2.spM.y(),2) + pow(seed2.spM.y(),2);
-		      seed2_sum += pow(seed2.spT.y(),2) + pow(seed2.spT.y(),2);
+		      seed2_sum += pow(seed2.spB.y(),2) + pow(seed2.spB.z(),2);
+		      seed2_sum += pow(seed2.spM.y(),2) + pow(seed2.spM.z(),2);
+		      seed2_sum += pow(seed2.spT.y(),2) + pow(seed2.spT.z(),2);
 		      
 		      return seed1_sum > seed2_sum;		      
 		  }

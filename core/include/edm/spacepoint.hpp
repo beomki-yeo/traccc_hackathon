@@ -16,6 +16,11 @@ namespace traccc {
     struct spacepoint {
         point3 global = { 0., 0., 0.};
         variance3 variance = { 0., 0., 0.};
+
+	scalar x() const { return global[0];}
+	scalar y() const { return global[1];}
+	scalar z() const { return global[2];}
+	scalar radius() const { return std::sqrt(global[0]*global[0]+global[1]*global[1]); }
     };
 
     /// Container of spacepoints belonging to one detector module

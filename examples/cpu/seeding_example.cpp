@@ -177,9 +177,9 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 	    auto spT = seeds[i].spT;
 
 	    sd_writer.append({weight,z_vertex,
-			      spB.m_x, spB.m_y, spB.m_z, spB.m_varianceR, spB.m_varianceZ,
-			      spM.m_x, spM.m_y, spM.m_z, spM.m_varianceR, spM.m_varianceZ,
-			      spT.m_x, spT.m_y, spT.m_z, spT.m_varianceR, spT.m_varianceZ});
+			      spB.x(), spB.y(), spB.z(), 0, 0,
+			      spM.x(), spM.y(), spM.z(), 0, 0,
+			      spT.x(), spT.y(), spT.z(), 0, 0});
         }	
 	
     }
