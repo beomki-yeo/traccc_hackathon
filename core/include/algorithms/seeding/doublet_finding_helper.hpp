@@ -5,11 +5,9 @@
  * Mozilla Public License Version 2.0
  */
 
-
 #pragma once
 
-#include <edm/internal_spacepoint.hpp>
-#include <algorithms/seeding/detail/doublet.hpp>
+#include <algorithms/seeding/detail/seeding_config.hpp>
 
 namespace traccc{
 

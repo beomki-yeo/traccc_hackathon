@@ -5,7 +5,6 @@
  * Mozilla Public License Version 2.0
  */
 
-
 #pragma once
 
 namespace traccc{
@@ -45,5 +44,26 @@ namespace traccc{
     using device_doublet_collection
     = doublet_collection< vecmem::device_vector >;
 
+    /// Convenience declaration for the doublet container type to use in host code
+    /// header: global bin index / neighborhood index
+    /// item  : internal spacepoint
+    using host_doublet_container
+    = host_container< size_t, doublet >;
+
+    /// Convenience declaration for the doublet container type to use in device code
+    using device_doublet_container
+    = device_container< size_t, doublet>;
+
+    /// Convenience declaration for the doublet container data type to use in host code
+    using doublet_container_data
+    = container_data< size_t, doublet >;
+
+    /// Convenience declaration for the doublet container buffer type to use in host code
+    using doublet_container_buffer
+    = container_buffer< size_t, doublet >;
+
+    /// Convenience declaration for the doublet container view type to use in host code
+    using doublet_container_view
+    = container_view< size_t, doublet >;    
     
 } // namespace traccc

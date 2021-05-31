@@ -10,13 +10,14 @@
 #include <edm/internal_spacepoint.hpp>
 #include <edm/spacepoint.hpp>
 #include <algorithms/seeding/detail/seeding_config.hpp>
+#include <algorithms/seeding/detail/spacepoint_grid.hpp>
 #include <algorithms/seeding/detail/bin_finder.hpp>
 
 #include <algorithm>
 #include <iostream>
 
 namespace traccc{
-
+    
     // group the spacepoints basaed on its position
     struct spacepoint_grouping{
 

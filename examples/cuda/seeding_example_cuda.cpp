@@ -13,15 +13,18 @@
 #include "edm/internal_spacepoint.hpp"
 #include "geometry/pixel_segmentation.hpp"
 
-// seeding
+// seeding (cpu)
 #include "algorithms/seeding/spacepoint_grouping.hpp"
 #include "algorithms/seeding/seed_finding.hpp"
+// seeding (cuda)
+#include "cuda/algorithms/seeding/seed_finding.hpp"
 
 // io
 #include "csv/csv_io.hpp"
 
 // vecmem
 #include <vecmem/memory/host_memory_resource.hpp>
+#include <vecmem/memory/cuda/managed_memory_resource.hpp>
 
 // std
 #include <chrono>
@@ -48,6 +51,9 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
     // Memory resource used by the EDM.
     vecmem::host_memory_resource resource;
 
+    // Memory resource used by the EDM.
+    vecmem::cuda::managed_memory_resource mng_mr;
+    
     // Elapsed time
     float binning_cpu(0);
     float seeding_cpu(0);
@@ -74,7 +80,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 	}
 
 	/*-------------------
-	     Seed finding
+	  SEED FINDING
 	  -------------------*/
 
 	// Seed finder config
@@ -109,6 +115,10 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 	grid_config.zMin = config.zMin;
 	grid_config.deltaRMax = config.deltaRMax;
 	grid_config.cotThetaMax = config.cotThetaMax;
+
+	/*-------------------
+	  spacepoint binning
+	  -------------------*/
 	
 	// create internal spacepoints grouped in bins
 	/*time*/ auto start_binning_cpu = std::chrono::system_clock::now();
@@ -136,11 +146,18 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 	
 	/*time*/ std::chrono::duration<double> time_seeding_cpu = end_seeding_cpu - start_seeding_cpu; 
 	/*time*/ seeding_cpu += time_seeding_cpu.count();
-		
+
 	for (size_t i=0; i<internal_sp_per_event.headers.size(); ++i){
 	    n_internal_spacepoints+=internal_sp_per_event.items[i].size();
 	}
+	
+	/*-----------------------
+	  seed finding -- cuda
+	  -----------------------*/
 
+	traccc::cuda::seed_finding sf_cuda(config, internal_sp_per_event, &cuts, &mng_mr);
+	auto seeds_cuda = sf_cuda();
+	
 	/*------------
 	  Writer
 	  ------------*/
@@ -184,16 +201,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 			      spM.x(), spM.y(), spM.z(), 0, 0,
 			      spT.x(), spT.y(), spT.z(), 0, 0});
         }	
-
-	traccc::seed_statistics_writer sd_stat_writer{std::string("event")+event_number+"-seed_statistics.csv"};
-	auto stats = sf.get_stats();
-	for (size_t i=0; i<stats.size(); ++i){
-	    auto stat = stats[i];
-	    sd_stat_writer.append({stat.n_spM,
-				   stat.n_mid_bot_doublets,
-				   stat.n_mid_top_doublets,
-				   stat.n_triplets});
-	}	
+	
     }
     
     std::cout << "==> Statistics ... " << std::endl;

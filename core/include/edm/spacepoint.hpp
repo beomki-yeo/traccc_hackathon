@@ -8,6 +8,7 @@
 #pragma once
 
 #include "container.hpp"
+#include <definitions/primitives.hpp>
 #include <vector>
 
 namespace traccc {

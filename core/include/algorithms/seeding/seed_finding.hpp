@@ -11,6 +11,7 @@
 #include <edm/internal_spacepoint.hpp>
 #include <edm/seed.hpp>
 #include <algorithms/seeding/detail/seeding_config.hpp>
+#include <algorithms/seeding/detail/seed_statistics.hpp>
 #include <algorithms/seeding/doublet_finding.hpp>
 #include <algorithms/seeding/triplet_finding.hpp>
 #include <algorithms/seeding/seed_filtering.hpp>
@@ -43,6 +44,9 @@ void operator()(host_seed_collection& seeds){
 	
 	auto& bin_information = m_isp_container.headers[i];
 	auto& spM_collection = m_isp_container.items[i];
+
+	seed_statistics stats({0,0,0,0});
+	stats.n_spM = spM_collection.size();
 	
 	/// iterate over middle spacepoints
 	for (size_t j=0; j<spM_collection.size(); ++j){
@@ -55,7 +59,7 @@ void operator()(host_seed_collection& seeds){
 	    
 	    auto doublets_mid_top = m_doublet_finding(bin_information, spM_location, false);
 	    if (doublets_mid_top.empty()) continue;
-
+	    
 	    host_triplet_collection triplets_per_spM;
 	    
 	    for (auto mid_bot: doublets_mid_bot){
@@ -63,15 +67,24 @@ void operator()(host_seed_collection& seeds){
 		triplets_per_spM.insert(std::end(triplets_per_spM), triplets.begin(), triplets.end());
 	    }
 
+	    stats.n_mid_bot_doublets += doublets_mid_bot.size();
+	    stats.n_mid_top_doublets += doublets_mid_top.size();
+	    stats.n_triplets += triplets_per_spM.size();
+	    
 	    m_seed_filtering(triplets_per_spM, seeds);	    	    	    
-	}	
+	}
+
+	m_stats.push_back(stats);
     }
 }
+
+std::vector< seed_statistics > get_stats(){ return m_stats; }
     
 private:
     const host_internal_spacepoint_container& m_isp_container;
     doublet_finding m_doublet_finding;
     triplet_finding m_triplet_finding;
     seed_filtering m_seed_filtering;
+    std::vector< seed_statistics > m_stats;
 };
 } // namespace traccc

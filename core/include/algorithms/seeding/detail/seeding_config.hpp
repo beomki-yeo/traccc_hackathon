@@ -7,14 +7,7 @@
 
 #pragma once
 
-#include "utils/axis.hpp"
-#include "utils/grid.hpp"
-
 namespace traccc{
-
-// define spacepoint_grid
-using spacepoint_grid = grid<traccc::axis<AxisBoundaryType::Closed>,
-			     traccc::axis<AxisBoundaryType::Bound> >;
     
 struct seedfinder_config{
     

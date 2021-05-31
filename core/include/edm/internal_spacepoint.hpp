@@ -18,6 +18,8 @@
 #include <vecmem/containers/data/jagged_vector_buffer.hpp>
 #include <vecmem/containers/data/vector_buffer.hpp>
 
+// std
+#include <algorithm>
 
 namespace traccc {
 
@@ -77,9 +79,7 @@ namespace traccc {
 	    m_varianceZ = sp.m_varianceZ;
 	    return *this;
 	}
-	
-
-	
+		
 	const float& x() const { return m_x; }
 	const float& y() const { return m_y; }
 	const float& z() const { return m_z; }

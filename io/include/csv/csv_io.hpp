@@ -126,6 +126,19 @@ namespace traccc {
     };
 
     using seed_writer = dfe::NamedTupleCsvWriter<csv_seed>;
+
+    struct csv_seed_statistics{
+
+	size_t n_spM;
+	size_t n_mid_bot_doublets;
+	size_t n_mid_top_doublets;
+	size_t n_triplets;		
+	
+	DFE_NAMEDTUPLE(csv_seed_statistics, n_spM, n_mid_bot_doublets, n_mid_top_doublets, n_triplets);
+    };
+    
+    using seed_statistics_writer = dfe::NamedTupleCsvWriter<csv_seed_statistics>;
+    
   struct csv_surface {
 
     uint64_t geometry_id = 0;
@@ -138,6 +151,7 @@ namespace traccc {
     DFE_NAMEDTUPLE(csv_surface, geometry_id, cx,cy,cz,rot_xu,rot_xv,rot_xw,rot_yu,rot_yv,rot_yw,rot_zu,rot_zv,rot_zw);
 
   };
+
 
   using surface_reader = dfe::NamedTupleCsvReader<csv_surface>;
 
