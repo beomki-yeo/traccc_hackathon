@@ -34,5 +34,25 @@ namespace traccc{
     /// Convenience declaration for the triplet collection type to use in device code
     using device_triplet_collection
     = triplet_collection< vecmem::device_vector >;
+
+    /// Convenience declaration for the triplet container type to use in host code
+    using host_triplet_container
+    = host_container< size_t, triplet >;
+
+    /// Convenience declaration for the triplet container type to use in device code
+    using device_triplet_container
+    = device_container< size_t, triplet>;
+
+    /// Convenience declaration for the triplet container data type to use in host code
+    using triplet_container_data
+    = container_data< size_t, triplet >;
+
+    /// Convenience declaration for the triplet container buffer type to use in host code
+    using triplet_container_buffer
+    = container_buffer< size_t, triplet >;
+
+    /// Convenience declaration for the triplet container view type to use in host code
+    using triplet_container_view
+    = container_view< size_t, triplet >;        
     
 } // namespace traccc

@@ -9,16 +9,17 @@
 
 #include <edm/internal_spacepoint.hpp>
 #include <algorithms/seeding/detail/doublet.hpp>
+#include <algorithms/seeding/detail/seeding_config.hpp>
 #include <algorithms/seeding/doublet_finding_helper.hpp>
 
-namespace traccc{
-    
+namespace traccc{    
 namespace cuda{
 
-struct doublet_finding{
-
-        
-};
-
+void doublet_finding(const seedfinder_config& config,
+		     host_internal_spacepoint_container& internal_sp_container,
+		     host_doublet_container& doublet_container,
+		     bool bottom,
+		     vecmem::memory_resource* resource);
+   
 }// namespace cuda
 }// namespace traccc

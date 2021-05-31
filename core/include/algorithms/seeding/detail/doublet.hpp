@@ -45,8 +45,6 @@ namespace traccc{
     = doublet_collection< vecmem::device_vector >;
 
     /// Convenience declaration for the doublet container type to use in host code
-    /// header: global bin index / neighborhood index
-    /// item  : internal spacepoint
     using host_doublet_container
     = host_container< size_t, doublet >;
 

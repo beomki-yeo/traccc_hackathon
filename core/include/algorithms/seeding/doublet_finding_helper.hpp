@@ -22,6 +22,7 @@ static bool isCompatible(const internal_spacepoint<spacepoint>& sp1,
 static lin_circle transform_coordinates(const internal_spacepoint<spacepoint>& sp1,
 					const internal_spacepoint<spacepoint>& sp2,
 					bool bottom);
+
 };
     
 bool doublet_finding_helper::isCompatible(const internal_spacepoint<spacepoint>& sp1,

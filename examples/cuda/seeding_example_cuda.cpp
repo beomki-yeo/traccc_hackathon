@@ -32,6 +32,7 @@
 
 // custom
 #include "atlas_cuts.hpp"
+#include "tml_multiplet_config.hpp"
 
 int seq_run(const std::string& detector_file, const std::string& hits_dir, unsigned int events)
 {
@@ -130,12 +131,14 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 	/*time*/ std::chrono::duration<double> time_binning_cpu = end_binning_cpu - start_binning_cpu; 
 
 	/*time*/ binning_cpu += time_binning_cpu.count();      
-
-	traccc::atlas_cuts cuts(internal_sp_per_event);
 	
 	/*-----------------------
 	  seed finding -- cpu
 	  -----------------------*/
+	
+	traccc::atlas_cuts cuts(internal_sp_per_event);
+	traccc::cuda::tml_multiplet_config tml_cfg;
+	
 	/*time*/ auto start_seeding_cpu = std::chrono::system_clock::now();
        
 	traccc::seed_finding sf(config, internal_sp_per_event, &cuts);
@@ -155,7 +158,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 	  seed finding -- cuda
 	  -----------------------*/
 
-	traccc::cuda::seed_finding sf_cuda(config, internal_sp_per_event, &cuts, &mng_mr);
+	traccc::cuda::seed_finding sf_cuda(config, internal_sp_per_event, &tml_cfg, &cuts, &mng_mr);
 	auto seeds_cuda = sf_cuda();
 	
 	/*------------
