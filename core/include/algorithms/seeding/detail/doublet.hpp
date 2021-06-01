@@ -46,22 +46,22 @@ namespace traccc{
 
     /// Convenience declaration for the doublet container type to use in host code
     using host_doublet_container
-    = host_container< size_t, doublet >;
+    = host_container< int, doublet >;
 
     /// Convenience declaration for the doublet container type to use in device code
     using device_doublet_container
-    = device_container< size_t, doublet>;
+    = device_container< int, doublet>;
 
     /// Convenience declaration for the doublet container data type to use in host code
     using doublet_container_data
-    = container_data< size_t, doublet >;
+    = container_data< int, doublet >;
 
     /// Convenience declaration for the doublet container buffer type to use in host code
     using doublet_container_buffer
-    = container_buffer< size_t, doublet >;
+    = container_buffer< int, doublet >;
 
     /// Convenience declaration for the doublet container view type to use in host code
     using doublet_container_view
-    = container_view< size_t, doublet >;    
+    = container_view< int, doublet >;    
     
 } // namespace traccc

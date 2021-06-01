@@ -15,8 +15,12 @@ namespace cuda{
 class tml_multiplet_config: public multiplet_config {
 public:
     tml_multiplet_config(){
-	safety_factor = 2;
-	safety_adder = 10;
+	//safety_factor = 2;
+	//safety_adder = 10;
+	safety_factor = 1.5;
+	safety_adder = 10;       	
+	//par_for_mb_doublets = {1, 89.79, 0.8704};
+	//par_for_mt_doublets = {1, 6.686, 0.3248};	
 	par_for_mb_doublets = {1, 25.85, 0.4009};
 	par_for_mt_doublets = {1, 18.36, 0.2184};
 	par_for_triplets = {1, 0, 0.01939};	

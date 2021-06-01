@@ -30,12 +30,9 @@ list( APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" )
 include( traccc-compiler-options )
 
 # Set GPU-related options
-foreach( arch cuda sycl hip )
-  if( TRACCC_BUILD_${arch} )
-    include ( traccc-compiler-options-${arch} )
-    add_subdirectory( ${arch} )
-  endif()
-endforeach()
+if( TRACCC_BUILD_CUDA )
+  add_subdirectory( cuda )
+endif()
 
 # Build the necessary externals.
 add_subdirectory(extern)

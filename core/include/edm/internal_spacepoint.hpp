@@ -9,6 +9,7 @@
 
 // traccc include
 #include "edm/spacepoint.hpp"
+#include "utils/arch_qualifiers.hpp"
 
 // VecMem include(s).
 #include <vecmem/containers/jagged_vector.hpp>
@@ -25,8 +26,8 @@ namespace traccc {
 
     struct neighbor_idx{
 	size_t counts;
-	std::array< size_t, 9u > global_indices;
-	std::array< size_t, 9u > vector_indices;
+	size_t global_indices[9];
+	size_t vector_indices[9];
     };
 
     /// Header: bin information (global bin index, neighborhood bin indices)    
@@ -51,6 +52,7 @@ namespace traccc {
 	scalar m_varianceZ;
 	const spacepoint& m_sp;
 
+	__CUDA_HOST_DEVICE__
 	internal_spacepoint(const spacepoint& sp, const vector3& globalPos,
 			    const vector2& offsetXY,
 			    const vector2& variance): m_sp(sp) {	  
@@ -61,6 +63,8 @@ namespace traccc {
 	    m_varianceR = variance[0];
 	    m_varianceZ = variance[1];	    
 	}
+
+	__CUDA_HOST_DEVICE__
 	internal_spacepoint(const internal_spacepoint<spacepoint>& sp)
 	    : m_sp(sp.sp()){
 	    m_x = sp.m_x;
@@ -70,6 +74,8 @@ namespace traccc {
 	    m_varianceR = sp.m_varianceR;
 	    m_varianceZ = sp.m_varianceZ;
 	}
+
+	__CUDA_HOST_DEVICE__
 	internal_spacepoint& operator=(const internal_spacepoint<spacepoint>& sp){
 	    m_x = sp.m_x;
 	    m_y = sp.m_y;
@@ -79,14 +85,29 @@ namespace traccc {
 	    m_varianceZ = sp.m_varianceZ;
 	    return *this;
 	}
-		
+
+	__CUDA_HOST_DEVICE__
 	const float& x() const { return m_x; }
+
+	__CUDA_HOST_DEVICE__
 	const float& y() const { return m_y; }
+
+	__CUDA_HOST_DEVICE__
 	const float& z() const { return m_z; }
+	
+	__CUDA_HOST_DEVICE__
 	const float& radius() const { return m_r; }
+
+	__CUDA_HOST_DEVICE__
 	float phi() const { return atan2f(m_y, m_x); }
+
+	__CUDA_HOST_DEVICE__
 	const float& varianceR() const { return m_varianceR; }
+
+	__CUDA_HOST_DEVICE__
 	const float& varianceZ() const { return m_varianceZ; }
+
+	__CUDA_HOST_DEVICE__
 	const spacepoint& sp() const { return m_sp; }
     };
     

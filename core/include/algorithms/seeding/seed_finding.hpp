@@ -55,15 +55,17 @@ void operator()(host_seed_collection& seeds){
 	   
 	    // doublet search	    
 	    auto doublets_mid_bot = m_doublet_finding(bin_information, spM_location, true);
+	    
 	    if (doublets_mid_bot.empty()) continue;
 	    
 	    auto doublets_mid_top = m_doublet_finding(bin_information, spM_location, false);
+	    
 	    if (doublets_mid_top.empty()) continue;
 	    
 	    host_triplet_collection triplets_per_spM;
 	    
 	    for (auto mid_bot: doublets_mid_bot){
-		host_triplet_collection triplets = m_triplet_finding(mid_bot, doublets_mid_top);//, triplets_per_spM);
+		host_triplet_collection triplets = m_triplet_finding(mid_bot, doublets_mid_top);
 		triplets_per_spM.insert(std::end(triplets_per_spM), triplets.begin(), triplets.end());
 	    }
 
@@ -72,6 +74,7 @@ void operator()(host_seed_collection& seeds){
 	    stats.n_triplets += triplets_per_spM.size();
 	    
 	    m_seed_filtering(triplets_per_spM, seeds);	    	    	    
+	    
 	}
 
 	m_stats.push_back(stats);

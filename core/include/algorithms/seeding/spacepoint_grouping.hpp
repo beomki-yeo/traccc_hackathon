@@ -24,8 +24,11 @@ namespace traccc{
 	// constructor declaration
 	spacepoint_grouping(const seedfinder_config& config, const spacepoint_grid_config& grid_config);
 
-	host_internal_spacepoint_container operator()(const host_spacepoint_container& sp_container){
-	    host_internal_spacepoint_container internal_sp_container;
+	host_internal_spacepoint_container operator()(const host_spacepoint_container& sp_container, vecmem::memory_resource* mr = nullptr){
+	    host_internal_spacepoint_container internal_sp_container = {
+		host_internal_spacepoint_container::header_vector(mr),
+		host_internal_spacepoint_container::item_vector(mr)
+	    };
 
 	    this->operator()(sp_container, internal_sp_container);
 

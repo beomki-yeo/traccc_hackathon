@@ -114,7 +114,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 	/*time*/ auto start_binning_cpu = std::chrono::system_clock::now();
 	
 	traccc::spacepoint_grouping sg(config, grid_config);
-	auto internal_sp_per_event = sg(spacepoints_per_event);
+	auto internal_sp_per_event = sg(spacepoints_per_event, &resource);
 
 	/*time*/ auto end_binning_cpu = std::chrono::system_clock::now();
 	/*time*/ std::chrono::duration<double> time_binning_cpu = end_binning_cpu - start_binning_cpu; 

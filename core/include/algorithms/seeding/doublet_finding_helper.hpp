@@ -14,14 +14,17 @@ namespace traccc{
 // helper function used for both cpu and gpu
 struct doublet_finding_helper{
     
-static bool isCompatible(const internal_spacepoint<spacepoint>& sp1,
-			 const internal_spacepoint<spacepoint>& sp2,
-			 const seedfinder_config& config,
-			 bool bottom);
-    
-static lin_circle transform_coordinates(const internal_spacepoint<spacepoint>& sp1,
-					const internal_spacepoint<spacepoint>& sp2,
-					bool bottom);
+static __CUDA_HOST_DEVICE__
+bool isCompatible(const internal_spacepoint<spacepoint>& sp1,
+		  const internal_spacepoint<spacepoint>& sp2,
+		  const seedfinder_config& config,
+		  bool bottom);
+
+
+static __CUDA_HOST_DEVICE__
+lin_circle transform_coordinates(const internal_spacepoint<spacepoint>& sp1,
+				 const internal_spacepoint<spacepoint>& sp2,
+				 bool bottom);
 
 };
     

@@ -66,7 +66,7 @@ void operator()(const bin_information& bin_information,
 		sp_location spB_location = {bin_idx,sp_idx};
 		doublets.push_back(doublet({spM_location,spB_location,lin}));
 	    }		
-	}	    
+	}
     }
     
     else if (!bottom){
@@ -91,7 +91,7 @@ void operator()(const bin_information& bin_information,
 		doublets.push_back(doublet({spM_location, spT_location, lin}));
 	    }		
 	}	
-    } 
+    }
 }
     
 private:

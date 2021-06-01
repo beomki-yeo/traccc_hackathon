@@ -11,7 +11,7 @@ include_guard( GLOBAL )
 include( traccc-functions )
 
 # Set up the used C++ standard(s).
-set( CMAKE_CXX_STANDARD 17 CACHE STRING "The (host) C++ standard to use" )
+set( CMAKE_CXX_STANDARD 14 CACHE STRING "The (host) C++ standard to use" )
 
 # Turn on a number of warnings for the "known compilers".
 if( ( "${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU" ) OR

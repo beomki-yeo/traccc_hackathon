@@ -270,7 +270,7 @@ struct grid_helper {
 	std::array<size_t, sizeof...(Axes)> nBinsArray = getNBins(axes);
 	
 	// Produce iterator of global indices
-	return global_neighborhood_indices(neighborIndices, nBinsArray);
+	return global_neighborhood_indices<sizeof...(Axes)>(neighborIndices, nBinsArray);
     }
 
     

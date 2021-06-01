@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <definitions/primitives.hpp>
+
 namespace traccc{
     
 struct seedfinder_config{

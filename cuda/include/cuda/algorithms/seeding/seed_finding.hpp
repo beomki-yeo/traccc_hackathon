@@ -45,18 +45,18 @@ void operator()(host_seed_collection& seeds){
     size_t n_bins = m_isp_container.headers.size();
     
     host_doublet_container mid_bot_container = {
-	   vecmem::vector< size_t >(n_bins, 0, m_mr),
-	   vecmem::jagged_vector< doublet >(n_bins, m_mr)
+	host_doublet_container::header_vector(n_bins, 0, m_mr),
+	host_doublet_container::item_vector(n_bins, m_mr)
     };    
     
     host_doublet_container mid_top_container = {
-           vecmem::vector< size_t >(n_bins, 0, m_mr),
-	   vecmem::jagged_vector< doublet >(n_bins, m_mr)
+        host_doublet_container::header_vector(n_bins, 0, m_mr),
+	host_doublet_container::item_vector(n_bins, m_mr)
     };
-
+    
     host_triplet_container triplet_container = {
-           vecmem::vector< size_t >(n_bins, 0, m_mr),
-	   vecmem::jagged_vector< triplet >(n_bins, m_mr)
+	host_triplet_container::header_vector(n_bins, 0, m_mr),
+	host_triplet_container::item_vector(n_bins, m_mr)
     };
     
     for (size_t i=0; i<n_bins; ++i){
@@ -70,8 +70,27 @@ void operator()(host_seed_collection& seeds){
 	triplet_container.items[i] = vecmem::vector<triplet>(n_triplets);    
     }
 
-    traccc::cuda::doublet_finding(m_seedfinder_config, m_isp_container, mid_bot_container, true, m_mr);
-    
+    traccc::cuda::doublet_finding(m_seedfinder_config, m_isp_container, mid_bot_container, mid_top_container, true, m_mr);
+
+    // sort doublets in terms of middle spacepoint idx
+    // note: it takes tooooo long with GPU bubble sort so used cpu sort function
+    for (int i=0; i<mid_bot_container.headers.size(); ++i){
+	auto n_doublets = mid_bot_container.headers[i];
+	auto doublets = mid_bot_container.items[i];
+	std::sort(doublets.begin(), doublets.begin()+n_doublets,
+		  [](doublet& d1, doublet& d2){
+		      return d1.sp1.sp_idx < d2.sp1.sp_idx;
+		  });		
+    }
+        
+    for (int i=0; i<mid_top_container.headers.size(); ++i){
+	auto n_doublets = mid_top_container.headers[i];
+	auto doublets = mid_top_container.items[i];
+	std::sort(doublets.begin(), doublets.begin()+n_doublets,
+		  [](doublet& d1, doublet& d2){
+		      return d1.sp1.sp_idx < d2.sp1.sp_idx;
+		  });		
+    }
     
 }
 
