@@ -144,8 +144,8 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
        
 	traccc::seed_finding sf(config, internal_sp_per_event, &cuts);
 	auto seeds = sf();
-
 	n_seeds+=seeds.size();
+	
 	/*time*/ auto end_seeding_cpu = std::chrono::system_clock::now();	
 	/*time*/ std::chrono::duration<double> time_seeding_cpu = end_seeding_cpu - start_seeding_cpu; 
 	/*time*/ seeding_cpu += time_seeding_cpu.count();

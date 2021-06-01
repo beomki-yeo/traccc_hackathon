@@ -29,8 +29,20 @@ seed_finding(seedfinder_config& config,
     m_isp_container(isp_container),
     m_seedfinder_config(config),
     m_multiplet_config(multi_cfg),
-    m_mr(mr)
-{}
+    m_mr(mr),
+
+    mid_bot_container({host_doublet_container::header_vector(m_mr),
+		       host_doublet_container::item_vector(m_mr)}),
+    
+    mid_top_container({host_doublet_container::header_vector(m_mr),
+		       host_doublet_container::item_vector(m_mr)}),
+    
+    triplet_container({host_triplet_container::header_vector(m_mr),
+		       host_triplet_container::item_vector(m_mr)})    
+    {
+	
+
+    }
     
 host_seed_collection operator()(){
     host_seed_collection seed_collection;
@@ -42,10 +54,11 @@ host_seed_collection operator()(){
 void operator()(host_seed_collection& seeds){
     
     // allocate doublet container
+    /*
     size_t n_bins = m_isp_container.headers.size();
     
     host_doublet_container mid_bot_container = {
-	host_doublet_container::header_vector(n_bins, 0, m_mr),
+    host_doublet_container::header_vector(n_bins, 0, m_mr),
 	host_doublet_container::item_vector(n_bins, m_mr)
     };    
     
@@ -58,8 +71,8 @@ void operator()(host_seed_collection& seeds){
 	host_triplet_container::header_vector(n_bins, 0, m_mr),
 	host_triplet_container::item_vector(n_bins, m_mr)
     };
-    
-    for (size_t i=0; i<n_bins; ++i){
+    */
+    for (size_t i=0; i<m_isp_container.headers.size(); ++i){
 	size_t n_spM = m_isp_container.items[i].size();
 	size_t n_mid_bot_doublets = m_multiplet_config->get_mid_bot_doublets_size(n_spM);
 	size_t n_mid_top_doublets = m_multiplet_config->get_mid_top_doublets_size(n_spM);
@@ -69,7 +82,8 @@ void operator()(host_seed_collection& seeds){
 	mid_top_container.items[i] = vecmem::vector<doublet>(n_mid_top_doublets);
 	triplet_container.items[i] = vecmem::vector<triplet>(n_triplets);    
     }
-
+    
+    
     traccc::cuda::doublet_finding(m_seedfinder_config, m_isp_container, mid_bot_container, mid_top_container, true, m_mr);
 
     // sort doublets in terms of middle spacepoint idx
@@ -97,6 +111,11 @@ void operator()(host_seed_collection& seeds){
 private:
     host_internal_spacepoint_container& m_isp_container;
     multiplet_config* m_multiplet_config;
+    
+    host_doublet_container mid_bot_container;
+    host_doublet_container mid_top_container;
+    host_triplet_container triplet_container;
+        
     const seedfinder_config m_seedfinder_config;
     vecmem::memory_resource* m_mr;
 };        
