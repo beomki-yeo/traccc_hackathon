@@ -167,17 +167,6 @@ void operator()(host_internal_spacepoint_container& isp_container,
 	auto n_triplets = triplet_container.headers[i];
 	auto& triplets = triplet_container.items[i];
 
-	/*
-	if (n_triplets>0){
-	    for (int j=0; j<n_triplets; ++j){
-		auto triplet = triplets[j];
-		std::cout << "(" <<triplet.sp1.sp_idx <<","<<triplet.sp2.sp_idx <<","<<triplet.sp3.sp_idx << ") ";
-	    }
-	    std::cout << std::endl;	    
-	    std::cout << n_triplets << std::endl;
-	}
-	*/
-	
 	std::sort(triplets.begin(), triplets.begin()+n_triplets,
 		  [](triplet& t1, triplet& t2){
 
@@ -198,28 +187,7 @@ void operator()(host_internal_spacepoint_container& isp_container,
 
 		      return false;
 		  });
-	/*
-	if (n_triplets>0){
-	    for (int i=0; i<n_triplets; ++i){
-		auto tr = triplets[i];
-		std::cout << "(" << tr.sp1.bin_idx << "," << tr.sp1.sp_idx << "," << tr.sp2.sp_idx << ") ";
-	    }
-	    std::cout << std::endl;
-	}
-	*/
     }
-
-    /*
-    for (int i=0; i<triplet_container.headers.size(); ++i){
-	auto n_triplets = triplet_container.headers[i];
-	auto& triplets = triplet_container.items[i];
-	for (int j=0; j<n_triplets; j++){
-	    auto triplet = triplets[j];
-	    std::cout << "(" << triplet.sp1.sp_idx << "," << triplet.sp2.sp_idx << ") ";
-	}
-	std::cout << std::endl;
-    }
-    */
 
     // triplets per middle-bot doublet
     vecmem::jagged_vector< size_t > n_triplets_per_mb(m_sp_grid->size(false),m_mr);

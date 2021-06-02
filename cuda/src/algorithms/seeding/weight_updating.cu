@@ -95,7 +95,8 @@ void weight_updating_kernel(const seedfilter_config filter_config,
 	}
 
 	auto& spT_idx = triplet.sp3;
-	auto& current_spT = internal_sp_per_bin[spT_idx.sp_idx];
+	//auto& current_spT = internal_sp_per_bin[spT_idx.sp_idx];
+	auto& current_spT = internal_sp_device.items.at(spT_idx.bin_idx)[spT_idx.sp_idx];
 	float currentTop_r = current_spT.radius();
 	
 	// if two compatible seeds with high distance in r are found, compatible
@@ -115,7 +116,9 @@ void weight_updating_kernel(const seedfilter_config filter_config,
 	    }
 
 	    auto& other_triplet = *tr_it;
-	    auto other_spT = internal_sp_per_bin[(*tr_it).sp3.sp_idx];
+	    //auto other_spT = internal_sp_per_bin[(*tr_it).sp3.sp_idx];
+	    auto other_spT_idx = (*tr_it).sp3;
+	    auto other_spT = internal_sp_device.items.at(other_spT_idx.bin_idx)[other_spT_idx.sp_idx];
 	    
 	    // compared top SP should have at least deltaRMin distance
 	    float otherTop_r = other_spT.radius();
