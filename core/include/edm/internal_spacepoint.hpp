@@ -36,7 +36,8 @@ namespace traccc {
 	neighbor_idx bottom_idx;
 	neighbor_idx top_idx;
     };
-    
+
+    inline
     bool operator==(const bin_information& lhs, const bin_information& rhs){
 	return (lhs.global_index == rhs.global_index);
     }    
@@ -145,6 +146,7 @@ namespace traccc {
     using internal_spacepoint_container_view
     = container_view< bin_information, internal_spacepoint<spacepoint> >;
 
+    inline
     size_t find_vector_id_from_global_id(size_t global_bin, vecmem::vector<bin_information>& headers){
 	auto location
 	    = std::find_if(headers.begin(), headers.end(),
@@ -153,7 +155,8 @@ namespace traccc {
 	    - headers.begin();
 	return location;	
     }
-    
+
+    inline
     void fill_vector_id(neighbor_idx& neighbor, vecmem::vector<bin_information>& headers){
 	for (size_t i=0; i<neighbor.counts; ++i){
 	    auto global_id = neighbor.global_indices[i];
@@ -162,7 +165,8 @@ namespace traccc {
 	    neighbor.vector_indices[i] = vector_id;
 	}
     }
-    
+
+    inline
     void fill_vector_id(host_internal_spacepoint_container& isp_container){
 
 	for (size_t i=0; i<isp_container.headers.size(); ++i){

@@ -16,15 +16,16 @@ namespace traccc{
 
 // helper function used for both cpu and gpu
 struct triplet_finding_helper{
-    
-static bool isCompatible(const internal_spacepoint<spacepoint>& spM,
-			 const lin_circle& lb,
-			 const lin_circle& lt,
-			 const seedfinder_config& config,
-			 const scalar& iSinTheta2,
-			 const scalar& scatteringInRegion2,			 
-			 scalar& curvature,
-			 scalar& impact_parameter);    
+
+static __CUDA_HOST_DEVICE__    
+bool isCompatible(const internal_spacepoint<spacepoint>& spM,
+		  const lin_circle& lb,
+		  const lin_circle& lt,
+		  const seedfinder_config& config,
+		  const scalar& iSinTheta2,
+		  const scalar& scatteringInRegion2,			 
+		  scalar& curvature,
+		  scalar& impact_parameter);    
 };
     
 bool triplet_finding_helper::isCompatible(const internal_spacepoint<spacepoint>& spM,

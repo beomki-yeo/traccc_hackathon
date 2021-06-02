@@ -59,7 +59,7 @@ void operator()(const doublet mid_bot,
 			    curvature,   // curvature
 			    impact_parameter, // impact parameter
 			    -impact_parameter*m_filter_config.impactWeightFactor,
-			    lb.Zo});		
+			    lb.Zo});
     }
     
     for (size_t i=0; i<triplets.size(); ++i){

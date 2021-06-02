@@ -119,13 +119,16 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
     traccc::cuda::seed_finding sf_cuda(config, sg.get_spgrid(), &tml_cfg, &cuts, &mng_mr);
 
     /*time*/ auto start_wall_time = std::chrono::system_clock::now();
+
+    /*-----------------
+      hit reading
+      -----------------*/
+
+    std::vector< traccc::host_spacepoint_container > all_spacepoints;
     
     // Loop over events
     for (unsigned int event = 0; event < events; ++event){
 
-	/*-----------------
-	  hit reading
-	  -----------------*/
 	/*time*/ auto start_hit_reading_cpu = std::chrono::system_clock::now();
 	
         // Read the cells from the relevant event file
@@ -146,16 +149,24 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 	    n_modules++;
 	}
 
+	all_spacepoints.push_back(spacepoints_per_event);
+	
 	/*time*/ auto end_hit_reading_cpu = std::chrono::system_clock::now();	
 	/*time*/ std::chrono::duration<double> time_hit_reading_cpu = end_hit_reading_cpu - start_hit_reading_cpu; 
 	/*time*/ hit_reading_cpu += time_hit_reading_cpu.count();
-	
+
+    }
+
+    for (unsigned int event = 0; event < events; ++event){
+     
 	/*-------------------
 	  spacepoint binning
 	  -------------------*/
 	
 	// create internal spacepoints grouped in bins
 	/*time*/ auto start_binning_cpu = std::chrono::system_clock::now();
+
+	auto& spacepoints_per_event = all_spacepoints[event];
 	
 	auto internal_sp_per_event = sg(spacepoints_per_event, &mng_mr);
 
@@ -202,6 +213,11 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 	/*------------
 	  Writer
 	  ------------*/
+
+	std::string event_string = "000000000";
+        std::string event_number = std::to_string(event);
+        event_string.replace(event_string.size()-event_number.size(), event_number.size(), event_number);
+	
 	if (!skip_write){
         traccc::spacepoint_writer spwriter{std::string("event")+event_number+"-spacepoints.csv"};
 	for (size_t i=0; i<spacepoints_per_event.items.size(); ++i){

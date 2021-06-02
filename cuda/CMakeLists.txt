@@ -1,7 +1,8 @@
 enable_language(CUDA)
 
 add_library(traccc_cuda SHARED
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms/seeding/doublet_finding.cu)
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms/seeding/doublet_finding.cu
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms/seeding/triplet_finding.cu)
 
 find_library(CUDART_LIBRARY cudart ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
 

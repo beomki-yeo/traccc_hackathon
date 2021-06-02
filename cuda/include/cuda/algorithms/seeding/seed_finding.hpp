@@ -12,6 +12,7 @@
 #include <algorithms/seeding/detail/seeding_config.hpp>
 #include <cuda/algorithms/seeding/detail/multiplet_config.hpp>
 #include <cuda/algorithms/seeding/doublet_finding.cuh>
+#include <cuda/algorithms/seeding/triplet_finding.cuh>
 
 #include <iostream>
 #include <algorithm>
@@ -97,8 +98,9 @@ void operator()(host_internal_spacepoint_container& isp_container,
     }
 
     // get the size of doublets with same spM
-    vecmem::jagged_vector< std::pair<size_t, size_t > > n_doublets_per_bin(m_sp_grid->size(false),m_mr);
-
+    //vecmem::jagged_vector< std::pair<size_t, size_t > > n_doublets_per_spM(m_sp_grid->size(false),m_mr);
+    vecmem::jagged_vector< size_t > n_mt_per_spM(m_sp_grid->size(false),m_mr);
+    
     for(size_t i=0; i < m_sp_grid->size(false); ++i){
 	auto n_mid_bot_doublets = mid_bot_container.headers[i];
 	auto mid_bot_doublets = mid_bot_container.items[i];
@@ -128,42 +130,103 @@ void operator()(host_internal_spacepoint_container& isp_container,
 	std::cout << std::endl;
 	*/
 
-	n_doublets_per_bin[i].reserve(mb_last-mid_bot_doublets.begin());
+	//n_doublets_per_spM[i].reserve(mb_last-mid_bot_doublets.begin());
+	n_mt_per_spM[i].reserve(mb_last-mid_bot_doublets.begin());
 	
 	for (auto it = mid_bot_doublets.begin(); it != mb_last; it++){
-	    auto mid_bot_size = std::count_if(
+
+	    size_t mid_bot_size = std::count_if(
 		  mid_bot_container.items[i].begin(),
 		  mid_bot_container.items[i].begin()+n_mid_bot_doublets,
 		  [&](const doublet& d) {
 		      return d.sp1.sp_idx == it->sp1.sp_idx;
 		  });
 	    
-	    auto mid_top_size = std::count_if(
+	    size_t mid_top_size = std::count_if(
 		  mid_top_container.items[i].begin(),
 		  mid_top_container.items[i].begin()+n_mid_top_doublets,
 		  [&](const doublet& d) {
 		      return d.sp1.sp_idx == it->sp1.sp_idx;
 		  });
 
-	    n_doublets_per_bin[i].push_back(std::make_pair(mid_bot_size,mid_top_size));	    
-	    //std::cout << it->sp1.sp_idx << "  " << mid_bot_size << "  " << mid_top_size << std::endl;
+	    //n_doublets_per_spM[i].push_back(std::make_pair(mid_bot_size,mid_top_size));
+	    n_mt_per_spM[i].push_back(mid_top_size);	   
 	}			
     }
-
-    /*
+    
     traccc::cuda::triplet_finding(m_seedfinder_config,
 				  m_seedfilter_config,
 				  isp_container,
 				  mid_bot_container,
 				  mid_top_container,
-				  n_doublets_per_bin,
+				  //n_doublets_per_spM,
+				  n_mt_per_spM,
+				  triplet_container,
 				  m_mr);
+
+    //sort triplets in terms of mid-bot doublet
+    for (int i=0; i<triplet_container.headers.size(); ++i){
+	auto n_triplets = triplet_container.headers[i];
+	auto& triplets = triplet_container.items[i];
+	std::sort(triplets.begin(), triplets.begin()+n_triplets,
+		  [](triplet& t1, triplet& t2){
+		      if (t1.sp1.sp_idx < t2.sp1.sp_idx) return true;
+		      if (t2.sp1.sp_idx < t1.sp1.sp_idx) return false;
+		      if (t1.sp2.sp_idx < t2.sp2.sp_idx) return true;
+		      if (t2.sp2.sp_idx < t1.sp2.sp_idx) return false;
+		  });		
+    }
+
+    /*
+    for (int i=0; i<triplet_container.headers.size(); ++i){
+	auto n_triplets = triplet_container.headers[i];
+	auto& triplets = triplet_container.items[i];
+	for (int j=0; j<n_triplets; j++){
+	    auto triplet = triplets[j];
+	    std::cout << "(" << triplet.sp1.sp_idx << "," << triplet.sp2.sp_idx << ") ";
+	}
+	std::cout << std::endl;
+    }
     */
+
+    // triplets per middle-bot doublet
+    vecmem::jagged_vector< size_t > n_triplets_per_mb(m_sp_grid->size(false),m_mr);
+
+    for(size_t i=0; i < m_sp_grid->size(false); ++i){
+	auto n_triplets = triplet_container.headers[i];
+	auto triplets = triplet_container.items[i];
+	triplets.erase(triplets.begin()+n_triplets,
+		       triplets.end());
+	
+	auto last = std::unique(triplets.begin(), triplets.end(),
+				[] (triplet const & lhs, triplet const & rhs) {
+				    return
+					(lhs.sp1.sp_idx == rhs.sp1.sp_idx) &&
+					(lhs.sp2.sp_idx == rhs.sp2.sp_idx);
+				}
+				);
+	
+	n_triplets_per_mb[i].reserve(last-triplets.begin());
+	
+	for (auto it = triplets.begin(); it != last; it++){
+
+	    size_t triplet_size = std::count_if(
+		  triplet_container.items[i].begin(),
+		  triplet_container.items[i].begin()+n_triplets,
+		  [&](const triplet& t) {
+		      return
+			  (t.sp1.sp_idx == it->sp1.sp_idx) &&
+			  (t.sp2.sp_idx == it->sp2.sp_idx);
+		  });
+	    
+	    n_triplets_per_mb[i].push_back(triplet_size);	   
+	}			
+    }
 }
 
 private:
     const seedfinder_config m_seedfinder_config;
-    const seedfinder_config m_seedfilter_config;
+    const seedfilter_config m_seedfilter_config;
     std::shared_ptr< spacepoint_grid > m_sp_grid;    
     multiplet_config* m_multiplet_config;
     

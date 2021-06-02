@@ -26,9 +26,8 @@ void doublet_finding(const seedfinder_config& config,
     auto mid_bot_doublet_view = get_data(mid_bot_doublet_container, resource);
     auto mid_top_doublet_view = get_data(mid_top_doublet_container, resource);
     
-    unsigned int num_threads = WARP_SIZE*2; 
+    unsigned int num_threads = WARP_SIZE*4; 
     unsigned int num_blocks = internal_sp_data.headers.m_size;
-
     
     doublet_finding_kernel<<< num_blocks, num_threads >>>(config,
 							  internal_sp_data,

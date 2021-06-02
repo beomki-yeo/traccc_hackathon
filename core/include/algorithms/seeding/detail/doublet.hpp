@@ -32,6 +32,7 @@ namespace traccc{
 	lin_circle lin;
     };
 
+    inline
     bool operator==(const doublet& lhs, const doublet& rhs){
 	return (lhs.sp1.bin_idx == rhs.sp1.bin_idx &&
 		lhs.sp1.sp_idx == rhs.sp1.sp_idx &&
