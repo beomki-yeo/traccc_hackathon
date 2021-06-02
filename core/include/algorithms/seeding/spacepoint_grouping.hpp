@@ -34,7 +34,9 @@ namespace traccc{
 
 	    return internal_sp_container;
 	}
-
+	
+	std::shared_ptr< spacepoint_grid > get_spgrid(){ return m_spgrid; }
+	
 	void operator()(const host_spacepoint_container& sp_container,
 			host_internal_spacepoint_container& internal_sp_container){
 	    // get region of interest (or full detector if configured accordingly)
@@ -136,7 +138,7 @@ namespace traccc{
 	std::unique_ptr< bin_finder > m_bottom_bin_finder;
 	std::unique_ptr< bin_finder > m_top_bin_finder;	
     };
-
+    
     spacepoint_grouping::spacepoint_grouping(const seedfinder_config& config, const spacepoint_grid_config& grid_config)
 	: m_config(config),
 	  m_grid_config(grid_config){

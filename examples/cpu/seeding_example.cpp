@@ -100,6 +100,19 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 	config.beamPos = {-.5, -.5};
 	config.impactMax = 10.;
 
+	config.highland = 13.6 * std::sqrt(config.radLengthPerSeed) *
+	    (1 + 0.038 * std::log(config.radLengthPerSeed));
+	float maxScatteringAngle = config.highland / config.minPt;
+	config.maxScatteringAngle2 = maxScatteringAngle * maxScatteringAngle;
+	// helix radius in homogeneous magnetic field. Units are Kilotesla, MeV and
+	// millimeter
+	// TODO: change using ACTS units
+	config.pTPerHelixRadius = 300. * config.bFieldInZ;
+	config.minHelixDiameter2 =
+	    std::pow(config.minPt * 2 / config.pTPerHelixRadius, 2);
+	config.pT2perRadius =	    
+	    std::pow(config.highland / config.pTPerHelixRadius, 2);	
+	
 	// setup spacepoint grid config
 	traccc::spacepoint_grid_config grid_config;
 	grid_config.bFieldInZ = config.bFieldInZ;
@@ -121,7 +134,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 
 	/*time*/ binning_cpu += time_binning_cpu.count();      
 
-	traccc::atlas_cuts cuts(internal_sp_per_event);
+	traccc::atlas_cuts cuts;
 	
 	/*-----------------------
 	  seed finding -- cpu

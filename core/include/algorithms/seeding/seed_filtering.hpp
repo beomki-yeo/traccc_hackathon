@@ -25,13 +25,7 @@ void operator()(host_triplet_collection& triplets,
     host_seed_collection seeds_per_spM;
     
     for (auto& triplet: triplets){
-	if (m_exp_cuts != nullptr){
-	    m_exp_cuts->seedWeight(triplet);
-	    if (!m_exp_cuts->singleSeedCut(triplet)){
-		continue;
-	    }
-	}
-	
+
 	// bottom
 	auto spB_idx = triplet.sp1;
 	auto spB = m_isp_container.items[spB_idx.bin_idx][spB_idx.sp_idx];
@@ -43,6 +37,14 @@ void operator()(host_triplet_collection& triplets,
 	// top
 	auto spT_idx = triplet.sp3; 
 	auto spT = m_isp_container.items[spT_idx.bin_idx][spT_idx.sp_idx];
+	
+	if (m_exp_cuts != nullptr){
+	    
+	    m_exp_cuts->seedWeight(triplet.weight, spB, spM, spT);
+	    if (!m_exp_cuts->singleSeedCut(triplet.weight, spB, spM, spT)){
+		continue;
+	    }	    
+	}       
 	
 	seeds_per_spM.push_back({spB.m_sp,spM.m_sp,spT.m_sp,
 				 triplet.weight, triplet.z_vertex});

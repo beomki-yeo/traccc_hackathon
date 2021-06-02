@@ -20,22 +20,7 @@ struct triplet_finding{
 triplet_finding(seedfinder_config& config, const host_internal_spacepoint_container& isp_container):
     m_config(config),
     m_isp_container(isp_container)
-    {
-	// calculation of scattering using the highland formula
-	// convert pT to p once theta angle is known
-	m_config.highland = 13.6 * std::sqrt(m_config.radLengthPerSeed) *
-	    (1 + 0.038 * std::log(m_config.radLengthPerSeed));
-	float maxScatteringAngle = m_config.highland / m_config.minPt;
-	m_config.maxScatteringAngle2 = maxScatteringAngle * maxScatteringAngle;
-	// helix radius in homogeneous magnetic field. Units are Kilotesla, MeV and
-	// millimeter
-	// TODO: change using ACTS units
-	m_config.pTPerHelixRadius = 300. * m_config.bFieldInZ;
-	m_config.minHelixDiameter2 =
-	    std::pow(m_config.minPt * 2 / m_config.pTPerHelixRadius, 2);
-	m_config.pT2perRadius =	    
-	    std::pow(m_config.highland / m_config.pTPerHelixRadius, 2);	
-    }
+    {}
     
 
 host_triplet_collection operator()(const doublet mid_bot,

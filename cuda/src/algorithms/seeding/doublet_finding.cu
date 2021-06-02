@@ -15,14 +15,12 @@ __global__
 void doublet_finding_kernel(const seedfinder_config config,
 			    internal_spacepoint_container_view internal_sp_data,
 			    doublet_container_view mid_bot_doublet_view,
-			    doublet_container_view mid_top_doublet_view,
-			    bool bottom);    
+			    doublet_container_view mid_top_doublet_view);    
     
 void doublet_finding(const seedfinder_config& config,
 		     host_internal_spacepoint_container& internal_sp_container,
 		     host_doublet_container& mid_bot_doublet_container,
 		     host_doublet_container& mid_top_doublet_container,
-		     bool bottom,
 		     vecmem::memory_resource* resource){
     auto internal_sp_data = get_data(internal_sp_container, resource);
     auto mid_bot_doublet_view = get_data(mid_bot_doublet_container, resource);
@@ -35,8 +33,7 @@ void doublet_finding(const seedfinder_config& config,
     doublet_finding_kernel<<< num_blocks, num_threads >>>(config,
 							  internal_sp_data,
 							  mid_bot_doublet_view,
-							  mid_top_doublet_view,
-							  bottom);       
+							  mid_top_doublet_view);   
     CUDA_ERROR_CHECK(cudaGetLastError());
     CUDA_ERROR_CHECK(cudaDeviceSynchronize());	        
 }
@@ -45,8 +42,7 @@ __global__
 void doublet_finding_kernel(const seedfinder_config config,
 			    internal_spacepoint_container_view internal_sp_view,
 			    doublet_container_view mid_bot_doublet_view,
-			    doublet_container_view mid_top_doublet_view, 
-			    bool bottom){
+			    doublet_container_view mid_top_doublet_view){
 
     device_internal_spacepoint_container internal_sp_device({internal_sp_view.headers, internal_sp_view.items});
     device_doublet_container mid_bot_doublet_device({mid_bot_doublet_view.headers, mid_bot_doublet_view.items});

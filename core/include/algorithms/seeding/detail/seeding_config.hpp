@@ -89,7 +89,7 @@ struct seedfinder_config{
     float maxScatteringAngle2 = 0;
     float pTPerHelixRadius = 0;
     float minHelixDiameter2 = 0;
-    float pT2perRadius = 0;    
+    float pT2perRadius = 0;        
 };
 
 // spacepoint grid configuration

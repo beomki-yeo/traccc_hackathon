@@ -32,6 +32,13 @@ namespace traccc{
 	lin_circle lin;
     };
 
+    bool operator==(const doublet& lhs, const doublet& rhs){
+	return (lhs.sp1.bin_idx == rhs.sp1.bin_idx &&
+		lhs.sp1.sp_idx == rhs.sp1.sp_idx &&
+		lhs.sp2.bin_idx == rhs.sp2.bin_idx &&
+		lhs.sp2.sp_idx == rhs.sp2.sp_idx);
+    }    
+    
     /// Container of doublet belonging to one detector module
     template< template< typename > class vector_t >
     using doublet_collection = vector_t< doublet >;

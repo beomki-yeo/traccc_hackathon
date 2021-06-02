@@ -15,9 +15,15 @@ public:
     
     virtual ~experiment_cuts() = default;
 
-    virtual void seedWeight(triplet& aTriplet) const = 0;
+    virtual void seedWeight(scalar& triplet_weight,
+			    const internal_spacepoint<spacepoint>& spB,
+			    const internal_spacepoint<spacepoint>& spM,
+			    const internal_spacepoint<spacepoint>& spT) const = 0;
     
-    virtual bool singleSeedCut(const triplet& aTriplet) const = 0;
+    virtual bool singleSeedCut(const scalar& triplet_weight,
+			       const internal_spacepoint<spacepoint>& spB,
+			       const internal_spacepoint<spacepoint>& spM,
+			       const internal_spacepoint<spacepoint>& spT) const = 0;
     
     virtual host_seed_collection cutPerMiddleSP(const host_seed_collection& seeds) const = 0;
     
