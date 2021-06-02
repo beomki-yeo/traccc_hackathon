@@ -52,6 +52,7 @@ void operator()(const bin_information& bin_information,
     
 	for (size_t i=0; i<counts; ++i){
 	    auto& bin_idx = bottom_bin_indices[i];
+	    
 	    auto& spacepoints = m_isp_container.items[bin_idx];
 	    
 	    for (size_t sp_idx=0; sp_idx < spacepoints.size(); ++sp_idx){
@@ -65,7 +66,7 @@ void operator()(const bin_information& bin_information,
 		lin_circle lin = doublet_finding_helper::transform_coordinates(spM,spB,bottom);
 		sp_location spB_location = {bin_idx,sp_idx};
 		doublets.push_back(doublet({spM_location,spB_location,lin}));
-	    }		
+	    }	    
 	}
     }
     

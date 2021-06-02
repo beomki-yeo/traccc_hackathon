@@ -41,6 +41,8 @@ void operator()(host_seed_collection& seeds){
     
     // iterate over grid bins
     for (size_t i=0; i<m_isp_container.headers.size(); ++i){
+
+	size_t n_triplets_per_bin = 0;
 	
 	auto& bin_information = m_isp_container.headers[i];
 	auto& spM_collection = m_isp_container.items[i];
@@ -54,18 +56,31 @@ void operator()(host_seed_collection& seeds){
 	    sp_location spM_location({i,j});
 	   
 	    // doublet search	    
-	    auto doublets_mid_bot = m_doublet_finding(bin_information, spM_location, true);
+	    auto doublets_mid_bot = m_doublet_finding(bin_information, spM_location, true);	    
 	    
 	    if (doublets_mid_bot.empty()) continue;
 	    
 	    auto doublets_mid_top = m_doublet_finding(bin_information, spM_location, false);
 	    
 	    if (doublets_mid_top.empty()) continue;
+
+	    //std::cout << "doublets per spM: " << doublets_mid_bot.size() << " " << doublets_mid_top.size() << std::endl;
 	    
 	    host_triplet_collection triplets_per_spM;
 	    
 	    for (auto mid_bot: doublets_mid_bot){
 		host_triplet_collection triplets = m_triplet_finding(mid_bot, doublets_mid_top);
+
+		n_triplets_per_bin+=triplets.size();
+
+		/*
+		if (triplets.size()>0){
+		    for (auto triplet: triplets){
+			std::cout << "(" <<triplet.sp1.sp_idx <<","<<triplet.sp2.sp_idx <<","<<triplet.sp3.sp_idx << ") ";
+		    }
+		}
+		*/
+		
 		triplets_per_spM.insert(std::end(triplets_per_spM), triplets.begin(), triplets.end());
 	    }
 
@@ -78,6 +93,12 @@ void operator()(host_seed_collection& seeds){
 			     seeds);	    	    	    
 	}
 
+	/*
+	if (n_triplets_per_bin>0){
+	    std::cout << std::endl;
+	    std::cout << n_triplets_per_bin << std::endl;
+	}
+	*/
 	m_stats.push_back(stats);
     }
 }

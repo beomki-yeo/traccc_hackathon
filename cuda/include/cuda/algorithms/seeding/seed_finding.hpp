@@ -101,7 +101,7 @@ void operator()(host_internal_spacepoint_container& isp_container,
     }
 
     // get the size of doublets with same spM
-    //vecmem::jagged_vector< std::pair<size_t, size_t > > n_doublets_per_spM(m_sp_grid->size(false),m_mr);
+    vecmem::jagged_vector< size_t > n_mb_per_spM(m_sp_grid->size(false),m_mr);
     vecmem::jagged_vector< size_t > n_mt_per_spM(m_sp_grid->size(false),m_mr);
     
     for(size_t i=0; i < m_sp_grid->size(false); ++i){
@@ -114,45 +114,40 @@ void operator()(host_internal_spacepoint_container& isp_container,
 	auto mid_top_doublets = mid_top_container.items[i];
 	mid_top_doublets.erase(mid_top_doublets.begin()+n_mid_top_doublets,
 			       mid_top_doublets.end());
-	
+
 	auto mb_last = std::unique(mid_bot_doublets.begin(), mid_bot_doublets.end(),
 				   [] (doublet const & lhs, doublet const & rhs) {
 				    return (lhs.sp1.sp_idx == rhs.sp1.sp_idx);
 				   }
 				   );
-	/*
-	std::cout << "mid bot: " << std::endl;
-	for (size_t j=0; j<n_mid_bot_doublets; ++j){
-	    std::cout << mid_bot_container.items[i][j].sp1.sp_idx << " "; 
-	}
-	std::cout << std::endl;
-	std::cout << "mid top: " << std::endl;
-	for (size_t j=0; j<n_mid_top_doublets; ++j){
-	    std::cout << mid_top_container.items[i][j].sp1.sp_idx << " "; 
-	}	
-	std::cout << std::endl;
-	*/
-
-	//n_doublets_per_spM[i].reserve(mb_last-mid_bot_doublets.begin());
-	n_mt_per_spM[i].reserve(mb_last-mid_bot_doublets.begin());
 	
-	for (auto it = mid_bot_doublets.begin(); it != mb_last; it++){
+	auto mt_last = std::unique(mid_top_doublets.begin(), mid_top_doublets.end(),
+				   [] (doublet const & lhs, doublet const & rhs) {
+				    return (lhs.sp1.sp_idx == rhs.sp1.sp_idx);
+				   }
+				   );
 
+	n_mb_per_spM[i].reserve(mb_last-mid_bot_doublets.begin());
+	n_mt_per_spM[i].reserve(mt_last-mid_top_doublets.begin());
+	
+	for (auto it = mid_top_doublets.begin(); it != mt_last; it++){
+
+	    
 	    size_t mid_bot_size = std::count_if(
 		  mid_bot_container.items[i].begin(),
 		  mid_bot_container.items[i].begin()+n_mid_bot_doublets,
 		  [&](const doublet& d) {
-		      return d.sp1.sp_idx == it->sp1.sp_idx;
+		      return (d.sp1.sp_idx == it->sp1.sp_idx);
 		  });
 	    
 	    size_t mid_top_size = std::count_if(
 		  mid_top_container.items[i].begin(),
 		  mid_top_container.items[i].begin()+n_mid_top_doublets,
 		  [&](const doublet& d) {
-		      return d.sp1.sp_idx == it->sp1.sp_idx;
+		      return (d.sp1.sp_idx == it->sp1.sp_idx);
 		  });
 
-	    //n_doublets_per_spM[i].push_back(std::make_pair(mid_bot_size,mid_top_size));
+	    n_mb_per_spM[i].push_back(mid_bot_size);	   
 	    n_mt_per_spM[i].push_back(mid_top_size);	   
 	}			
     }
@@ -162,7 +157,7 @@ void operator()(host_internal_spacepoint_container& isp_container,
 				  isp_container,
 				  mid_bot_container,
 				  mid_top_container,
-				  //n_doublets_per_spM,
+				  n_mb_per_spM,
 				  n_mt_per_spM,
 				  triplet_container,
 				  m_mr);
@@ -171,13 +166,47 @@ void operator()(host_internal_spacepoint_container& isp_container,
     for (int i=0; i<triplet_container.headers.size(); ++i){
 	auto n_triplets = triplet_container.headers[i];
 	auto& triplets = triplet_container.items[i];
+
+	/*
+	if (n_triplets>0){
+	    for (int j=0; j<n_triplets; ++j){
+		auto triplet = triplets[j];
+		std::cout << "(" <<triplet.sp1.sp_idx <<","<<triplet.sp2.sp_idx <<","<<triplet.sp3.sp_idx << ") ";
+	    }
+	    std::cout << std::endl;	    
+	    std::cout << n_triplets << std::endl;
+	}
+	*/
+	
 	std::sort(triplets.begin(), triplets.begin()+n_triplets,
 		  [](triplet& t1, triplet& t2){
-		      if (t1.sp1.sp_idx < t2.sp1.sp_idx) return true;
-		      if (t2.sp1.sp_idx < t1.sp1.sp_idx) return false;
+
 		      if (t1.sp2.sp_idx < t2.sp2.sp_idx) return true;
 		      if (t2.sp2.sp_idx < t1.sp2.sp_idx) return false;
-		  });		
+		      
+		      if (t1.sp1.bin_idx < t2.sp1.bin_idx) return true;
+		      if (t2.sp1.bin_idx < t1.sp1.bin_idx) return false;
+		      
+		      if (t1.sp1.sp_idx < t2.sp1.sp_idx) return true;
+		      if (t2.sp1.sp_idx < t1.sp1.sp_idx) return false;
+
+		      if (t1.sp3.bin_idx < t2.sp3.bin_idx) return true;
+		      if (t2.sp3.bin_idx < t1.sp3.bin_idx) return false;
+		      
+		      if (t1.sp3.sp_idx < t2.sp3.sp_idx) return true;
+		      if (t2.sp3.sp_idx < t1.sp3.sp_idx) return false;
+
+		      return false;
+		  });
+	/*
+	if (n_triplets>0){
+	    for (int i=0; i<n_triplets; ++i){
+		auto tr = triplets[i];
+		std::cout << "(" << tr.sp1.bin_idx << "," << tr.sp1.sp_idx << "," << tr.sp2.sp_idx << ") ";
+	    }
+	    std::cout << std::endl;
+	}
+	*/
     }
 
     /*
@@ -207,6 +236,7 @@ void operator()(host_internal_spacepoint_container& isp_container,
 	auto last = std::unique(triplets.begin(), triplets.end(),
 				[] (triplet const & lhs, triplet const & rhs) {
 				    return
+					(lhs.sp1.bin_idx == rhs.sp1.bin_idx) &&
 					(lhs.sp1.sp_idx == rhs.sp1.sp_idx) &&
 					(lhs.sp2.sp_idx == rhs.sp2.sp_idx);
 				}
@@ -221,11 +251,13 @@ void operator()(host_internal_spacepoint_container& isp_container,
 		  triplet_container.items[i].begin()+n_triplets,
 		  [&](const triplet& t) {
 		      return
+			  (t.sp1.bin_idx == it->sp1.bin_idx) &&
 			  (t.sp1.sp_idx == it->sp1.sp_idx) &&
 			  (t.sp2.sp_idx == it->sp2.sp_idx);
 		  });
 	    
-	    n_triplets_per_mb[i].push_back(triplet_size);	   
+	    n_triplets_per_mb[i].push_back(triplet_size);
+
 	}			
     }
     
@@ -246,7 +278,7 @@ void operator()(host_internal_spacepoint_container& isp_container,
 		       triplets.end());
 	auto last = std::unique(triplets.begin(), triplets.end(),
 				[] (triplet const & lhs, triplet const & rhs) {
-				    return (lhs.sp1.sp_idx == rhs.sp1.sp_idx);
+				    return (lhs.sp2.sp_idx == rhs.sp2.sp_idx);
 				}
 				);		
 
@@ -256,7 +288,7 @@ void operator()(host_internal_spacepoint_container& isp_container,
 	    for (int j=0; j<n_triplets; j++){
 		auto& triplet = triplet_container.items[i][j];
 		
-		if (triplet.sp1.sp_idx == it->sp1.sp_idx){
+		if (triplet.sp2.sp_idx == it->sp2.sp_idx){
 		    triplet_per_spM.push_back(triplet);
 		}
 	    }

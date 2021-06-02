@@ -20,8 +20,8 @@ void triplet_finding(const seedfinder_config& config,
 		     host_internal_spacepoint_container& internal_sp_container,
 		     host_doublet_container& mid_bot_doublet_container,
 		     host_doublet_container& mid_top_doublet_container,
-		     //vecmem::jagged_vector< std::pair<size_t, size_t> > n_doublets_per_spM,
-		     vecmem::jagged_vector< size_t >& n_doublets_per_spM,
+		     vecmem::jagged_vector< size_t >& n_mb_per_spM,
+		     vecmem::jagged_vector< size_t >& n_mt_per_spM,
 		     host_triplet_container& triplet_container,
 		     vecmem::memory_resource* resource);
        

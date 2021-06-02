@@ -82,7 +82,6 @@ void weight_updating_kernel(const seedfilter_config filter_config,
 	    continue;
 	}
 
-
 	size_t start_idx = 0;
 	size_t end_idx = 0;	
 

@@ -94,7 +94,7 @@ void doublet_finding_kernel(const seedfinder_config config,
 	    }
 	}
 
-	// SKIP if there is not compatible hits on any of bottom and top side
+	// Skip if there is not compatible hits on any of bottom and top side
 	if (!hasCompatBottom || !hasCompatTop) {
 	    continue;
 	}
@@ -135,7 +135,7 @@ void doublet_finding_kernel(const seedfinder_config config,
 		auto spT_loc = sp_location({neigh_bin, spT_idx});
 
 		auto pos = atomicAdd(&num_mid_top_doublets_per_bin,1);
-
+		
 		if (pos>=mid_top_doublets_per_bin.size()){
 		    num_mid_top_doublets_per_bin = mid_top_doublets_per_bin.size();
 		    continue;
@@ -144,98 +144,7 @@ void doublet_finding_kernel(const seedfinder_config config,
 		mid_top_doublets_per_bin[pos] = doublet({spM_loc, spT_loc, lin});   
 	    }				
 	}	   
-    }
-
-    
-    //bubble sort in terms of spM_idx
-    //To-do: make a function for bubble sort
-    //__syncthreads();
-    //int tid = threadIdx.x;
-    //int n_sort_iter;
-    //doublet tempVal;
-    /*
-    n_sort_iter = num_mid_bot_doublets_per_bin/blockDim.x + 1;
-    //n_sort_iter = 1;
-    for (int i = 0; i < num_mid_bot_doublets_per_bin / 2 + 1; i++) {
-	if (threadIdx.x < num_mid_bot_doublets_per_bin) {
-	    for (int j=0; j<n_sort_iter; j++){
-		int k = j*blockDim.x + tid;		
-		if (k % 2 == 0 && k < num_mid_bot_doublets_per_bin - 1) {
-		    if (mid_bot_doublets_per_bin[k + 1].sp1.sp_idx < mid_bot_doublets_per_bin[k].sp1.sp_idx) {
-			tempVal = mid_bot_doublets_per_bin[k];
-			mid_bot_doublets_per_bin[k] = mid_bot_doublets_per_bin[k + 1];
-			mid_bot_doublets_per_bin[k + 1] = tempVal;
-		    }
-		}
-	    }
-	}
-	__syncthreads();
-	if (threadIdx.x < num_mid_bot_doublets_per_bin) {
-	    for (int j=0; j<n_sort_iter; j++){
-		int k = j*blockDim.x + tid;				
-		if (k % 2 == 1 && k < num_mid_bot_doublets_per_bin - 1) {	 
-		    if (mid_bot_doublets_per_bin[k + 1].sp1.sp_idx < mid_bot_doublets_per_bin[k].sp1.sp_idx) {
-			tempVal = mid_bot_doublets_per_bin[k];
-			mid_bot_doublets_per_bin[k] = mid_bot_doublets_per_bin[k + 1];
-			mid_bot_doublets_per_bin[k + 1] = tempVal;
-		    }
-		}
-	    }
-	}
-	__syncthreads();
-    }
-    __syncthreads();
-
-    n_sort_iter = num_mid_top_doublets_per_bin/blockDim.x + 1;
-    //n_sort_iter = 1;
-    for (int i = 0; i < num_mid_top_doublets_per_bin / 2 + 1; i++) {
-	if (threadIdx.x < num_mid_top_doublets_per_bin) {
-	    for (int j=0; j<n_sort_iter; j++){
-		int k = j*blockDim.x + tid;		
-		if (k % 2 == 0 && k < num_mid_top_doublets_per_bin - 1) {
-		    if (mid_top_doublets_per_bin[k + 1].sp1.sp_idx < mid_top_doublets_per_bin[k].sp1.sp_idx) {
-			tempVal = mid_top_doublets_per_bin[k];
-			mid_top_doublets_per_bin[k] = mid_top_doublets_per_bin[k + 1];
-			mid_top_doublets_per_bin[k + 1] = tempVal;
-		    }
-		}
-	    }
-	}
-	__syncthreads();
-	if (threadIdx.x < num_mid_top_doublets_per_bin) {
-	    for (int j=0; j<n_sort_iter; j++){
-		int k = j*blockDim.x + tid;				
-		if (k % 2 == 1 && k < num_mid_top_doublets_per_bin - 1) {	 
-		    if (mid_top_doublets_per_bin[k + 1].sp1.sp_idx < mid_top_doublets_per_bin[k].sp1.sp_idx) {
-			tempVal = mid_top_doublets_per_bin[k];
-			mid_top_doublets_per_bin[k] = mid_top_doublets_per_bin[k + 1];
-			mid_top_doublets_per_bin[k + 1] = tempVal;
-		    }
-		}
-	    }
-	}
-	__syncthreads();
-    }
-    __syncthreads();
-    */    
-    
-    /*
-    if (threadIdx.x == 0 && blockIdx.x==76){
-	printf("%d \n", num_mid_bot_doublets_per_bin);
-	for (auto el: mid_bot_doublets_per_bin){
-	    printf("%d ", el.sp1.sp_idx);
-	}
-	printf("\n");
-    }
-    */
-    /*
-    if (threadIdx.x == 0 && blockIdx.x==76){
-	for (auto el: mid_top_doublets_per_bin){
-	    printf("%d ", el.sp1.sp_idx);
-	}
-	printf("\n");
-    }
-    */
+    }    
 }
     
 }// namespace cuda

@@ -179,6 +179,8 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 	/*-----------------------
 	  seed finding -- cpu
 	  -----------------------*/       
+
+	std::cout << "---- start cpu seed finding" << std::endl;
 	
 	/*time*/ auto start_seeding_cpu = std::chrono::system_clock::now();
 
@@ -203,6 +205,8 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 	  seed finding -- cuda
 	  -----------------------*/
 
+	std::cout << "---- start cuda seed finding" << std::endl;
+	
 	/*time*/ auto start_seeding_cuda = std::chrono::system_clock::now();
 	auto seeds_cuda = sf_cuda(internal_sp_per_event);
 	n_seeds_cuda+=seeds_cuda.size();
