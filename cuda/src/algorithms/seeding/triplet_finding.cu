@@ -121,8 +121,7 @@ void triplet_finding_kernel(const seedfinder_config config,
 	    if (end_idx > mb_idx){
 		break;
 	    }
-	    start_idx += n_mid_top;
-	    
+	    start_idx += n_mid_top;	    
 	}        
 	
 	// iterate over mid-top doublets

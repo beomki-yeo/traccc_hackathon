@@ -13,6 +13,7 @@
 #include <cuda/algorithms/seeding/detail/multiplet_config.hpp>
 #include <cuda/algorithms/seeding/doublet_finding.cuh>
 #include <cuda/algorithms/seeding/triplet_finding.cuh>
+#include <cuda/algorithms/seeding/weight_updating.cuh>
 
 #include <iostream>
 #include <algorithm>
@@ -29,6 +30,7 @@ seed_finding(seedfinder_config& config,
 	     experiment_cuts* exp_cuts = nullptr,
 	     vecmem::memory_resource* mr = nullptr):    
     m_seedfinder_config(config),
+    m_seed_filtering(exp_cuts),
     m_sp_grid(sp_grid),
     m_multiplet_config(multi_cfg),
     m_mr(mr),
@@ -70,7 +72,7 @@ host_seed_collection operator()(host_internal_spacepoint_container& isp_containe
         
 void operator()(host_internal_spacepoint_container& isp_container,
 		host_seed_collection& seeds){
-    
+        
     traccc::cuda::doublet_finding(m_seedfinder_config,
 				  isp_container,
 				  mid_bot_container,
@@ -82,6 +84,7 @@ void operator()(host_internal_spacepoint_container& isp_container,
     for (int i=0; i<mid_bot_container.headers.size(); ++i){
 	auto n_doublets = mid_bot_container.headers[i];
 	auto& doublets = mid_bot_container.items[i];
+
 	std::sort(doublets.begin(), doublets.begin()+n_doublets,
 		  [](doublet& d1, doublet& d2){
 		      return d1.sp1.sp_idx < d2.sp1.sp_idx;
@@ -191,9 +194,12 @@ void operator()(host_internal_spacepoint_container& isp_container,
 
     // triplets per middle-bot doublet
     vecmem::jagged_vector< size_t > n_triplets_per_mb(m_sp_grid->size(false),m_mr);
-
+    vecmem::jagged_vector< float > compatseed_container(m_sp_grid->size(false),m_mr);
+    
     for(size_t i=0; i < m_sp_grid->size(false); ++i){
 	auto n_triplets = triplet_container.headers[i];
+	compatseed_container[i].resize(n_triplets);
+	
 	auto triplets = triplet_container.items[i];
 	triplets.erase(triplets.begin()+n_triplets,
 		       triplets.end());
@@ -222,6 +228,45 @@ void operator()(host_internal_spacepoint_container& isp_container,
 	    n_triplets_per_mb[i].push_back(triplet_size);	   
 	}			
     }
+    
+    traccc::cuda::weight_updating(m_seedfilter_config,
+				  isp_container,
+				  triplet_container,
+				  n_triplets_per_mb,
+				  compatseed_container,
+				  m_mr);
+    
+    for(size_t i=0; i < m_sp_grid->size(false); ++i){
+	// Get triplets per spM
+	
+	auto n_triplets = triplet_container.headers[i];
+	
+	auto triplets = triplet_container.items[i];
+	triplets.erase(triplets.begin()+n_triplets,
+		       triplets.end());
+	auto last = std::unique(triplets.begin(), triplets.end(),
+				[] (triplet const & lhs, triplet const & rhs) {
+				    return (lhs.sp1.sp_idx == rhs.sp1.sp_idx);
+				}
+				);		
+
+	for (auto it = triplets.begin(); it != last; it++){
+	    host_triplet_collection triplet_per_spM;
+	    
+	    for (int j=0; j<n_triplets; j++){
+		auto& triplet = triplet_container.items[i][j];
+		
+		if (triplet.sp1.sp_idx == it->sp1.sp_idx){
+		    triplet_per_spM.push_back(triplet);
+		}
+	    }
+
+	    if (triplet_per_spM.size() > 0){
+		m_seed_filtering(isp_container, triplet_per_spM, seeds);
+	    }
+	}	
+    }
+    
 }
 
 private:
@@ -229,11 +274,12 @@ private:
     const seedfilter_config m_seedfilter_config;
     std::shared_ptr< spacepoint_grid > m_sp_grid;    
     multiplet_config* m_multiplet_config;
+    seed_filtering m_seed_filtering;
     
     host_doublet_container mid_bot_container;
     host_doublet_container mid_top_container;
     host_triplet_container triplet_container;
-        
+
     vecmem::memory_resource* m_mr;
 };        
     

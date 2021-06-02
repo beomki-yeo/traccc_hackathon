@@ -28,6 +28,13 @@ namespace traccc{
 	}
     };
 
+    inline
+    bool operator==(const seed& lhs, const seed& rhs){
+	return ( lhs.spB == rhs.spB &&
+		 lhs.spM == rhs.spM &&
+		 lhs.spT == rhs.spT);
+    }    
+    
     template< template< typename > class vector_t >
     using seed_collection = vector_t< seed >;
 

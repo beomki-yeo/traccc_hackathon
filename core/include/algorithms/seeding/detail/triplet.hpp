@@ -22,6 +22,17 @@ namespace traccc{
 	scalar weight;
 	scalar z_vertex;
     };    
+
+    __CUDA_HOST_DEVICE__
+    bool operator==(const triplet& lhs, const triplet& rhs){
+	return (lhs.sp1.bin_idx == rhs.sp1.bin_idx &&
+		lhs.sp1.sp_idx == rhs.sp1.sp_idx &&
+		lhs.sp2.bin_idx == rhs.sp2.bin_idx &&
+		lhs.sp2.sp_idx == rhs.sp2.sp_idx &&
+		lhs.sp3.bin_idx == rhs.sp3.bin_idx &&
+		lhs.sp3.sp_idx == rhs.sp3.sp_idx);
+    }    
+
     
     /// Container of triplet belonging to one detector module
     template< template< typename > class vector_t >

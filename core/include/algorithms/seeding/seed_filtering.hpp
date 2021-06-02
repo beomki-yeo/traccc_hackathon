@@ -13,13 +13,15 @@ namespace traccc{
 
 struct seed_filtering{
 
-seed_filtering(const host_internal_spacepoint_container& isp_container,
-	       experiment_cuts* exp_cuts = nullptr)
-    :m_isp_container(isp_container),
+seed_filtering(experiment_cuts* exp_cuts = nullptr
+	       //const host_internal_spacepoint_container& isp_container,
+	       )
+    ://m_isp_container(isp_container),
      m_exp_cuts(exp_cuts)
     {}
     
-void operator()(host_triplet_collection& triplets,
+void operator()(host_internal_spacepoint_container& isp_container,
+		host_triplet_collection& triplets,
 		host_seed_collection& seeds){
 
     host_seed_collection seeds_per_spM;
@@ -28,15 +30,15 @@ void operator()(host_triplet_collection& triplets,
 
 	// bottom
 	auto spB_idx = triplet.sp1;
-	auto spB = m_isp_container.items[spB_idx.bin_idx][spB_idx.sp_idx];
+	auto spB = isp_container.items[spB_idx.bin_idx][spB_idx.sp_idx];
 	
 	// middle
 	auto spM_idx = triplet.sp2; 
-	auto spM = m_isp_container.items[spM_idx.bin_idx][spM_idx.sp_idx];
+	auto spM = isp_container.items[spM_idx.bin_idx][spM_idx.sp_idx];
 	
 	// top
 	auto spT_idx = triplet.sp3; 
-	auto spT = m_isp_container.items[spT_idx.bin_idx][spT_idx.sp_idx];
+	auto spT = isp_container.items[spT_idx.bin_idx][spT_idx.sp_idx];
 	
 	if (m_exp_cuts != nullptr){
 	    
@@ -93,7 +95,7 @@ void operator()(host_triplet_collection& triplets,
     
 private:    
     seedfilter_config m_filter_config;
-    const host_internal_spacepoint_container& m_isp_container;
+    //const host_internal_spacepoint_container& m_isp_container;
     experiment_cuts* m_exp_cuts;
 };
 

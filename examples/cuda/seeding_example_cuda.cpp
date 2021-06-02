@@ -48,6 +48,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
     uint64_t n_internal_spacepoints = 0;
     uint64_t n_doublets = 0;
     uint64_t n_seeds = 0;
+    uint64_t n_seeds_cuda = 0;
     
     // Memory resource used by the EDM.
     vecmem::host_memory_resource resource;
@@ -204,11 +205,25 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 
 	/*time*/ auto start_seeding_cuda = std::chrono::system_clock::now();
 	auto seeds_cuda = sf_cuda(internal_sp_per_event);
-
+	n_seeds_cuda+=seeds_cuda.size();
+	
 	/*time*/ auto end_seeding_cuda = std::chrono::system_clock::now();	
 	/*time*/ std::chrono::duration<double> time_seeding_cuda = end_seeding_cuda - start_seeding_cuda; 
 	/*time*/ seeding_cuda += time_seeding_cuda.count();
 
+	/*----------------------------------
+	  compare seeds from cpu and cuda
+	  ----------------------------------*/
+       
+	int n_match = 0;
+	for (auto seed: seeds){
+	    if (std::find(seeds_cuda.begin(), seeds_cuda.end(), seed) != seeds_cuda.end()){
+		n_match++;
+	    }
+	}
+	
+	float matching_rate = float(n_match)/seeds.size();
+	std::cout << "event " << std::to_string(event) << " seed matching rate: " << matching_rate << std::endl;
 	
 	/*------------
 	  Writer
@@ -279,8 +294,9 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
     
     std::cout << "==> Statistics ... " << std::endl;
     std::cout << "- read    " <<  n_spacepoints << " spacepoints from " << n_modules << " modules" << std::endl;
-    std::cout << "- created " <<  n_internal_spacepoints << " internal spacepoints" << std::endl;
-    std::cout << "- created " <<  n_seeds << " seeds" << std::endl;
+    std::cout << "- created        " <<  n_internal_spacepoints << " internal spacepoints" << std::endl;
+    std::cout << "- created (cpu)  " <<  n_seeds << " seeds" << std::endl;
+    std::cout << "- created (cuda) " <<  n_seeds_cuda << " seeds" << std::endl;
     std::cout << "==> Elpased time ... " << std::endl;
     std::cout << "wall time           " << std::setw(10) << std::left << wall_time     << std::endl;
     std::cout << "hit reading (cpu)   " << std::setw(10) << std::left << hit_reading_cpu     << std::endl;

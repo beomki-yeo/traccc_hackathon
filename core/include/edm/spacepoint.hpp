@@ -23,7 +23,17 @@ namespace traccc {
 	scalar z() const { return global[2];}
 	scalar radius() const { return std::sqrt(global[0]*global[0]+global[1]*global[1]); }
     };
-
+    
+    inline
+    bool operator==(const spacepoint& lhs, const spacepoint& rhs){
+	if (std::abs(lhs.global[0] - rhs.global[0]) < 1e-6 &&
+	    std::abs(lhs.global[1] - rhs.global[1]) < 1e-6 &&
+	    std::abs(lhs.global[2] - rhs.global[2]) < 1e-6){
+	    return true;
+	}
+	return false;
+    }    
+    
     /// Container of spacepoints belonging to one detector module
     template< template< typename > class vector_t >
     using spacepoint_collection = vector_t< spacepoint >;
