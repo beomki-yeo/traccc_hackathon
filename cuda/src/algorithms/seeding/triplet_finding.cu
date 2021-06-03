@@ -130,18 +130,6 @@ void triplet_finding_kernel(const seedfinder_config config,
 
 	}
 	
-	/*
-	for (auto n_mb : n_mb_per_spM){
-	    //auto n_mid_top = n_doublets.second;
-	    
-	    end_idx += n_doublets;	    
-	    if (end_idx > mb_idx){
-		break;
-	    }
-	    start_idx += n_doublets;	    
-	}        
-	*/
-	
 	// iterate over mid-top doublets
 	for (auto mt_it = mid_top_doublets_per_bin.begin()+mt_start_idx;
 	     mt_it!= mid_top_doublets_per_bin.begin()+mt_end_idx ;
