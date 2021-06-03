@@ -9,6 +9,7 @@
 #pragma once
 
 #include <edm/internal_spacepoint.hpp>
+#include <algorithms/seeding/detail/singlet.hpp>
 #include <algorithms/seeding/detail/doublet.hpp>
 #include <algorithms/seeding/doublet_finding_helper.hpp>
 

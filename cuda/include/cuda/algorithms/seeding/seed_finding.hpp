@@ -11,6 +11,8 @@
 #include <edm/seed.hpp>
 #include <algorithms/seeding/detail/seeding_config.hpp>
 #include <cuda/algorithms/seeding/detail/multiplet_config.hpp>
+#include <cuda/algorithms/seeding/detail/doublet_counter.hpp>
+#include <cuda/algorithms/seeding/doublet_counting.cuh>
 #include <cuda/algorithms/seeding/doublet_finding.cuh>
 #include <cuda/algorithms/seeding/triplet_finding.cuh>
 #include <cuda/algorithms/seeding/weight_updating.cuh>
@@ -34,6 +36,9 @@ seed_finding(seedfinder_config& config,
     m_sp_grid(sp_grid),
     m_multiplet_config(multi_cfg),
     m_mr(mr),
+
+    doublet_counter_container({host_doublet_counter_container::header_vector(sp_grid->size(false),0, mr),
+			       host_doublet_counter_container::item_vector(sp_grid->size(false),mr)}),
     
     mid_bot_container({host_doublet_container::header_vector(sp_grid->size(false),0, mr),
 		       host_doublet_container::item_vector(sp_grid->size(false),mr)}),
@@ -55,13 +60,15 @@ host_seed_collection operator()(host_internal_spacepoint_container& isp_containe
 	size_t n_mid_top_doublets = m_multiplet_config->get_mid_top_doublets_size(n_spM);
 	size_t n_triplets = m_multiplet_config->get_triplets_size(n_spM);
 
+	doublet_counter_container.headers[i] = 0;
 	mid_bot_container.headers[i] = 0;
 	mid_top_container.headers[i] = 0;
 	triplet_container.headers[i] = 0;
-	
+
+	doublet_counter_container.items[i].resize(n_spM);
 	mid_bot_container.items[i].resize(n_mid_bot_doublets);       
 	mid_top_container.items[i].resize(n_mid_top_doublets);	
-	triplet_container.items[i].resize(n_triplets);
+	triplet_container.items[i].resize(n_triplets);       	
     }	
     
     host_seed_collection seed_collection;
@@ -72,96 +79,30 @@ host_seed_collection operator()(host_internal_spacepoint_container& isp_containe
         
 void operator()(host_internal_spacepoint_container& isp_container,
 		host_seed_collection& seeds){
-        
+
+    traccc::cuda::doublet_counting(m_seedfinder_config,
+				   isp_container,
+				   doublet_counter_container,
+				   m_mr);
+    
     traccc::cuda::doublet_finding(m_seedfinder_config,
 				  isp_container,
+				  doublet_counter_container,
 				  mid_bot_container,
 				  mid_top_container,
 				  m_mr);
-
-    // sort doublets in terms of middle spacepoint idx
-    // note: it takes too long with GPU bubble sort so used cpu sort function
-    for (int i=0; i<mid_bot_container.headers.size(); ++i){
-	auto n_doublets = mid_bot_container.headers[i];
-	auto& doublets = mid_bot_container.items[i];
-
-	std::sort(doublets.begin(), doublets.begin()+n_doublets,
-		  [](doublet& d1, doublet& d2){
-		      return d1.sp1.sp_idx < d2.sp1.sp_idx;
-		  });		
-    }
-        
-    for (int i=0; i<mid_top_container.headers.size(); ++i){
-	auto n_doublets = mid_top_container.headers[i];
-	auto& doublets = mid_top_container.items[i];
-	std::sort(doublets.begin(), doublets.begin()+n_doublets,
-		  [](doublet& d1, doublet& d2){
-		      return d1.sp1.sp_idx < d2.sp1.sp_idx;
-		  });		
-    }
-
-    // get the size of doublets with same spM
-    vecmem::jagged_vector< size_t > n_mb_per_spM(m_sp_grid->size(false),m_mr);
-    vecmem::jagged_vector< size_t > n_mt_per_spM(m_sp_grid->size(false),m_mr);
-    
-    for(size_t i=0; i < m_sp_grid->size(false); ++i){
-	auto n_mid_bot_doublets = mid_bot_container.headers[i];
-	auto mid_bot_doublets = mid_bot_container.items[i];
-	mid_bot_doublets.erase(mid_bot_doublets.begin()+n_mid_bot_doublets,
-			       mid_bot_doublets.end());
-
-	auto n_mid_top_doublets = mid_top_container.headers[i];
-	auto mid_top_doublets = mid_top_container.items[i];
-	mid_top_doublets.erase(mid_top_doublets.begin()+n_mid_top_doublets,
-			       mid_top_doublets.end());
-
-	auto mb_last = std::unique(mid_bot_doublets.begin(), mid_bot_doublets.end(),
-				   [] (doublet const & lhs, doublet const & rhs) {
-				    return (lhs.sp1.sp_idx == rhs.sp1.sp_idx);
-				   }
-				   );
-	
-	auto mt_last = std::unique(mid_top_doublets.begin(), mid_top_doublets.end(),
-				   [] (doublet const & lhs, doublet const & rhs) {
-				    return (lhs.sp1.sp_idx == rhs.sp1.sp_idx);
-				   }
-				   );
-
-	n_mb_per_spM[i].reserve(mb_last-mid_bot_doublets.begin());
-	n_mt_per_spM[i].reserve(mt_last-mid_top_doublets.begin());
-	
-	for (auto it = mid_top_doublets.begin(); it != mt_last; it++){
-
-	    
-	    size_t mid_bot_size = std::count_if(
-		  mid_bot_container.items[i].begin(),
-		  mid_bot_container.items[i].begin()+n_mid_bot_doublets,
-		  [&](const doublet& d) {
-		      return (d.sp1.sp_idx == it->sp1.sp_idx);
-		  });
-	    
-	    size_t mid_top_size = std::count_if(
-		  mid_top_container.items[i].begin(),
-		  mid_top_container.items[i].begin()+n_mid_top_doublets,
-		  [&](const doublet& d) {
-		      return (d.sp1.sp_idx == it->sp1.sp_idx);
-		  });
-
-	    n_mb_per_spM[i].push_back(mid_bot_size);	   
-	    n_mt_per_spM[i].push_back(mid_top_size);	   
-	}			
-    }
     
     traccc::cuda::triplet_finding(m_seedfinder_config,
 				  m_seedfilter_config,
 				  isp_container,
+				  doublet_counter_container,
 				  mid_bot_container,
 				  mid_top_container,
-				  n_mb_per_spM,
-				  n_mt_per_spM,
+				  //n_mb_per_spM,
+				  //n_mt_per_spM,
 				  triplet_container,
 				  m_mr);
-
+        
     //sort triplets in terms of mid-bot doublet
     for (int i=0; i<triplet_container.headers.size(); ++i){
 	auto n_triplets = triplet_container.headers[i];
@@ -265,17 +206,20 @@ void operator()(host_internal_spacepoint_container& isp_container,
 		m_seed_filtering(isp_container, triplet_per_spM, seeds);
 	    }
 	}	
-    }
+    }    
     
 }
 
 private:
+    bool first_alloc = true;
+    
     const seedfinder_config m_seedfinder_config;
     const seedfilter_config m_seedfilter_config;
     std::shared_ptr< spacepoint_grid > m_sp_grid;    
     multiplet_config* m_multiplet_config;
     seed_filtering m_seed_filtering;
-    
+
+    host_doublet_counter_container doublet_counter_container;
     host_doublet_container mid_bot_container;
     host_doublet_container mid_top_container;
     host_triplet_container triplet_container;

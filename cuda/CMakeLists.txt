@@ -1,6 +1,7 @@
 enable_language(CUDA)
 
 add_library(traccc_cuda SHARED
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms/seeding/doublet_counting.cu
   ${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms/seeding/doublet_finding.cu
   ${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms/seeding/triplet_finding.cu
   ${CMAKE_CURRENT_SOURCE_DIR}/src/algorithms/seeding/weight_updating.cu)

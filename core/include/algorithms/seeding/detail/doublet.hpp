@@ -6,16 +6,11 @@
  */
 
 #pragma once
+#include <algorithms/seeding/detail/singlet.hpp>
+
 
 namespace traccc{
-    
-    struct sp_location{
-	/// index of the bin of the spacepoint grid
-	size_t bin_idx;
-	/// index of the spacepoint in the bin
-	size_t sp_idx; 
-    };       	
-    
+        
     struct lin_circle {
 	float Zo;
 	float cotTheta;
