@@ -13,6 +13,7 @@
 #include <cuda/algorithms/seeding/detail/multiplet_config.hpp>
 #include <cuda/algorithms/seeding/detail/doublet_counter.hpp>
 #include <cuda/algorithms/seeding/doublet_counting.cuh>
+#include <cuda/algorithms/seeding/triplet_counting.cuh>
 #include <cuda/algorithms/seeding/doublet_finding.cuh>
 #include <cuda/algorithms/seeding/triplet_finding.cuh>
 #include <cuda/algorithms/seeding/weight_updating.cuh>
@@ -91,6 +92,14 @@ void operator()(host_internal_spacepoint_container& isp_container,
 				  mid_bot_container,
 				  mid_top_container,
 				  m_mr);
+   
+    traccc::cuda::triplet_counting(m_seedfinder_config,
+				   m_seedfilter_config,
+				   isp_container,
+				   mid_bot_container,
+				   mid_top_container,
+				   triplet_counter_container,
+				   m_mr);
     
     traccc::cuda::triplet_finding(m_seedfinder_config,
 				  m_seedfilter_config,
@@ -98,8 +107,6 @@ void operator()(host_internal_spacepoint_container& isp_container,
 				  doublet_counter_container,
 				  mid_bot_container,
 				  mid_top_container,
-				  //n_mb_per_spM,
-				  //n_mt_per_spM,
 				  triplet_container,
 				  m_mr);
         
@@ -222,6 +229,7 @@ private:
     host_doublet_counter_container doublet_counter_container;
     host_doublet_container mid_bot_container;
     host_doublet_container mid_top_container;
+    host_triplet_counter_container triplet_counter_container;
     host_triplet_container triplet_container;
 
     vecmem::memory_resource* m_mr;

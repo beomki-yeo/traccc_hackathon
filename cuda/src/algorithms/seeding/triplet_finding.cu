@@ -149,21 +149,7 @@ void triplet_finding_kernel(const seedfinder_config config,
 	if (mt_start_idx >= mid_top_doublets_per_bin.size()){
 	    continue;
 	}
-	
-	
-	/*
-	if (mt_end_idx >= mid_top_doublets_per_bin.size()){
-	    printf("%d %d %d %d %d %d %d \n",
-		   int(num_mid_bot_doublets_per_bin),
-		   int(mb_end_idx),
-		   int(mb_idx),
-		   int(num_mid_top_doublets_per_bin),
-		   int(mt_start_idx),
-		   int(mt_end_idx),
-		   int(mid_top_doublets_per_bin.size()));
-	}
-	*/
-	
+	       	
 	// iterate over mid-top doublets
 	
 	for (auto mt_it = mid_top_doublets_per_bin.begin()+mt_start_idx;
