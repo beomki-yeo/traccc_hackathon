@@ -10,6 +10,7 @@
 #include <edm/internal_spacepoint.hpp>
 #include <algorithms/seeding/detail/doublet.hpp>
 #include <cuda/algorithms/seeding/detail/doublet_counter.hpp>
+#include <cuda/algorithms/seeding/detail/triplet_counter.hpp>
 #include <algorithms/seeding/detail/seeding_config.hpp>
 #include <algorithms/seeding/triplet_finding_helper.hpp>
 
@@ -22,8 +23,7 @@ void triplet_finding(const seedfinder_config& config,
 		     host_doublet_counter_container& doublet_counter_container,
 		     host_doublet_container& mid_bot_doublet_container,
 		     host_doublet_container& mid_top_doublet_container,
-		     //vecmem::jagged_vector< size_t >& n_mb_per_spM,
-		     //vecmem::jagged_vector< size_t >& n_mt_per_spM,
+		     host_triplet_counter_container& triplet_counter_container,
 		     host_triplet_container& triplet_container,
 		     vecmem::memory_resource* resource);
        

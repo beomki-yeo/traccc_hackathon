@@ -9,6 +9,7 @@
 
 #include <edm/internal_spacepoint.hpp>
 #include <algorithms/seeding/detail/triplet.hpp>
+#include <cuda/algorithms/seeding/detail/triplet_counter.hpp>
 #include <algorithms/seeding/detail/seeding_config.hpp>
 
 namespace traccc{    
@@ -16,8 +17,9 @@ namespace cuda{
 
 void weight_updating(const seedfilter_config& filter_config,
 		     host_internal_spacepoint_container& internal_sp_container,
+		     host_triplet_counter_container& triplet_counter_container,
 		     host_triplet_container& triplet_container,
-		     vecmem::jagged_vector< size_t >& n_triplets_per_mb,
+		     //vecmem::jagged_vector< size_t >& n_triplets_per_mb,
 		     vecmem::jagged_vector< float >& compatseed_container,
 		     vecmem::memory_resource* resource
 		     );

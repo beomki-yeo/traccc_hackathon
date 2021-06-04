@@ -49,8 +49,12 @@ void doublet_counting_kernel(const seedfinder_config config,
     auto& num_compat_spM_per_bin = doublet_counter_device.headers.at(blockIdx.x);
     auto doublet_counter_per_bin = doublet_counter_device.items.at(blockIdx.x);
 
+    num_compat_spM_per_bin = 0;
+
     size_t n_iter = internal_sp_per_bin.size()/blockDim.x + 1;
 
+    __syncthreads();
+    
     for (size_t i_it = 0; i_it < n_iter; ++i_it){
 	auto sp_idx = i_it*blockDim.x + threadIdx.x;
 	

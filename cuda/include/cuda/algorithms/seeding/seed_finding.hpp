@@ -46,10 +46,15 @@ seed_finding(seedfinder_config& config,
     
     mid_top_container({host_doublet_container::header_vector(sp_grid->size(false), 0, mr),
 		       host_doublet_container::item_vector(sp_grid->size(false),mr)}),
+
+    triplet_counter_container({host_triplet_counter_container::header_vector(sp_grid->size(false),0, mr),
+			       host_triplet_counter_container::item_vector(sp_grid->size(false),mr)}),
     
     triplet_container({host_triplet_container::header_vector(sp_grid->size(false), 0, mr),
 		       host_triplet_container::item_vector(sp_grid->size(false),mr)})
-       
+
+    //compatseed_container(vecmem::jagged_vector<float>(sp_grid->size(false),m_mr))
+    
     {}
     
 host_seed_collection operator()(host_internal_spacepoint_container& isp_container){
@@ -64,12 +69,15 @@ host_seed_collection operator()(host_internal_spacepoint_container& isp_containe
 	doublet_counter_container.headers[i] = 0;
 	mid_bot_container.headers[i] = 0;
 	mid_top_container.headers[i] = 0;
+	triplet_counter_container.headers[i] = 0;
 	triplet_container.headers[i] = 0;
 
 	doublet_counter_container.items[i].resize(n_spM);
 	mid_bot_container.items[i].resize(n_mid_bot_doublets);       
-	mid_top_container.items[i].resize(n_mid_top_doublets);	
-	triplet_container.items[i].resize(n_triplets);       	
+	mid_top_container.items[i].resize(n_mid_top_doublets);
+	triplet_counter_container.items[i].resize(n_mid_bot_doublets);
+	triplet_container.items[i].resize(n_triplets);
+	//compatseed_container[i].resize(n_triplets);	
     }	
     
     host_seed_collection seed_collection;
@@ -96,6 +104,7 @@ void operator()(host_internal_spacepoint_container& isp_container,
     traccc::cuda::triplet_counting(m_seedfinder_config,
 				   m_seedfilter_config,
 				   isp_container,
+				   doublet_counter_container,
 				   mid_bot_container,
 				   mid_top_container,
 				   triplet_counter_container,
@@ -107,9 +116,57 @@ void operator()(host_internal_spacepoint_container& isp_container,
 				  doublet_counter_container,
 				  mid_bot_container,
 				  mid_top_container,
+				  triplet_counter_container,
 				  triplet_container,
 				  m_mr);
-        
+    
+    vecmem::jagged_vector< float > compatseed_container(m_sp_grid->size(false),m_mr);
+
+    for(size_t i=0; i < m_sp_grid->size(false); ++i){
+	auto n_triplets = triplet_container.headers[i];
+	compatseed_container[i].resize(n_triplets);
+    }
+    
+    traccc::cuda::weight_updating(m_seedfilter_config,
+				  isp_container,
+				  triplet_counter_container,
+				  triplet_container,
+				  //n_triplets_per_mb,
+				  compatseed_container,
+				  m_mr);
+
+    for(size_t i=0; i < m_sp_grid->size(false); ++i){
+	// Get triplets per spM
+	
+	auto n_triplets = triplet_container.headers[i];
+	
+	auto triplets = triplet_container.items[i];
+	triplets.erase(triplets.begin()+n_triplets,
+		       triplets.end());
+	auto last = std::unique(triplets.begin(), triplets.end(),
+				[] (triplet const & lhs, triplet const & rhs) {
+				    return (lhs.sp2.sp_idx == rhs.sp2.sp_idx);
+				}
+				);		
+
+	for (auto it = triplets.begin(); it != last; it++){
+	    host_triplet_collection triplet_per_spM;
+	    
+	    for (int j=0; j<n_triplets; j++){
+		auto& triplet = triplet_container.items[i][j];
+		
+		if (triplet.sp2.sp_idx == it->sp2.sp_idx){
+		    triplet_per_spM.push_back(triplet);
+		}
+	    }
+
+	    if (triplet_per_spM.size() > 0){
+		m_seed_filtering(isp_container, triplet_per_spM, seeds);
+	    }
+	}	
+    }    
+    
+    /*
     //sort triplets in terms of mid-bot doublet
     for (int i=0; i<triplet_container.headers.size(); ++i){
 	auto n_triplets = triplet_container.headers[i];
@@ -176,45 +233,7 @@ void operator()(host_internal_spacepoint_container& isp_container,
 
 	}			
     }
-    
-    traccc::cuda::weight_updating(m_seedfilter_config,
-				  isp_container,
-				  triplet_container,
-				  n_triplets_per_mb,
-				  compatseed_container,
-				  m_mr);
-    
-    for(size_t i=0; i < m_sp_grid->size(false); ++i){
-	// Get triplets per spM
-	
-	auto n_triplets = triplet_container.headers[i];
-	
-	auto triplets = triplet_container.items[i];
-	triplets.erase(triplets.begin()+n_triplets,
-		       triplets.end());
-	auto last = std::unique(triplets.begin(), triplets.end(),
-				[] (triplet const & lhs, triplet const & rhs) {
-				    return (lhs.sp2.sp_idx == rhs.sp2.sp_idx);
-				}
-				);		
-
-	for (auto it = triplets.begin(); it != last; it++){
-	    host_triplet_collection triplet_per_spM;
-	    
-	    for (int j=0; j<n_triplets; j++){
-		auto& triplet = triplet_container.items[i][j];
-		
-		if (triplet.sp2.sp_idx == it->sp2.sp_idx){
-		    triplet_per_spM.push_back(triplet);
-		}
-	    }
-
-	    if (triplet_per_spM.size() > 0){
-		m_seed_filtering(isp_container, triplet_per_spM, seeds);
-	    }
-	}	
-    }    
-    
+    */            
 }
 
 private:
@@ -231,6 +250,7 @@ private:
     host_doublet_container mid_top_container;
     host_triplet_counter_container triplet_counter_container;
     host_triplet_container triplet_container;
+    //vecmem::jagged_vector< float > compatseed_container;
 
     vecmem::memory_resource* m_mr;
 };        

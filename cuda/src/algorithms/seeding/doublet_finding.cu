@@ -29,7 +29,7 @@ void doublet_finding(const seedfinder_config& config,
     auto mid_bot_doublet_view = get_data(mid_bot_doublet_container, resource);
     auto mid_top_doublet_view = get_data(mid_top_doublet_container, resource);
     
-    unsigned int num_threads = WARP_SIZE*4; 
+    unsigned int num_threads = WARP_SIZE*2; 
     unsigned int num_blocks = internal_sp_data.headers.m_size;
     
     doublet_finding_kernel<<< num_blocks, num_threads >>>(config,
@@ -155,83 +155,6 @@ void doublet_finding_kernel(const seedfinder_config config,
 		}
 	    }				    	    
 	}
-
-	
-	/*
-	bool hasCompatBottom = false;
-	bool hasCompatTop = false;
-     
-	for(size_t i_n=0; i_n<bin_info.bottom_idx.counts; ++i_n){	   
-
-	    if (hasCompatBottom && hasCompatTop){
-		break;
-	    }
-	    
-	    auto neigh_bin = bin_info.bottom_idx.vector_indices[i_n];
-	    
-	    auto neigh_internal_sp_per_bin = internal_sp_device.items.at(neigh_bin);		
-	    for (size_t spB_idx=0; spB_idx<neigh_internal_sp_per_bin.size(); ++spB_idx){		
-		auto neigh_isp = neigh_internal_sp_per_bin[spB_idx];
-		if (!hasCompatBottom){
-		    hasCompatBottom = doublet_finding_helper::isCompatible(isp, neigh_isp, config, true);
-		}
-		if (!hasCompatTop){
-		    hasCompatTop = doublet_finding_helper::isCompatible(isp, neigh_isp, config, false);
-		}
-	    }
-	}
-
-	// Skip if there is not compatible hits on any of bottom and top side
-	if (!hasCompatBottom || !hasCompatTop) {
-	    continue;
-	}
-	
-	for(size_t i_n=0; i_n<bin_info.bottom_idx.counts; ++i_n){		
-	    auto neigh_bin = bin_info.bottom_idx.vector_indices[i_n];
-	    
-	    auto neigh_internal_sp_per_bin = internal_sp_device.items.at(neigh_bin);		
-	    for (size_t spB_idx=0; spB_idx<neigh_internal_sp_per_bin.size(); ++spB_idx){	       		
-		auto neigh_isp = neigh_internal_sp_per_bin[spB_idx];		
-
-		if (!doublet_finding_helper::isCompatible(isp, neigh_isp, config, true)) continue;
-		
-		auto spB_loc = sp_location({neigh_bin, spB_idx});
-		auto lin = doublet_finding_helper::transform_coordinates(isp, neigh_isp, true);
-		auto pos = atomicAdd(&num_mid_bot_doublets_per_bin,1);
-	       
-		if (pos>=mid_bot_doublets_per_bin.size()){
-		    num_mid_bot_doublets_per_bin = mid_bot_doublets_per_bin.size();
-		    continue;
-		}
-		
-		mid_bot_doublets_per_bin[pos] = doublet({spM_loc, spB_loc, lin});
-		
-		
-	    }				
-	}
-
-	for(size_t i_n=0; i_n<bin_info.top_idx.counts; ++i_n){		
-	    auto neigh_bin = bin_info.top_idx.vector_indices[i_n];
-	    
-	    auto neigh_internal_sp_per_bin = internal_sp_device.items.at(neigh_bin);		
-	    for (size_t spT_idx=0; spT_idx<neigh_internal_sp_per_bin.size(); ++spT_idx){		
-		auto neigh_isp = neigh_internal_sp_per_bin[spT_idx];		
-	    
-		if (!doublet_finding_helper::isCompatible(isp, neigh_isp, config, false)) continue;		
-		auto lin = doublet_finding_helper::transform_coordinates(isp, neigh_isp, false);
-		auto spT_loc = sp_location({neigh_bin, spT_idx});
-
-		auto pos = atomicAdd(&num_mid_top_doublets_per_bin,1);
-		
-		if (pos>=mid_top_doublets_per_bin.size()){
-		    num_mid_top_doublets_per_bin = mid_top_doublets_per_bin.size();
-		    continue;
-		}
-		
-		mid_top_doublets_per_bin[pos] = doublet({spM_loc, spT_loc, lin});   
-	    }				
-	}	   
-	*/
     }    
 }
     

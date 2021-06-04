@@ -16,6 +16,12 @@ struct sp_location{
     size_t sp_idx; 
 };       	
 
+__CUDA_HOST_DEVICE__
+bool operator==(const sp_location& lhs, const sp_location& rhs){
+    return (lhs.bin_idx == rhs.bin_idx &&
+	    lhs.sp_idx == rhs.sp_idx);
+}    
+    
     /// Container of singlet belonging to one detector module
     template< template< typename > class vector_t >
     using singlet_collection = vector_t< sp_location >;
