@@ -122,18 +122,10 @@ void operator()(host_internal_spacepoint_container& isp_container,
 				  triplet_container,
 				  m_mr);
     
-    vecmem::jagged_vector< float > compatseed_container(m_sp_grid->size(false),m_mr);
-
-    for(size_t i=0; i < m_sp_grid->size(false); ++i){
-	auto n_triplets = triplet_container.headers[i];
-	compatseed_container[i].resize(n_triplets);
-    }
-    
     traccc::cuda::weight_updating(m_seedfilter_config,
 				  isp_container,
 				  triplet_counter_container,
 				  triplet_container,
-				  //n_triplets_per_mb,
 				  compatseed_container,
 				  m_mr);
     
