@@ -53,15 +53,23 @@ void doublet_counting_kernel(const seedfinder_config config,
 
     size_t n_iter = internal_sp_per_bin.size()/blockDim.x + 1;
 
+    //size_t n_iter = doublet_counter_per_bin.size()/blockDim.x + 1;
+
     __syncthreads();
     
     for (size_t i_it = 0; i_it < n_iter; ++i_it){
 	auto sp_idx = i_it*blockDim.x + threadIdx.x;
-	
+
 	if (sp_idx >= internal_sp_per_bin.size()) {
 	    continue;
 	}
-
+	
+	/*
+	if (sp_idx >= doublet_counter_per_bin.size()) {
+	    continue;
+	}
+	*/
+		
 	auto spM_loc = sp_location({blockIdx.x, sp_idx});
 	auto isp = internal_sp_per_bin[sp_idx];	
 

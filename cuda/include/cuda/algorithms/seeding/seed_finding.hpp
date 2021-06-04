@@ -73,13 +73,20 @@ host_seed_collection operator()(host_internal_spacepoint_container& isp_containe
 	triplet_counter_container.headers[i] = 0;
 	triplet_container.headers[i] = 0;
 	compatseed_container.headers[i] = 0;
+
+
+	//if (first_alloc){
 	
-	doublet_counter_container.items[i].resize(n_spM);
+	doublet_counter_container.items[i].resize(n_spM);	
 	mid_bot_container.items[i].resize(n_mid_bot_doublets);       
-	mid_top_container.items[i].resize(n_mid_top_doublets);
+	mid_top_container.items[i].resize(n_mid_top_doublets);	    
 	triplet_counter_container.items[i].resize(n_mid_bot_doublets);
 	triplet_container.items[i].resize(n_triplets);
-	compatseed_container.items[i].resize(n_triplets);	
+	compatseed_container.items[i].resize(n_triplets);
+	
+	//first_alloc = false;	    
+	//}
+
     }	
     
     host_seed_collection seed_collection;
@@ -163,8 +170,8 @@ void operator()(host_internal_spacepoint_container& isp_container,
 }
 
 private:
+
     bool first_alloc = true;
-    
     const seedfinder_config m_seedfinder_config;
     const seedfilter_config m_seedfilter_config;
     std::shared_ptr< spacepoint_grid > m_sp_grid;    

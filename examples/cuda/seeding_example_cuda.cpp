@@ -182,9 +182,9 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 	
 	/*time*/ auto start_seeding_cpu = std::chrono::system_clock::now();
 
-	traccc::seed_finding sf(config, internal_sp_per_event, &cuts);
 	traccc::host_seed_collection seeds;
-	
+
+	traccc::seed_finding sf = traccc::seed_finding(config, internal_sp_per_event, &cuts);	
 	if (skip_cpu == false){
 	    
 	    seeds = sf();
@@ -214,7 +214,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 	/*----------------------------------
 	  compare seeds from cpu and cuda
 	  ----------------------------------*/
-       
+	
 	int n_match = 0;
 	for (auto seed: seeds){
 	    if (std::find(seeds_cuda.begin(), seeds_cuda.end(), seed) != seeds_cuda.end()){
@@ -275,6 +275,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
         }	
 
 	traccc::seed_statistics_writer sd_stat_writer{std::string("event")+event_number+"-seed_statistics.csv"};
+	
 	auto stats = sf.get_stats();
 	for (size_t i=0; i<stats.size(); ++i){
 	    auto stat = stats[i];
@@ -282,7 +283,8 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 				   stat.n_mid_bot_doublets,
 				   stat.n_mid_top_doublets,
 				   stat.n_triplets});
-	}	
+	}
+       
 	}
     }
 
