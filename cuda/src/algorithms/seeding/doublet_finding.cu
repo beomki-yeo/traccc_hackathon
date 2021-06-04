@@ -29,7 +29,7 @@ void doublet_finding(const seedfinder_config& config,
     auto mid_bot_doublet_view = get_data(mid_bot_doublet_container, resource);
     auto mid_top_doublet_view = get_data(mid_top_doublet_container, resource);
     
-    unsigned int num_threads = WARP_SIZE*2; 
+    unsigned int num_threads = WARP_SIZE*8; 
     unsigned int num_blocks = internal_sp_data.headers.m_size;
     
     doublet_finding_kernel<<< num_blocks, num_threads >>>(config,
@@ -67,13 +67,23 @@ void doublet_finding_kernel(const seedfinder_config config,
     auto& num_mid_top_doublets_per_bin = mid_top_doublet_device.headers.at(blockIdx.x);
     auto mid_top_doublets_per_bin = mid_top_doublet_device.items.at(blockIdx.x);
     
-    size_t n_iter = internal_sp_per_bin.size()/blockDim.x + 1;
+    //size_t n_iter = internal_sp_per_bin.size()/blockDim.x + 1;
+    size_t n_iter = doublet_counter_per_bin.size()/blockDim.x + 1;
+
+    num_mid_bot_doublets_per_bin = 0;
+    num_mid_top_doublets_per_bin = 0;
+    __syncthreads();
     
     for (size_t i_it = 0; i_it < n_iter; ++i_it){
 
 	auto sp_idx = i_it*blockDim.x + threadIdx.x;
-	
+
+	/*
 	if (sp_idx >= internal_sp_per_bin.size()) {
+	    continue;
+	}
+	*/
+	if (sp_idx >= doublet_counter_per_bin.size()) {
 	    continue;
 	}
 

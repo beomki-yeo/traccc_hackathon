@@ -35,7 +35,7 @@ void triplet_counting(const seedfinder_config& config,
     auto mid_top_doublet_view = get_data(mid_top_doublet_container, resource);
     auto triplet_counter_container_view = get_data(triplet_counter_container, resource);
     
-    unsigned int num_threads = WARP_SIZE*6; 
+    unsigned int num_threads = WARP_SIZE*8; 
     unsigned int num_blocks = internal_sp_view.headers.m_size;
     
     triplet_counting_kernel<<< num_blocks, num_threads >>>(config,

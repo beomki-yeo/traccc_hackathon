@@ -56,7 +56,9 @@ seed_finding(seedfinder_config& config,
     compatseed_container({host_compatseed_container::header_vector(sp_grid->size(false), 0, mr),
 			  host_compatseed_container::item_vector(sp_grid->size(false),mr)})
     
-    {}
+    {
+	first_alloc = true;
+    }
     
 host_seed_collection operator()(host_internal_spacepoint_container& isp_container){
     
@@ -67,6 +69,7 @@ host_seed_collection operator()(host_internal_spacepoint_container& isp_containe
 	size_t n_mid_top_doublets = m_multiplet_config->get_mid_top_doublets_size(n_spM);
 	size_t n_triplets = m_multiplet_config->get_triplets_size(n_spM);
 
+	///// Zero initialization
 	doublet_counter_container.headers[i] = 0;
 	mid_bot_container.headers[i] = 0;
 	mid_top_container.headers[i] = 0;
@@ -74,9 +77,6 @@ host_seed_collection operator()(host_internal_spacepoint_container& isp_containe
 	triplet_container.headers[i] = 0;
 	compatseed_container.headers[i] = 0;
 
-
-	//if (first_alloc){
-	
 	doublet_counter_container.items[i].resize(n_spM);	
 	mid_bot_container.items[i].resize(n_mid_bot_doublets);       
 	mid_top_container.items[i].resize(n_mid_top_doublets);	    
@@ -84,10 +84,9 @@ host_seed_collection operator()(host_internal_spacepoint_container& isp_containe
 	triplet_container.items[i].resize(n_triplets);
 	compatseed_container.items[i].resize(n_triplets);
 	
-	//first_alloc = false;	    
-	//}
-
     }	
+
+    first_alloc = false;
     
     host_seed_collection seed_collection;
     this->operator()(isp_container, seed_collection);
@@ -171,7 +170,7 @@ void operator()(host_internal_spacepoint_container& isp_container,
 
 private:
 
-    bool first_alloc = true;
+    bool first_alloc;
     const seedfinder_config m_seedfinder_config;
     const seedfilter_config m_seedfilter_config;
     std::shared_ptr< spacepoint_grid > m_sp_grid;    

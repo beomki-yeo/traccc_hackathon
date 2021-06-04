@@ -88,6 +88,9 @@ void triplet_finding_kernel(const seedfinder_config config,
     auto& num_triplets_per_bin = triplet_device.headers.at(blockIdx.x);    
     auto triplets_per_bin = triplet_device.items.at(blockIdx.x);
 
+    num_triplets_per_bin = 0;
+    __syncthreads();
+    
     size_t n_iter = num_mid_bot_doublets_per_bin/blockDim.x + 1;
     
     for (size_t i_it = 0; i_it < n_iter; ++i_it){
@@ -97,8 +100,7 @@ void triplet_finding_kernel(const seedfinder_config config,
 	if (mb_idx >= num_mid_bot_doublets_per_bin){
 	    continue;
 	}
-		
-	size_t num_triplets_per_mid_bot = 0;
+	
 	auto spM_idx = mid_bot_doublet.sp1.sp_idx;
 	auto spM = internal_sp_per_bin[spM_idx];
 	auto lb = mid_bot_doublet.lin;
@@ -171,9 +173,7 @@ void triplet_finding_kernel(const seedfinder_config config,
 		n_triplets_per_mb++;
 	    }	    
 	}	
-    }
-    
-    __syncthreads();
+    }    
 }
     
 }// namespace cuda

@@ -31,7 +31,7 @@ void weight_updating(const seedfilter_config& filter_config,
     auto triplet_view = get_data(triplet_container, resource);
     auto compatseed_view = get_data(compatseed_container, resource);
     
-    unsigned int num_threads = WARP_SIZE*6; 
+    unsigned int num_threads = WARP_SIZE*8; 
     unsigned int num_blocks = internal_sp_data.headers.m_size;
 
     
