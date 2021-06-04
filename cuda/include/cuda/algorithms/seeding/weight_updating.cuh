@@ -10,6 +10,7 @@
 #include <edm/internal_spacepoint.hpp>
 #include <algorithms/seeding/detail/triplet.hpp>
 #include <cuda/algorithms/seeding/detail/triplet_counter.hpp>
+#include <cuda/algorithms/seeding/detail/compatseed.hpp>
 #include <algorithms/seeding/detail/seeding_config.hpp>
 
 namespace traccc{    
