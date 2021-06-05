@@ -7,6 +7,7 @@
 
 #include <cuda/algorithms/seeding/doublet_counting.cuh>
 #include <cuda/utils/definitions.hpp>
+#include <cuda/utils/cuda_helper.cuh>
 
 namespace traccc{    
 namespace cuda{
@@ -26,10 +27,12 @@ void doublet_counting(const seedfinder_config& config,
     
     unsigned int num_threads = WARP_SIZE*4; 
     unsigned int num_blocks = internal_sp_view.headers.m_size;
+    unsigned int sh_mem = sizeof(int)*num_threads;
     
-    doublet_counting_kernel<<< num_blocks, num_threads >>>(config,
-							   internal_sp_view,
-							   doublet_counter_container_view);
+    doublet_counting_kernel
+	<<< num_blocks, num_threads, sh_mem >>>(config,
+						internal_sp_view,
+						doublet_counter_container_view);
     
     CUDA_ERROR_CHECK(cudaGetLastError());
     CUDA_ERROR_CHECK(cudaDeviceSynchronize());	        
@@ -49,21 +52,16 @@ void doublet_counting_kernel(const seedfinder_config config,
     auto& num_compat_spM_per_bin = doublet_counter_device.headers.at(blockIdx.x);
     auto doublet_counter_per_bin = doublet_counter_device.items.at(blockIdx.x);
 
-
-
-    //size_t n_iter = internal_sp_per_bin.size()/blockDim.x + 1;
     size_t n_iter = doublet_counter_per_bin.size()/blockDim.x + 1;
 
+    // zero initialization
+    extern __shared__ int num_compat_spM_per_thread[];
     num_compat_spM_per_bin = 0;
     __syncthreads();
     
     for (size_t i_it = 0; i_it < n_iter; ++i_it){
 	auto sp_idx = i_it*blockDim.x + threadIdx.x;
-	/*
-	if (sp_idx >= internal_sp_per_bin.size()) {
-	    continue;
-	}
-	*/	
+
 	if (sp_idx >= doublet_counter_per_bin.size()) {
 	    continue;
 	}
@@ -96,9 +94,18 @@ void doublet_counting_kernel(const seedfinder_config config,
 	
 	if (doublet_counter_per_bin[sp_idx].n_mid_bot > 0 &&
 	    doublet_counter_per_bin[sp_idx].n_mid_top > 0){
-	    atomicAdd(&num_compat_spM_per_bin,1);
+	    //atomicAdd(&num_compat_spM_per_bin,1);
+	    num_compat_spM_per_thread[threadIdx.x]++;
 	}
-    }    
+    }
+
+    __syncthreads();    
+    cuda_helper::reduce_sum<int>(blockDim.x, threadIdx.x, num_compat_spM_per_thread);
+    
+    if (threadIdx.x==0){
+	num_compat_spM_per_bin = num_compat_spM_per_thread[0];
+    } 
+
 }
     
 }// namespace cuda

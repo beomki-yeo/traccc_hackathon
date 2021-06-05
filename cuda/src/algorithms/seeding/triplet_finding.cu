@@ -6,7 +6,7 @@
  */
 
 #include <cuda/algorithms/seeding/triplet_finding.cuh>
-#include <cuda/utils/definitions.hpp>
+#include <cuda/utils/cuda_helper.cuh>
 
 namespace traccc{    
 namespace cuda{
@@ -41,15 +41,17 @@ void triplet_finding(const seedfinder_config& config,
     
     unsigned int num_threads = WARP_SIZE*16; 
     unsigned int num_blocks = internal_sp_view.headers.m_size;
-
-    triplet_finding_kernel<<< num_blocks, num_threads >>>(config,
-							  filter_config,
-							  internal_sp_view,
-							  doublet_counter_view,
-							  mid_bot_doublet_view,
-							  mid_top_doublet_view,
-							  triplet_counter_view,
-							  triplet_view);
+    unsigned int sh_mem = sizeof(int)*num_threads;
+    
+    triplet_finding_kernel
+	<<< num_blocks, num_threads, sh_mem >>>(config,
+						filter_config,
+						internal_sp_view,
+						doublet_counter_view,
+						mid_bot_doublet_view,
+						mid_top_doublet_view,
+						triplet_counter_view,
+						triplet_view);
     
     CUDA_ERROR_CHECK(cudaGetLastError());
     CUDA_ERROR_CHECK(cudaDeviceSynchronize());	            
@@ -88,22 +90,26 @@ void triplet_finding_kernel(const seedfinder_config config,
     auto& num_triplets_per_bin = triplet_device.headers.at(blockIdx.x);    
     auto triplets_per_bin = triplet_device.items.at(blockIdx.x);
 
+    size_t n_iter = num_mid_bot_doublets_per_bin/blockDim.x + 1;
+    
+    // zero initialization
+    extern __shared__ int num_triplets_per_thread[];
+    num_triplets_per_thread[threadIdx.x] = 0;        
     num_triplets_per_bin = 0;
     __syncthreads();
     
-    size_t n_iter = num_mid_bot_doublets_per_bin/blockDim.x + 1;
     
     for (size_t i_it = 0; i_it < n_iter; ++i_it){
 	auto mb_idx = i_it*blockDim.x + threadIdx.x;
-	auto mid_bot_doublet = mid_bot_doublets_per_bin[mb_idx];
+	auto& mid_bot_doublet = mid_bot_doublets_per_bin[mb_idx];
 	
 	if (mb_idx >= num_mid_bot_doublets_per_bin){
 	    continue;
 	}
 	
-	auto spM_idx = mid_bot_doublet.sp1.sp_idx;
-	auto spM = internal_sp_per_bin[spM_idx];
-	auto lb = mid_bot_doublet.lin;
+	auto& spM_idx = mid_bot_doublet.sp1.sp_idx;
+	auto& spM = internal_sp_per_bin[spM_idx];
+	auto& lb = mid_bot_doublet.lin;
 
 	scalar iSinTheta2 = 1 + lb.cotTheta * lb.cotTheta;
 	scalar scatteringInRegion2 = config.maxScatteringAngle2 * iSinTheta2;
@@ -159,6 +165,15 @@ void triplet_finding_kernel(const seedfinder_config config,
 		if (pos>=triplets_per_bin.size()) {
 		    continue;
 		}
+		/*
+		triplets_per_bin[pos].sp1 = mid_bot_doublet.sp2;
+		triplets_per_bin[pos].sp2 = mid_bot_doublet.sp1;
+		triplets_per_bin[pos].sp3 = (*mt_it).sp2;
+		triplets_per_bin[pos].curvature = curvature;
+		triplets_per_bin[pos].impact_parameter = impact_parameter;
+		triplets_per_bin[pos].weight = -impact_parameter*filter_config.impactWeightFactor;
+		triplets_per_bin[pos].z_vertex = lb.Zo;
+		*/
 		
 		triplets_per_bin[pos]
 		    = triplet({mid_bot_doublet.sp2,
@@ -168,14 +183,23 @@ void triplet_finding_kernel(const seedfinder_config config,
 			       impact_parameter,
 			       -impact_parameter*filter_config.impactWeightFactor,
 			       lb.Zo});
-
-		atomicAdd(&num_triplets_per_bin,1);
+		
+		//atomicAdd(&num_triplets_per_bin,1);
+		num_triplets_per_thread[threadIdx.x]++;
 		n_triplets_per_mb++;
+		
+		
 	    }	    
 	}	
-    }    
+    }
+    
+    __syncthreads();    
+    cuda_helper::reduce_sum<int>(blockDim.x, threadIdx.x, num_triplets_per_thread);
+    
+    if (threadIdx.x==0){
+	num_triplets_per_bin = num_triplets_per_thread[0];
+    }     
 }
     
 }// namespace cuda
 }// namespace traccc
-

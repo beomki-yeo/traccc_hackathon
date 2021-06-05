@@ -5,16 +5,16 @@
  * Mozilla Public License Version 2.0
  */
 
-
-#pragma once
-
 #include <edm/internal_spacepoint.hpp>
 #include <algorithms/seeding/detail/doublet.hpp>
 #include <algorithms/seeding/detail/triplet.hpp>
 #include <algorithms/seeding/detail/seeding_config.hpp>
+#include <algorithms/seeding/triplet_finding_helper.hpp>
 #include <cuda/algorithms/seeding/detail/doublet_counter.hpp>
 #include <cuda/algorithms/seeding/detail/triplet_counter.hpp>
-#include <algorithms/seeding/triplet_finding_helper.hpp>
+#include <cuda/utils/definitions.hpp>
+
+#pragma once
 
 namespace traccc{    
 namespace cuda{

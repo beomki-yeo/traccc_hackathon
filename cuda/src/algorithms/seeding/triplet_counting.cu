@@ -6,7 +6,7 @@
  */
 
 #include <cuda/algorithms/seeding/triplet_counting.cuh>
-#include <cuda/utils/definitions.hpp>
+#include <cuda/utils/cuda_helper.cuh>
 
 namespace traccc{    
 namespace cuda{
@@ -37,14 +37,16 @@ void triplet_counting(const seedfinder_config& config,
     
     unsigned int num_threads = WARP_SIZE*8; 
     unsigned int num_blocks = internal_sp_view.headers.m_size;
+    unsigned int sh_mem = sizeof(int)*num_threads;
     
-    triplet_counting_kernel<<< num_blocks, num_threads >>>(config,
-							   filter_config,
-							   internal_sp_view,
-							   doublet_counter_container_view,
-							   mid_bot_doublet_view,
-							   mid_top_doublet_view,
-							   triplet_counter_container_view);
+    triplet_counting_kernel
+	<<< num_blocks,num_threads, sh_mem >>>(config,
+					       filter_config,
+					       internal_sp_view,
+					       doublet_counter_container_view,
+					       mid_bot_doublet_view,
+					       mid_top_doublet_view,
+					       triplet_counter_container_view);
     
     CUDA_ERROR_CHECK(cudaGetLastError());
     CUDA_ERROR_CHECK(cudaDeviceSynchronize());	            
@@ -64,7 +66,7 @@ void triplet_counting_kernel(const seedfinder_config config,
     device_doublet_container mid_bot_doublet_device({mid_bot_doublet_view.headers, mid_bot_doublet_view.items});
     device_doublet_container mid_top_doublet_device({mid_top_doublet_view.headers, mid_top_doublet_view.items});
     device_triplet_counter_container triplet_counter_device({triplet_counter_view.headers, triplet_counter_view.items});
-
+    
     auto bin_info = internal_sp_device.headers.at(blockIdx.x);
     auto internal_sp_per_bin = internal_sp_device.items.at(blockIdx.x);
     auto& num_compat_spM_per_bin = doublet_counter_device.headers.at(blockIdx.x);
@@ -78,13 +80,16 @@ void triplet_counting_kernel(const seedfinder_config config,
     
     size_t n_iter = num_mid_bot_doublets_per_bin/blockDim.x + 1;
 
+    // zero initialization
+    extern __shared__ int num_compat_mb_per_thread[];
+    num_compat_mb_per_thread[threadIdx.x] = 0;    
     num_compat_mb_per_bin = 0;
-
+    
     __syncthreads();
     
     for (size_t i_it = 0; i_it < n_iter; ++i_it){
 	auto mb_idx = i_it*blockDim.x + threadIdx.x;
-	auto mid_bot_doublet = mid_bot_doublets_per_bin[mb_idx];
+	auto& mid_bot_doublet = mid_bot_doublets_per_bin[mb_idx];
 	
 	if (mb_idx >= num_mid_bot_doublets_per_bin){
 	    continue;
@@ -94,9 +99,9 @@ void triplet_counting_kernel(const seedfinder_config config,
 	triplet_counter_per_bin[mb_idx].n_triplets = 0;
 
 	size_t num_triplets_per_mid_bot = 0;
-	auto spM_idx = mid_bot_doublet.sp1.sp_idx;
-	auto spM = internal_sp_per_bin[spM_idx];
-	auto lb = mid_bot_doublet.lin;
+	auto& spM_idx = mid_bot_doublet.sp1.sp_idx;
+	auto& spM = internal_sp_per_bin[spM_idx];
+	auto& lb = mid_bot_doublet.lin;
 	
 	scalar iSinTheta2 = 1 + lb.cotTheta * lb.cotTheta;
 	scalar scatteringInRegion2 = config.maxScatteringAngle2 * iSinTheta2;
@@ -145,9 +150,18 @@ void triplet_counting_kernel(const seedfinder_config config,
 	}
 
 	if (triplet_counter_per_bin[mb_idx].n_triplets > 0){
-	    atomicAdd(&num_compat_mb_per_bin,1);
+	    //atomicAdd(&num_compat_mb_per_bin,1);
+	    num_compat_mb_per_thread[threadIdx.x]++;
 	}	
-    }    
+    }
+    
+    __syncthreads();
+    cuda_helper::reduce_sum<int>(blockDim.x, threadIdx.x, num_compat_mb_per_thread);
+    
+    if (threadIdx.x==0){
+	num_compat_mb_per_bin = num_compat_mb_per_thread[0];
+    }
+    
 }
     
 }// namespace cuda
