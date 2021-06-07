@@ -51,11 +51,7 @@ seed_finding(seedfinder_config& config,
 			       host_triplet_counter_container::item_vector(sp_grid->size(false),mr)}),
     
     triplet_container({host_triplet_container::header_vector(sp_grid->size(false), 0, mr),
-		       host_triplet_container::item_vector(sp_grid->size(false),mr)}),
-
-    compatseed_container({host_compatseed_container::header_vector(sp_grid->size(false), 0, mr),
-			  host_compatseed_container::item_vector(sp_grid->size(false),mr)})
-    
+		       host_triplet_container::item_vector(sp_grid->size(false),mr)})    
     {
 	first_alloc = true;
     }
@@ -75,14 +71,12 @@ host_seed_collection operator()(host_internal_spacepoint_container& isp_containe
 	mid_top_container.headers[i] = 0;
 	triplet_counter_container.headers[i] = 0;
 	triplet_container.headers[i] = 0;
-	compatseed_container.headers[i] = 0;
 
 	doublet_counter_container.items[i].resize(n_spM);	
 	mid_bot_container.items[i].resize(n_mid_bot_doublets);       
 	mid_top_container.items[i].resize(n_mid_top_doublets);	    
 	triplet_counter_container.items[i].resize(n_mid_bot_doublets);
 	triplet_container.items[i].resize(n_triplets);
-	compatseed_container.items[i].resize(n_triplets);
 	
     }	
 
@@ -132,7 +126,6 @@ void operator()(host_internal_spacepoint_container& isp_container,
 				  isp_container,
 				  triplet_counter_container,
 				  triplet_container,
-				  compatseed_container,
 				  m_mr);
     
     for(size_t i=0; i < m_sp_grid->size(false); ++i){
@@ -198,7 +191,6 @@ private:
     host_doublet_container mid_top_container;
     host_triplet_counter_container triplet_counter_container;
     host_triplet_container triplet_container;
-    host_compatseed_container compatseed_container;
     vecmem::memory_resource* m_mr;
 };        
 

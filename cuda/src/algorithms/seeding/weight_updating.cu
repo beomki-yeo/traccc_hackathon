@@ -15,31 +15,28 @@ __global__
 void weight_updating_kernel(const seedfilter_config filter_config,
 			    internal_spacepoint_container_view internal_sp_view,
 			    triplet_counter_container_view triplet_counter_view,
-			    triplet_container_view triplet_view,
-			    compatseed_container_view compatseed_view);
+			    triplet_container_view triplet_view);
     
 void weight_updating(const seedfilter_config& filter_config,
 		     host_internal_spacepoint_container& internal_sp_container,
 		     host_triplet_counter_container& triplet_counter_container,
-		     host_triplet_container& triplet_container,		     
-		     host_compatseed_container& compatseed_container,
+		     host_triplet_container& triplet_container,
 		     vecmem::memory_resource* resource
 		     ){
 
     auto internal_sp_data = get_data(internal_sp_container, resource);
     auto triplet_counter_view = get_data(triplet_counter_container, resource);
     auto triplet_view = get_data(triplet_container, resource);
-    auto compatseed_view = get_data(compatseed_container, resource);
     
     unsigned int num_threads = WARP_SIZE*8; 
     unsigned int num_blocks = internal_sp_data.headers.m_size;
-
+    unsigned int sh_mem = sizeof(float)*filter_config.compatSeedLimit;
     
-    weight_updating_kernel<<< num_blocks, num_threads >>>(filter_config,
-							  internal_sp_data,
-							  triplet_counter_view,
-							  triplet_view,
-							  compatseed_view);   
+    weight_updating_kernel
+	<<< num_blocks, num_threads, sh_mem >>>(filter_config,
+						internal_sp_data,
+						triplet_counter_view,
+						triplet_view);   
     
     CUDA_ERROR_CHECK(cudaGetLastError());
     CUDA_ERROR_CHECK(cudaDeviceSynchronize());	        
@@ -50,15 +47,12 @@ __global__
 void weight_updating_kernel(const seedfilter_config filter_config,
 			    internal_spacepoint_container_view internal_sp_view,
 			    triplet_counter_container_view triplet_counter_view,
-			    triplet_container_view triplet_view,
-			    compatseed_container_view compatseed_view
-			    ){
+			    triplet_container_view triplet_view){
 
     device_internal_spacepoint_container internal_sp_device({internal_sp_view.headers, internal_sp_view.items});
 
     device_triplet_counter_container triplet_counter_device({triplet_counter_view.headers, triplet_counter_view.items});
     device_triplet_container triplet_device({triplet_view.headers, triplet_view.items});
-    device_compatseed_container compatseed_device({compatseed_view.headers, compatseed_view.items});
     
     auto bin_info = internal_sp_device.headers.at(blockIdx.x);
     auto internal_sp_per_bin = internal_sp_device.items.at(blockIdx.x);
@@ -68,12 +62,14 @@ void weight_updating_kernel(const seedfilter_config filter_config,
     
     auto& num_triplets_per_bin = triplet_device.headers.at(blockIdx.x);
     auto triplets_per_bin = triplet_device.items.at(blockIdx.x);   
-
-    auto& not_used = compatseed_device.headers.at(blockIdx.x);
-    auto compatseed = compatseed_device.items.at(blockIdx.x);
     
     size_t n_iter = num_triplets_per_bin/blockDim.x + 1;
 
+    // zero initialization
+    extern __shared__ float compat_seedR[];
+    __syncthreads();
+
+    
     for (size_t i_it = 0; i_it < n_iter; ++i_it){
 	auto tr_idx = i_it*blockDim.x + threadIdx.x;
 	auto& triplet = triplets_per_bin[tr_idx];
@@ -117,7 +113,7 @@ void weight_updating_kernel(const seedfilter_config filter_config,
 	// -> very good seed		
 	float lowerLimitCurv = triplet.curvature - filter_config.deltaInvHelixDiameter;
 	float upperLimitCurv = triplet.curvature + filter_config.deltaInvHelixDiameter;	
-	int n_compatseed = 0;
+	int num_compat_seedR = 0;
 	
 	// iterate over triplets
 	for (auto tr_it = triplets_per_bin.begin()+start_idx;
@@ -151,8 +147,8 @@ void weight_updating_kernel(const seedfilter_config filter_config,
 
 	    bool newCompSeed = true;
 	    
-	    for (size_t i_s = start_idx; i_s < start_idx+n_compatseed; ++i_s){
-		float previousDiameter = compatseed[i_s];
+	    for (size_t i_s = 0; i_s < num_compat_seedR; ++i_s){
+		float previousDiameter = compat_seedR[i_s];
 		
 		// original ATLAS code uses higher min distance for 2nd found compatible
 		// seed (20mm instead of 5mm)
@@ -165,13 +161,12 @@ void weight_updating_kernel(const seedfilter_config filter_config,
 	    }
 	    	    
 	    if (newCompSeed) {
-		//n_compatseed++;
-		compatseed[start_idx+n_compatseed] = otherTop_r;
+		compat_seedR[num_compat_seedR] = otherTop_r;
 		triplet.weight += filter_config.compatSeedWeight;
-		n_compatseed++;
+		num_compat_seedR++;
 	    }
 	    
-	    if (n_compatseed >= filter_config.compatSeedLimit) {
+	    if (num_compat_seedR >= filter_config.compatSeedLimit) {
 		break;
 	    }	    
 	}

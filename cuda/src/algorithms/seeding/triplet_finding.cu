@@ -39,7 +39,7 @@ void triplet_finding(const seedfinder_config& config,
     auto triplet_counter_view = get_data(triplet_counter_container, resource);    
     auto triplet_view = get_data(triplet_container, resource);
     
-    unsigned int num_threads = WARP_SIZE*8; 
+    unsigned int num_threads = WARP_SIZE*4; 
     unsigned int num_blocks = internal_sp_view.headers.m_size;
     unsigned int sh_mem = sizeof(int)*num_threads;
     
@@ -182,9 +182,7 @@ void triplet_finding_kernel(const seedfinder_config config,
 			       lb.Zo});
 
 		num_triplets_per_thread[threadIdx.x]++;
-		n_triplets_per_mb++;
-		
-		
+		n_triplets_per_mb++;	       		
 	    }	    
 	}	
     }
