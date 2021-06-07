@@ -39,7 +39,7 @@ void triplet_finding(const seedfinder_config& config,
     auto triplet_counter_view = get_data(triplet_counter_container, resource);    
     auto triplet_view = get_data(triplet_container, resource);
     
-    unsigned int num_threads = WARP_SIZE*16; 
+    unsigned int num_threads = WARP_SIZE*8; 
     unsigned int num_blocks = internal_sp_view.headers.m_size;
     unsigned int sh_mem = sizeof(int)*num_threads;
     
@@ -90,7 +90,7 @@ void triplet_finding_kernel(const seedfinder_config config,
     auto& num_triplets_per_bin = triplet_device.headers.at(blockIdx.x);    
     auto triplets_per_bin = triplet_device.items.at(blockIdx.x);
 
-    size_t n_iter = num_mid_bot_doublets_per_bin/blockDim.x + 1;
+    size_t n_iter = num_compat_mb_per_bin/blockDim.x + 1;
     
     // zero initialization
     extern __shared__ int num_triplets_per_thread[];
@@ -100,12 +100,11 @@ void triplet_finding_kernel(const seedfinder_config config,
     
     
     for (size_t i_it = 0; i_it < n_iter; ++i_it){
-	auto mb_idx = i_it*blockDim.x + threadIdx.x;
-	auto& mid_bot_doublet = mid_bot_doublets_per_bin[mb_idx];
-	
-	if (mb_idx >= num_mid_bot_doublets_per_bin){
+	auto gid = i_it*blockDim.x + threadIdx.x;
+	if (gid >= num_compat_mb_per_bin){
 	    continue;
 	}
+	auto& mid_bot_doublet = triplet_counter_per_bin[gid].mid_bot_doublet;
 	
 	auto& spM_idx = mid_bot_doublet.sp1.sp_idx;
 	auto& spM = internal_sp_per_bin[spM_idx];
@@ -119,22 +118,29 @@ void triplet_finding_kernel(const seedfinder_config config,
 	size_t mb_end_idx = 0;
 	size_t mt_start_idx = 0;
 	size_t mt_end_idx = 0;
+	size_t ref_idx;
+
 	
-	for (int i=0; i<internal_sp_per_bin.size(); ++i){
-	    if (doublet_counter_per_bin[i].n_mid_bot == 0 ||
-		doublet_counter_per_bin[i].n_mid_top == 0){
-		continue;
+	for (int i=0; i<num_mid_bot_doublets_per_bin; i++){	    
+	    if (mid_bot_doublet == mid_bot_doublets_per_bin[i]){
+		ref_idx = i;
+		break;
 	    }
-	    	    
+	}
+	
+	for (int i=0; i<num_compat_spM_per_bin; ++i){
+	    
 	    mb_end_idx += doublet_counter_per_bin[i].n_mid_bot;
 	    mt_end_idx += doublet_counter_per_bin[i].n_mid_top;
 	    
-	    if (mb_end_idx > mb_idx){
+	    if (mb_end_idx > ref_idx){
 		break;
 	    }
+	    	    
 	    mt_start_idx += doublet_counter_per_bin[i].n_mid_top;
 	}
-
+	
+	
 	if (mt_end_idx >= mid_top_doublets_per_bin.size()){
 	    mt_end_idx = fmin(mid_top_doublets_per_bin.size(), mt_end_idx);
 	}	    
@@ -146,9 +152,9 @@ void triplet_finding_kernel(const seedfinder_config config,
 	size_t n_triplets_per_mb = 0;
 	size_t triplet_start_idx = 0;
 
-	for (size_t i=0; i<mb_idx; i++){
+	for (size_t i=0; i<gid; i++){
 	    triplet_start_idx += triplet_counter_per_bin[i].n_triplets;
-	}	
+	}
 	
 	// iterate over mid-top doublets	
 	for (auto mt_it = mid_top_doublets_per_bin.begin()+mt_start_idx;
@@ -160,20 +166,11 @@ void triplet_finding_kernel(const seedfinder_config config,
 	    if (triplet_finding_helper::isCompatible(spM, lb, lt, config,
 						     iSinTheta2, scatteringInRegion2,
 						     curvature, impact_parameter)){
-
+		
 		size_t pos = triplet_start_idx + n_triplets_per_mb;	  
 		if (pos>=triplets_per_bin.size()) {
 		    continue;
 		}
-		/*
-		triplets_per_bin[pos].sp1 = mid_bot_doublet.sp2;
-		triplets_per_bin[pos].sp2 = mid_bot_doublet.sp1;
-		triplets_per_bin[pos].sp3 = (*mt_it).sp2;
-		triplets_per_bin[pos].curvature = curvature;
-		triplets_per_bin[pos].impact_parameter = impact_parameter;
-		triplets_per_bin[pos].weight = -impact_parameter*filter_config.impactWeightFactor;
-		triplets_per_bin[pos].z_vertex = lb.Zo;
-		*/
 		
 		triplets_per_bin[pos]
 		    = triplet({mid_bot_doublet.sp2,
@@ -183,8 +180,7 @@ void triplet_finding_kernel(const seedfinder_config config,
 			       impact_parameter,
 			       -impact_parameter*filter_config.impactWeightFactor,
 			       lb.Zo});
-		
-		//atomicAdd(&num_triplets_per_bin,1);
+
 		num_triplets_per_thread[threadIdx.x]++;
 		n_triplets_per_mb++;
 		

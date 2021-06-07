@@ -87,7 +87,7 @@ void weight_updating_kernel(const seedfilter_config filter_config,
 
 	size_t start_idx = 0;
 	size_t end_idx = 0;
-
+	
 	for (auto triplet_counter: triplet_counter_per_bin){
 
 	    end_idx += triplet_counter.n_triplets;
@@ -173,9 +173,9 @@ void weight_updating_kernel(const seedfilter_config filter_config,
 	    
 	    if (n_compatseed >= filter_config.compatSeedLimit) {
 		break;
-	    }
-	    
-	}	
+	    }	    
+	}
+	
     }
 }
     

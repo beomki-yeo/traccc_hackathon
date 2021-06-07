@@ -30,7 +30,7 @@ void doublet_finding(const seedfinder_config& config,
     auto mid_bot_doublet_view = get_data(mid_bot_doublet_container, resource);
     auto mid_top_doublet_view = get_data(mid_top_doublet_container, resource);
     
-    unsigned int num_threads = WARP_SIZE*8; 
+    unsigned int num_threads = WARP_SIZE*8;
     unsigned int num_blocks = internal_sp_data.headers.m_size;
     unsigned int sh_mem = sizeof(int)*num_threads*2;
     
@@ -71,7 +71,7 @@ void doublet_finding_kernel(const seedfinder_config config,
     auto& num_mid_top_doublets_per_bin = mid_top_doublet_device.headers.at(blockIdx.x);
     auto mid_top_doublets_per_bin = mid_top_doublet_device.items.at(blockIdx.x);
     
-    size_t n_iter = doublet_counter_per_bin.size()/blockDim.x + 1;
+    size_t n_iter = num_compat_spM_per_bin/blockDim.x + 1;
 
     // zero initialization
     extern __shared__ int num_doublets_per_thread[];
@@ -86,49 +86,44 @@ void doublet_finding_kernel(const seedfinder_config config,
     
     for (size_t i_it = 0; i_it < n_iter; ++i_it){
 
-	auto sp_idx = i_it*blockDim.x + threadIdx.x;
+	auto gid = i_it*blockDim.x + threadIdx.x;
 
+	if (gid >= num_compat_spM_per_bin){
+	    continue;
+	}
+	
+	auto sp_idx = doublet_counter_per_bin[gid].spM.sp_idx;
+	
 	if (sp_idx >= doublet_counter_per_bin.size()) {
 	    continue;
 	}
 
 	auto spM_loc = sp_location({blockIdx.x, sp_idx});
 	auto isp = internal_sp_per_bin[sp_idx];
-
-	if (doublet_counter_per_bin[sp_idx].n_mid_bot == 0 ||
-	    doublet_counter_per_bin[sp_idx].n_mid_top == 0){
-	    continue;
-	}	
-
+	
 	size_t n_mid_bot_per_spM = 0;
 	size_t n_mid_top_per_spM = 0;
 
 	size_t mid_bot_start_idx = 0;
 	size_t mid_top_start_idx = 0;
-	
-	for (size_t i=0; i<sp_idx; i++){
-	    if (doublet_counter_per_bin[i].n_mid_bot == 0 ||
-		doublet_counter_per_bin[i].n_mid_top == 0){
-		continue;
-	    }
+
+	for (size_t i=0; i<gid; i++){	    	    
 	    mid_bot_start_idx += doublet_counter_per_bin[i].n_mid_bot;
 	    mid_top_start_idx += doublet_counter_per_bin[i].n_mid_top;	    
-	}	
-	
-		
+	}
+			
 	for(size_t i_n=0; i_n<bin_info.bottom_idx.counts; ++i_n){		
 	    auto neigh_bin = bin_info.bottom_idx.vector_indices[i_n];	    
 	    auto neigh_internal_sp_per_bin = internal_sp_device.items.at(neigh_bin);
 	    
 	    for (size_t spB_idx=0; spB_idx<neigh_internal_sp_per_bin.size(); ++spB_idx){	       		
 		auto neigh_isp = neigh_internal_sp_per_bin[spB_idx];		
-		
 		if (doublet_finding_helper::isCompatible(isp, neigh_isp, config, true)){
 		    
 		    auto spB_loc = sp_location({neigh_bin, spB_idx});
 		    auto lin = doublet_finding_helper::transform_coordinates(isp, neigh_isp, true);
 		    
-		    if (n_mid_bot_per_spM < doublet_counter_per_bin[sp_idx].n_mid_bot &&
+		    if (n_mid_bot_per_spM < doublet_counter_per_bin[gid].n_mid_bot &&
 			num_mid_bot_doublets_per_bin < mid_bot_doublets_per_bin.size()){			
 			size_t pos = mid_bot_start_idx + n_mid_bot_per_spM;	  
 			if (pos>=mid_bot_doublets_per_bin.size()) {
@@ -139,35 +134,32 @@ void doublet_finding_kernel(const seedfinder_config config,
 								 spB_loc,
 								 lin});
 			
-			//atomicAdd(&num_mid_bot_doublets_per_bin,1);
 			num_mid_bot_doublets_per_thread[threadIdx.x]++;
 			n_mid_bot_per_spM++;
 			
 		    }
 		    
 		}
-
+		
 		if (doublet_finding_helper::isCompatible(isp, neigh_isp, config, false)){
 		    
 		    auto spT_loc = sp_location({neigh_bin, spB_idx});
 		    auto lin = doublet_finding_helper::transform_coordinates(isp, neigh_isp, false);
-
-		    if (n_mid_top_per_spM < doublet_counter_per_bin[sp_idx].n_mid_top &&
+		    
+		    if (n_mid_top_per_spM < doublet_counter_per_bin[gid].n_mid_top &&
 			num_mid_top_doublets_per_bin < mid_top_doublets_per_bin.size()){
 			
 			size_t pos = mid_top_start_idx + n_mid_top_per_spM;
 			if (pos>=mid_top_doublets_per_bin.size()) {
-			    continue;
+			continue;
 			}
-			
+		    
 			mid_top_doublets_per_bin[pos] = doublet({spM_loc,
 								 spT_loc,
 								 lin});
-			
-			//atomicAdd(&num_mid_top_doublets_per_bin,1);
+		    
 			num_mid_top_doublets_per_thread[threadIdx.x]++;
-			n_mid_top_per_spM++;
-
+			n_mid_top_per_spM++;			
 		    }		    
 		}
 	    }				    	    

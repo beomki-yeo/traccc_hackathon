@@ -27,12 +27,11 @@ void doublet_counting(const seedfinder_config& config,
     
     unsigned int num_threads = WARP_SIZE*4; 
     unsigned int num_blocks = internal_sp_view.headers.m_size;
-    unsigned int sh_mem = sizeof(int)*num_threads;
     
     doublet_counting_kernel
-	<<< num_blocks, num_threads, sh_mem >>>(config,
-						internal_sp_view,
-						doublet_counter_container_view);
+	<<< num_blocks, num_threads >>>(config,
+					internal_sp_view,
+					doublet_counter_container_view);
     
     CUDA_ERROR_CHECK(cudaGetLastError());
     CUDA_ERROR_CHECK(cudaDeviceSynchronize());	        
@@ -55,7 +54,6 @@ void doublet_counting_kernel(const seedfinder_config config,
     size_t n_iter = doublet_counter_per_bin.size()/blockDim.x + 1;
 
     // zero initialization
-    extern __shared__ int num_compat_spM_per_thread[];
     num_compat_spM_per_bin = 0;
     __syncthreads();
     
@@ -66,11 +64,12 @@ void doublet_counting_kernel(const seedfinder_config config,
 	    continue;
 	}
        
-		
+	int n_mid_bot = 0;
+	int n_mid_top = 0;
+	
 	auto spM_loc = sp_location({blockIdx.x, sp_idx});
 	auto isp = internal_sp_per_bin[sp_idx];	
 
-	doublet_counter_per_bin[sp_idx].spM = spM_loc;
 	doublet_counter_per_bin[sp_idx].n_mid_bot = 0;
 	doublet_counter_per_bin[sp_idx].n_mid_top = 0;
 	
@@ -82,30 +81,23 @@ void doublet_counting_kernel(const seedfinder_config config,
 	    for (size_t spB_idx=0; spB_idx<neigh_internal_sp_per_bin.size(); ++spB_idx){
 		auto neigh_isp = neigh_internal_sp_per_bin[spB_idx];
 		if (doublet_finding_helper::isCompatible(isp, neigh_isp, config, true)){
-		    doublet_counter_per_bin[sp_idx].n_mid_bot++;
+		    n_mid_bot++;
 		}
 		
 		if (doublet_finding_helper::isCompatible(isp, neigh_isp, config, false)){
-		    doublet_counter_per_bin[sp_idx].n_mid_top++;
+		    n_mid_top++;
 		}
 
 	    }
 	}
-	
-	if (doublet_counter_per_bin[sp_idx].n_mid_bot > 0 &&
-	    doublet_counter_per_bin[sp_idx].n_mid_top > 0){
-	    //atomicAdd(&num_compat_spM_per_bin,1);
-	    num_compat_spM_per_thread[threadIdx.x]++;
+
+	if (n_mid_bot > 0 && n_mid_top > 0){
+	    auto pos = atomicAdd(&num_compat_spM_per_bin,1);
+	    doublet_counter_per_bin[pos].spM = spM_loc;
+	    doublet_counter_per_bin[pos].n_mid_bot = n_mid_bot;
+	    doublet_counter_per_bin[pos].n_mid_top = n_mid_top;
 	}
     }
-
-    __syncthreads();    
-    cuda_helper::reduce_sum<int>(blockDim.x, threadIdx.x, num_compat_spM_per_thread);
-    
-    if (threadIdx.x==0){
-	num_compat_spM_per_bin = num_compat_spM_per_thread[0];
-    } 
-
 }
     
 }// namespace cuda

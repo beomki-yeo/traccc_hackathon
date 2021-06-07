@@ -141,14 +141,29 @@ void operator()(host_internal_spacepoint_container& isp_container,
 	auto n_triplets = triplet_container.headers[i];
 	
 	auto triplets = triplet_container.items[i];
+		
 	triplets.erase(triplets.begin()+n_triplets,
 		       triplets.end());
+
+	std::sort(triplets.begin(), triplets.end(),
+		  [](triplet& t1, triplet& t2){
+		      if (t1.sp2.sp_idx < t2.sp2.sp_idx) return true;
+		      if (t2.sp2.sp_idx < t1.sp2.sp_idx) return false;
+		  });		
+
+	/*
+	for (auto triplet: triplets){
+	    std::cout << "(" << triplet.sp1.sp_idx << " " << triplet.sp2.sp_idx << " " << triplet.weight << ") ";
+	}
+	std::cout << std::endl;
+	*/
+	
 	auto last = std::unique(triplets.begin(), triplets.end(),
 				[] (triplet const & lhs, triplet const & rhs) {
 				    return (lhs.sp2.sp_idx == rhs.sp2.sp_idx);
 				}
 				);		
-
+	
 	for (auto it = triplets.begin(); it != last; it++){
 	    host_triplet_collection triplet_per_spM;
 	    
@@ -163,9 +178,10 @@ void operator()(host_internal_spacepoint_container& isp_container,
 	    if (triplet_per_spM.size() > 0){
 		m_seed_filtering(isp_container, triplet_per_spM, seeds);
 	    }
-	}	
+	}
+	
     }        
-    
+   
 }
 
 private:

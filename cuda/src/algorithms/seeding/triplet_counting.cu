@@ -37,16 +37,15 @@ void triplet_counting(const seedfinder_config& config,
     
     unsigned int num_threads = WARP_SIZE*8; 
     unsigned int num_blocks = internal_sp_view.headers.m_size;
-    unsigned int sh_mem = sizeof(int)*num_threads;
     
     triplet_counting_kernel
-	<<< num_blocks,num_threads, sh_mem >>>(config,
-					       filter_config,
-					       internal_sp_view,
-					       doublet_counter_container_view,
-					       mid_bot_doublet_view,
-					       mid_top_doublet_view,
-					       triplet_counter_container_view);
+	<<< num_blocks,num_threads >>>(config,
+				       filter_config,
+				       internal_sp_view,
+				       doublet_counter_container_view,
+				       mid_bot_doublet_view,
+				       mid_top_doublet_view,
+				       triplet_counter_container_view);
     
     CUDA_ERROR_CHECK(cudaGetLastError());
     CUDA_ERROR_CHECK(cudaDeviceSynchronize());	            
@@ -81,8 +80,6 @@ void triplet_counting_kernel(const seedfinder_config config,
     size_t n_iter = num_mid_bot_doublets_per_bin/blockDim.x + 1;
 
     // zero initialization
-    extern __shared__ int num_compat_mb_per_thread[];
-    num_compat_mb_per_thread[threadIdx.x] = 0;    
     num_compat_mb_per_bin = 0;
     
     __syncthreads();
@@ -94,9 +91,6 @@ void triplet_counting_kernel(const seedfinder_config config,
 	if (mb_idx >= num_mid_bot_doublets_per_bin){
 	    continue;
 	}
-
-	triplet_counter_per_bin[mb_idx].mid_bot_doublet = mid_bot_doublet;
-	triplet_counter_per_bin[mb_idx].n_triplets = 0;
 
 	size_t num_triplets_per_mid_bot = 0;
 	auto& spM_idx = mid_bot_doublet.sp1.sp_idx;
@@ -111,13 +105,9 @@ void triplet_counting_kernel(const seedfinder_config config,
 	size_t mb_end_idx = 0;
 	size_t mt_start_idx = 0;
 	size_t mt_end_idx = 0;
-	
-	for (int i=0; i<internal_sp_per_bin.size(); ++i){
-	    if (doublet_counter_per_bin[i].n_mid_bot == 0 ||
-		doublet_counter_per_bin[i].n_mid_top == 0){
-		continue;
-	    }
-	    	    
+
+	for (int i=0; i<num_compat_spM_per_bin; ++i){
+
 	    mb_end_idx += doublet_counter_per_bin[i].n_mid_bot;
 	    mt_end_idx += doublet_counter_per_bin[i].n_mid_top;
 	    
@@ -126,7 +116,7 @@ void triplet_counting_kernel(const seedfinder_config config,
 	    }
 	    mt_start_idx += doublet_counter_per_bin[i].n_mid_top;
 	}
-
+	
 	if (mt_end_idx >= mid_top_doublets_per_bin.size()){
 	    mt_end_idx = fmin(mid_top_doublets_per_bin.size(), mt_end_idx);
 	}	    
@@ -135,6 +125,8 @@ void triplet_counting_kernel(const seedfinder_config config,
 	    continue;
 	}
 
+	int n_triplets = 0;
+	
 	// iterate over mid-top doublets	
 	for (auto mt_it = mid_top_doublets_per_bin.begin()+mt_start_idx;
 	     mt_it!= mid_top_doublets_per_bin.begin()+mt_end_idx ;
@@ -145,23 +137,16 @@ void triplet_counting_kernel(const seedfinder_config config,
 	    if (triplet_finding_helper::isCompatible(spM, lb, lt, config,
 						      iSinTheta2, scatteringInRegion2,
 						      curvature, impact_parameter)){
-		triplet_counter_per_bin[mb_idx].n_triplets++;
+		n_triplets++;
 	    }	    
 	}
 
-	if (triplet_counter_per_bin[mb_idx].n_triplets > 0){
-	    //atomicAdd(&num_compat_mb_per_bin,1);
-	    num_compat_mb_per_thread[threadIdx.x]++;
+	if (n_triplets > 0){
+	    auto pos = atomicAdd(&num_compat_mb_per_bin,1);
+	    triplet_counter_per_bin[pos].n_triplets = n_triplets;
+	    triplet_counter_per_bin[pos].mid_bot_doublet = mid_bot_doublet;
 	}	
     }
-    
-    __syncthreads();
-    cuda_helper::reduce_sum<int>(blockDim.x, threadIdx.x, num_compat_mb_per_thread);
-    
-    if (threadIdx.x==0){
-	num_compat_mb_per_bin = num_compat_mb_per_thread[0];
-    }
-    
 }
     
 }// namespace cuda
