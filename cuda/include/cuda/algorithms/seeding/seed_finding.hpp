@@ -70,14 +70,13 @@ host_seed_collection operator()(host_internal_spacepoint_container& isp_containe
 	mid_bot_container.headers[i] = 0;
 	mid_top_container.headers[i] = 0;
 	triplet_counter_container.headers[i] = 0;
-	triplet_container.headers[i] = 0;
-
+	triplet_container.headers[i] = 0;	
+	
 	doublet_counter_container.items[i].resize(n_spM);	
 	mid_bot_container.items[i].resize(n_mid_bot_doublets);       
 	mid_top_container.items[i].resize(n_mid_top_doublets);	    
 	triplet_counter_container.items[i].resize(n_mid_bot_doublets);
-	triplet_container.items[i].resize(n_triplets);
-	
+	triplet_container.items[i].resize(n_triplets);	
     }	
 
     first_alloc = false;
