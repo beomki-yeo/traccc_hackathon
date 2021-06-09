@@ -132,6 +132,20 @@ struct seedfilter_config {
   // compatible seed?
   size_t compatSeedLimit = 2;
   // Tool to apply experiment specific cuts on collected middle space points
+
+
+  // seed weight increase
+  float_t good_spB_min_radius = 150.;
+  float_t good_spB_weight_increase = 400.;
+  float_t good_spT_max_radius = 150.;
+  float_t good_spT_weight_increase = 200.;
+    
+  // bottom sp cut
+  float_t good_spB_min_weight=380;
+    
+  // seed cut
+  float_t seed_min_weight = 200;
+  float_t spB_min_radius = 43.;
 };
 
     

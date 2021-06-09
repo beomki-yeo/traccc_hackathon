@@ -47,8 +47,7 @@ bool atlas_cuts::singleSeedCut(const scalar& triplet_weight,
 			       const internal_spacepoint<spacepoint>& spB,
 			       const internal_spacepoint<spacepoint>& spM,
 			       const internal_spacepoint<spacepoint>& spT) const {
-    // bottom
-    
+    // bottom    
     return !(spB.radius() > 150. && triplet_weight < 380.);
 }
 
