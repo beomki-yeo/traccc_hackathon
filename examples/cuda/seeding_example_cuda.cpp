@@ -32,7 +32,7 @@
 
 // custom
 #include "atlas_cuts.hpp"
-#include "tml_multiplet_config.hpp"
+#include "tml_stats_config.hpp"
 
 int seq_run(const std::string& detector_file, const std::string& hits_dir, unsigned int events, bool skip_cpu, bool skip_write)
 {
@@ -116,7 +116,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
     traccc::spacepoint_grouping sg(config, grid_config);
 
     traccc::atlas_cuts cuts;
-    traccc::cuda::tml_multiplet_config tml_cfg;
+    traccc::cuda::tml_stats_config tml_cfg;
     traccc::cuda::seed_finding sf_cuda(config, sg.get_spgrid(), &tml_cfg, &cuts, &mng_mr);
 
     /*time*/ auto start_wall_time = std::chrono::system_clock::now();
@@ -274,18 +274,24 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 			      spT.x(), spT.y(), spT.z(), 0, 0});
         }	
 
-	traccc::seed_statistics_writer sd_stat_writer{std::string("event")+event_number+"-seed_statistics.csv"};
+	traccc::multiplet_statistics_writer multiplet_stat_writer{std::string("event")+event_number+"-multiplet_statistics.csv"};
 	
-	auto stats = sf.get_stats();
+	auto stats = sf.get_multiplet_stats();
 	for (size_t i=0; i<stats.size(); ++i){
 	    auto stat = stats[i];
-	    sd_stat_writer.append({stat.n_spM,
-				   stat.n_mid_bot_doublets,
-				   stat.n_mid_top_doublets,
-				   stat.n_triplets});
+	    multiplet_stat_writer.append({stat.n_spM,
+					  stat.n_mid_bot_doublets,
+					  stat.n_mid_top_doublets,
+					  stat.n_triplets});
 	}
-       
+
+	traccc::seed_statistics_writer seed_stat_writer{std::string("event")+event_number+"-seed_statistics.csv"};
+	
+	auto seed_stats = sf.get_seed_stats();
+	seed_stat_writer.append({seed_stats.n_internal_sp, seed_stats.n_seeds});
+	
 	}
+		
     }
 
     /*time*/ auto end_wall_time = std::chrono::system_clock::now();

@@ -10,7 +10,7 @@
 #include <edm/internal_spacepoint.hpp>
 #include <edm/seed.hpp>
 #include <algorithms/seeding/detail/seeding_config.hpp>
-#include <cuda/algorithms/seeding/detail/multiplet_config.hpp>
+#include <cuda/algorithms/seeding/detail/stats_config.hpp>
 #include <cuda/algorithms/seeding/detail/doublet_counter.hpp>
 #include <cuda/algorithms/seeding/doublet_counting.cuh>
 #include <cuda/algorithms/seeding/triplet_counting.cuh>
@@ -29,13 +29,13 @@ struct seed_finding{
     
 seed_finding(seedfinder_config& config,
 	     std::shared_ptr<spacepoint_grid> sp_grid,
-	     multiplet_config* multi_cfg,
+	     stats_config* stats_cfg,
 	     experiment_cuts* exp_cuts = nullptr,
 	     vecmem::memory_resource* mr = nullptr):    
     m_seedfinder_config(config),
     m_seed_filtering(exp_cuts),
     m_sp_grid(sp_grid),
-    m_multiplet_config(multi_cfg),
+    m_stats_config(stats_cfg),
     m_mr(mr),
 
     doublet_counter_container({host_doublet_counter_container::header_vector(sp_grid->size(false),0, mr),
@@ -61,9 +61,9 @@ host_seed_collection operator()(host_internal_spacepoint_container& isp_containe
     // initialize multiplet container
     for (size_t i=0; i<isp_container.headers.size(); ++i){
 	size_t n_spM = isp_container.items[i].size();
-	size_t n_mid_bot_doublets = m_multiplet_config->get_mid_bot_doublets_size(n_spM);
-	size_t n_mid_top_doublets = m_multiplet_config->get_mid_top_doublets_size(n_spM);
-	size_t n_triplets = m_multiplet_config->get_triplets_size(n_spM);
+	size_t n_mid_bot_doublets = m_stats_config->get_mid_bot_doublets_size(n_spM);
+	size_t n_mid_top_doublets = m_stats_config->get_mid_top_doublets_size(n_spM);
+	size_t n_triplets = m_stats_config->get_triplets_size(n_spM);
 
 	///// Zero initialization
 	doublet_counter_container.headers[i] = 0;
@@ -126,6 +126,17 @@ void operator()(host_internal_spacepoint_container& isp_container,
 				  triplet_counter_container,
 				  triplet_container,
 				  m_mr);
+
+    /*
+    traccc::cuda::seed_filtering(m_seedfilter_config,
+				 isp_container,
+				 doublet_counter,
+				 triplet_counter,
+				 triplet_container,
+				 seed_container,
+				 m_mr);
+    */
+
     
     for(size_t i=0; i < m_sp_grid->size(false); ++i){
 	// Get triplets per spM
@@ -136,19 +147,12 @@ void operator()(host_internal_spacepoint_container& isp_container,
 		
 	triplets.erase(triplets.begin()+n_triplets,
 		       triplets.end());
-
+	
 	std::sort(triplets.begin(), triplets.end(),
 		  [](triplet& t1, triplet& t2){
 		      if (t1.sp2.sp_idx < t2.sp2.sp_idx) return true;
 		      if (t2.sp2.sp_idx < t1.sp2.sp_idx) return false;
 		  });		
-
-	/*
-	for (auto triplet: triplets){
-	    std::cout << "(" << triplet.sp1.sp_idx << " " << triplet.sp2.sp_idx << " " << triplet.weight << ") ";
-	}
-	std::cout << std::endl;
-	*/
 	
 	auto last = std::unique(triplets.begin(), triplets.end(),
 				[] (triplet const & lhs, triplet const & rhs) {
@@ -182,7 +186,7 @@ private:
     const seedfinder_config m_seedfinder_config;
     const seedfilter_config m_seedfilter_config;
     std::shared_ptr< spacepoint_grid > m_sp_grid;    
-    multiplet_config* m_multiplet_config;
+    stats_config* m_stats_config;
     seed_filtering m_seed_filtering;
 
     host_doublet_counter_container doublet_counter_container;

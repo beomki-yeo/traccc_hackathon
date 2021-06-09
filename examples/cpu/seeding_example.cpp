@@ -196,17 +196,24 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 			      spB.x(), spB.y(), spB.z(), 0, 0,
 			      spM.x(), spM.y(), spM.z(), 0, 0,
 			      spT.x(), spT.y(), spT.z(), 0, 0});
-        }	
-
-	traccc::seed_statistics_writer sd_stat_writer{std::string("event")+event_number+"-seed_statistics.csv"};
-	auto stats = sf.get_stats();
+        }
+	
+	traccc::multiplet_statistics_writer multiplet_stat_writer{std::string("event")+event_number+"-multiplet_statistics.csv"};
+	
+	auto stats = sf.get_multiplet_stats();
 	for (size_t i=0; i<stats.size(); ++i){
 	    auto stat = stats[i];
-	    sd_stat_writer.append({stat.n_spM,
-				   stat.n_mid_bot_doublets,
-				   stat.n_mid_top_doublets,
-				   stat.n_triplets});
-	}	
+	    multiplet_stat_writer.append({stat.n_spM,
+					  stat.n_mid_bot_doublets,
+					  stat.n_mid_top_doublets,
+					  stat.n_triplets});
+	}
+
+	traccc::seed_statistics_writer seed_stat_writer{std::string("event")+event_number+"-seed_statistics.csv"};
+	
+	auto seed_stats = sf.get_seed_stats();
+	seed_stat_writer.append({seed_stats.n_internal_sp, seed_stats.n_seeds});    
+       
     }
     
     std::cout << "==> Statistics ... " << std::endl;

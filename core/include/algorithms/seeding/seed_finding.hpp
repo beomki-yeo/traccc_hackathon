@@ -11,7 +11,7 @@
 #include <edm/internal_spacepoint.hpp>
 #include <edm/seed.hpp>
 #include <algorithms/seeding/detail/seeding_config.hpp>
-#include <algorithms/seeding/detail/seed_statistics.hpp>
+#include <algorithms/seeding/detail/statistics.hpp>
 #include <algorithms/seeding/doublet_finding.hpp>
 #include <algorithms/seeding/triplet_finding.hpp>
 #include <algorithms/seeding/seed_filtering.hpp>
@@ -47,7 +47,7 @@ void operator()(host_seed_collection& seeds){
 	auto& bin_information = m_isp_container.headers[i];
 	auto& spM_collection = m_isp_container.items[i];
 
-	seed_statistics stats({0,0,0,0});
+	multiplet_statistics stats({0,0,0,0});
 	stats.n_spM = spM_collection.size();
 	
 	/// iterate over middle spacepoints
@@ -75,26 +75,35 @@ void operator()(host_seed_collection& seeds){
 		triplets_per_spM.insert(std::end(triplets_per_spM), triplets.begin(), triplets.end());
 	    }
 
-	    stats.n_mid_bot_doublets += doublets_mid_bot.size();
-	    stats.n_mid_top_doublets += doublets_mid_top.size();
-	    stats.n_triplets += triplets_per_spM.size();
-	    
 	    m_seed_filtering(m_isp_container,
 			     triplets_per_spM,
-			     seeds);	    	    	    
+			     seeds);
+	    
+	    stats.n_mid_bot_doublets += doublets_mid_bot.size();
+	    stats.n_mid_top_doublets += doublets_mid_top.size();
+	    stats.n_triplets += triplets_per_spM.size();	   
 	}
 
-	m_stats.push_back(stats);
+	m_multiplet_stats.push_back(stats);
     }
+
+    m_seed_stats = seed_statistics({0,0});
+    for (size_t i=0; i<m_isp_container.headers.size(); ++i){
+	m_seed_stats.n_internal_sp += m_isp_container.items[i].size();
+    }
+    m_seed_stats.n_seeds = seeds.size();
 }
 
-std::vector< seed_statistics > get_stats(){ return m_stats; }
+std::vector< multiplet_statistics > get_multiplet_stats(){ return m_multiplet_stats; }
+
+seed_statistics get_seed_stats(){ return m_seed_stats; }
     
 private:
     host_internal_spacepoint_container& m_isp_container;
     doublet_finding m_doublet_finding;
     triplet_finding m_triplet_finding;
     seed_filtering m_seed_filtering;
-    std::vector< seed_statistics > m_stats;
+    seed_statistics m_seed_stats;
+    std::vector< multiplet_statistics > m_multiplet_stats;
 };
 } // namespace traccc
