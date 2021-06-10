@@ -3,7 +3,8 @@ add_library(traccc_cuda_algorithms SHARED
   ${TRACCC_CUDA_ALGORITHMS_SOURCE_DIR}/seeding/doublet_finding.cu
   ${TRACCC_CUDA_ALGORITHMS_SOURCE_DIR}/seeding/triplet_counting.cu
   ${TRACCC_CUDA_ALGORITHMS_SOURCE_DIR}/seeding/triplet_finding.cu
-  ${TRACCC_CUDA_ALGORITHMS_SOURCE_DIR}/seeding/weight_updating.cu)
+  ${TRACCC_CUDA_ALGORITHMS_SOURCE_DIR}/seeding/weight_updating.cu
+  ${TRACCC_CUDA_ALGORITHMS_SOURCE_DIR}/seeding/seed_selecting.cu)
 
 target_include_directories(traccc_cuda_algorithms
   PUBLIC

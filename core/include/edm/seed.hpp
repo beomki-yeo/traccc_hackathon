@@ -43,19 +43,19 @@ namespace traccc{
     using device_seed_collection = seed_collection< vecmem::device_vector >;
 
     using host_seed_container
-    = host_container< size_t, seed >;
+    = host_container< int, seed >;
 
     using device_seed_container
-    = device_container< size_t, seed >;
+    = device_container< int, seed >;
 
     using seed_container_data
-    = container_data< size_t, seed >;
+    = container_data< int, seed >;
 
     using seed_container_buffer
-    = container_buffer< size_t, seed >;
+    = container_buffer< int, seed >;
 
     using seed_container_view
-    = container_view< size_t, seed >;
+    = container_view< int, seed >;
     
 }; //namespace traccc
 

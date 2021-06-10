@@ -119,7 +119,6 @@ void triplet_finding_kernel(const seedfinder_config config,
 	size_t mt_start_idx = 0;
 	size_t mt_end_idx = 0;
 	size_t ref_idx;
-
 	
 	for (int i=0; i<num_mid_bot_doublets_per_bin; i++){	    
 	    if (mid_bot_doublet == mid_bot_doublets_per_bin[i]){

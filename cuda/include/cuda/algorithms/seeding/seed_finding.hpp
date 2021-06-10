@@ -17,6 +17,7 @@
 #include <cuda/algorithms/seeding/doublet_finding.cuh>
 #include <cuda/algorithms/seeding/triplet_finding.cuh>
 #include <cuda/algorithms/seeding/weight_updating.cuh>
+#include <cuda/algorithms/seeding/seed_selecting.cuh>
 
 #include <iostream>
 #include <algorithm>
@@ -51,7 +52,9 @@ seed_finding(seedfinder_config& config,
 			       host_triplet_counter_container::item_vector(sp_grid->size(false),mr)}),
     
     triplet_container({host_triplet_container::header_vector(sp_grid->size(false), 0, mr),
-		       host_triplet_container::item_vector(sp_grid->size(false),mr)})    
+		       host_triplet_container::item_vector(sp_grid->size(false),mr)}),
+    seed_container({host_seed_container::header_vector(1, 0, mr),
+		    host_seed_container::item_vector(1,mr)})
     {
 	first_alloc = true;
     }
@@ -59,6 +62,8 @@ seed_finding(seedfinder_config& config,
 host_seed_collection operator()(host_internal_spacepoint_container& isp_container){
     
     // initialize multiplet container
+
+    size_t n_internal_sp = 0;
     for (size_t i=0; i<isp_container.headers.size(); ++i){
 	size_t n_spM = isp_container.items[i].size();
 	size_t n_mid_bot_doublets = m_stats_config->get_mid_bot_doublets_size(n_spM);
@@ -70,15 +75,20 @@ host_seed_collection operator()(host_internal_spacepoint_container& isp_containe
 	mid_bot_container.headers[i] = 0;
 	mid_top_container.headers[i] = 0;
 	triplet_counter_container.headers[i] = 0;
-	triplet_container.headers[i] = 0;	
+	triplet_container.headers[i] = 0;
 	
 	doublet_counter_container.items[i].resize(n_spM);	
 	mid_bot_container.items[i].resize(n_mid_bot_doublets);       
 	mid_top_container.items[i].resize(n_mid_top_doublets);	    
 	triplet_counter_container.items[i].resize(n_mid_bot_doublets);
-	triplet_container.items[i].resize(n_triplets);	
+	triplet_container.items[i].resize(n_triplets);
+
+	n_internal_sp += isp_container.items[i].size();
     }	
 
+    seed_container.headers[0] = 0;
+    seed_container.items[0].resize(m_stats_config->get_seeds_size(n_internal_sp));
+    
     first_alloc = false;
     
     host_seed_collection seed_collection;
@@ -174,10 +184,8 @@ void operator()(host_internal_spacepoint_container& isp_container,
 	    if (triplet_per_spM.size() > 0){
 		m_seed_filtering(isp_container, triplet_per_spM, seeds);
 	    }
-	}
-	
-    }        
-   
+	}	
+    }           
 }
 
 private:
@@ -194,6 +202,7 @@ private:
     host_doublet_container mid_top_container;
     host_triplet_counter_container triplet_counter_container;
     host_triplet_container triplet_container;
+    host_seed_container seed_container;
     vecmem::memory_resource* m_mr;
 };        
 
