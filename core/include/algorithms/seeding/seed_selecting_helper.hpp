@@ -28,7 +28,7 @@ void seed_weight(const seedfilter_config& filter_config,
 	weight = filter_config.good_spT_weight_increase;
     }
 
-    triplet_weight += weight;
+    triplet_weight += weight;    
     return;
 }
 

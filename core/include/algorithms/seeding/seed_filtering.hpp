@@ -58,6 +58,8 @@ void operator()(host_internal_spacepoint_container& isp_container,
 		      return seed1.weight > seed2.weight;
 		  }
 		  else {
+		      return seed1.z_vertex < seed2.z_vertex;
+		      /*
 		      float seed1_sum = 0;
 		      float seed2_sum = 0;
 		      seed1_sum += pow(seed1.spB.y(),2) + pow(seed1.spB.z(),2);
@@ -69,6 +71,7 @@ void operator()(host_internal_spacepoint_container& isp_container,
 		      seed2_sum += pow(seed2.spT.y(),2) + pow(seed2.spT.z(),2);
 		      
 		      return seed1_sum > seed2_sum;		      
+		      */
 		  }
 	      });
     if (m_exp_cuts != nullptr){

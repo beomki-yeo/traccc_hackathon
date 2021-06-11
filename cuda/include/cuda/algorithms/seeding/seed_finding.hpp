@@ -59,8 +59,7 @@ seed_finding(seedfinder_config& config,
 	first_alloc = true;
     }
     
-host_seed_collection operator()(host_internal_spacepoint_container& isp_container){
-    
+host_seed_container operator()(host_internal_spacepoint_container& isp_container){  
     // initialize multiplet container
 
     size_t n_internal_sp = 0;
@@ -91,15 +90,6 @@ host_seed_collection operator()(host_internal_spacepoint_container& isp_containe
     
     first_alloc = false;
     
-    host_seed_collection seed_collection;
-    this->operator()(isp_container, seed_collection);
-    
-    return seed_collection;
-}
-        
-void operator()(host_internal_spacepoint_container& isp_container,
-		host_seed_collection& seeds){
-
     traccc::cuda::doublet_counting(m_seedfinder_config,
 				   isp_container,
 				   doublet_counter_container,
@@ -136,7 +126,7 @@ void operator()(host_internal_spacepoint_container& isp_container,
 				  triplet_counter_container,
 				  triplet_container,
 				  m_mr);
-    /*
+    
     traccc::cuda::seed_selecting(m_seedfilter_config,
 				 isp_container,
 				 doublet_counter_container,
@@ -145,56 +135,9 @@ void operator()(host_internal_spacepoint_container& isp_container,
 				 seed_container,
 				 m_mr);
     
-    auto n_seeds = seed_container.headers[0];
-
-    //std::cout << n_seeds << std::endl;
-    
-    std::copy(seed_container.items[0].begin(),
-	      seed_container.items[0].begin()+n_seeds,
-	      std::back_inserter(seeds));
-    */
-    
-    for(size_t i=0; i < m_sp_grid->size(false); ++i){
-	// Get triplets per spM
-	
-	auto n_triplets = triplet_container.headers[i];
-	
-	auto triplets = triplet_container.items[i];
-		
-	triplets.erase(triplets.begin()+n_triplets,
-		       triplets.end());
-	
-	std::sort(triplets.begin(), triplets.end(),
-		  [](triplet& t1, triplet& t2){
-		      if (t1.sp2.sp_idx < t2.sp2.sp_idx) return true;
-		      if (t2.sp2.sp_idx < t1.sp2.sp_idx) return false;
-		  });		
-	
-	auto last = std::unique(triplets.begin(), triplets.end(),
-				[] (triplet const & lhs, triplet const & rhs) {
-				    return (lhs.sp2.sp_idx == rhs.sp2.sp_idx);
-				}
-				);		
-	
-	for (auto it = triplets.begin(); it != last; it++){
-	    host_triplet_collection triplet_per_spM;
-	    
-	    for (int j=0; j<n_triplets; j++){
-		auto& triplet = triplet_container.items[i][j];
-		
-		if (triplet.sp2.sp_idx == it->sp2.sp_idx){
-		    triplet_per_spM.push_back(triplet);
-		}
-	    }
-
-	    if (triplet_per_spM.size() > 0){
-		m_seed_filtering(isp_container, triplet_per_spM, seeds);
-	    }
-	}	
-    }           
-    
+    return seed_container;
 }
-
+    
 private:
 
     bool first_alloc;

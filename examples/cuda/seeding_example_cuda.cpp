@@ -205,7 +205,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 	
 	/*time*/ auto start_seeding_cuda = std::chrono::system_clock::now();
 	auto seeds_cuda = sf_cuda(internal_sp_per_event);
-	n_seeds_cuda+=seeds_cuda.size();
+	n_seeds_cuda+=seeds_cuda.headers[0];
 	
 	/*time*/ auto end_seeding_cuda = std::chrono::system_clock::now();	
 	/*time*/ std::chrono::duration<double> time_seeding_cuda = end_seeding_cuda - start_seeding_cuda; 
@@ -217,7 +217,11 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir, unsig
 	
 	int n_match = 0;
 	for (auto seed: seeds){
-	    if (std::find(seeds_cuda.begin(), seeds_cuda.end(), seed) != seeds_cuda.end()){
+	    if (std::find(seeds_cuda.items[0].begin(),
+			  seeds_cuda.items[0].begin()+n_seeds_cuda,
+			  seed)
+		!= seeds_cuda.items[0].begin()+n_seeds_cuda){
+		
 		n_match++;
 	    }
 	}

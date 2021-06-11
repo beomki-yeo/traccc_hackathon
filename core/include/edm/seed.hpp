@@ -30,7 +30,7 @@ namespace traccc{
     };
     
     inline
-    bool operator==(const seed& lhs, const seed& rhs){
+    bool operator==(const seed& lhs, const seed& rhs){	
 	return ( lhs.spB == rhs.spB &&
 		 lhs.spM == rhs.spM &&
 		 lhs.spT == rhs.spT);
