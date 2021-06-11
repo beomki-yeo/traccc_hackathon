@@ -33,7 +33,11 @@ namespace traccc{
 		lhs.sp3.sp_idx == rhs.sp3.sp_idx);
     }    
 
-    
+    __CUDA_HOST_DEVICE__
+    bool operator<(const triplet& lhs, const triplet& rhs) {
+	return lhs.weight < rhs.weight;
+    }
+       
     /// Container of triplet belonging to one detector module
     template< template< typename > class vector_t >
     using triplet_collection = vector_t< triplet >;

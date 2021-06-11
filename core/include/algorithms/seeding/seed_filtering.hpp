@@ -41,7 +41,6 @@ void operator()(host_internal_spacepoint_container& isp_container,
 	auto spT = isp_container.items[spT_idx.bin_idx][spT_idx.sp_idx];
 	
 	if (m_exp_cuts != nullptr){
-	    
 	    m_exp_cuts->seedWeight(triplet.weight, spB, spM, spT);
 	    if (!m_exp_cuts->singleSeedCut(triplet.weight, spB, spM, spT)){
 		continue;
@@ -49,9 +48,9 @@ void operator()(host_internal_spacepoint_container& isp_container,
 	}       
 	
 	seeds_per_spM.push_back({spB.m_sp,spM.m_sp,spT.m_sp,
-				 triplet.weight, triplet.z_vertex});
+				 triplet.weight, triplet.z_vertex});	
     }
-
+    
     // sort seeds based on their weights	
     std::sort(seeds_per_spM.begin(), seeds_per_spM.end(),
 	      [](seed& seed1, seed& seed2){

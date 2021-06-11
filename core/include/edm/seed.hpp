@@ -18,6 +18,7 @@ namespace traccc{
 	float weight;
 	float z_vertex;
 
+	__CUDA_HOST_DEVICE__    
 	seed& operator=(const seed& aSeed){
 	    spB = aSeed.spB;
 	    spM = aSeed.spM;
@@ -25,9 +26,9 @@ namespace traccc{
 	    weight = aSeed.weight;
 	    z_vertex = aSeed.z_vertex;
 	    return *this;
-	}
+	}	
     };
-
+    
     inline
     bool operator==(const seed& lhs, const seed& rhs){
 	return ( lhs.spB == rhs.spB &&

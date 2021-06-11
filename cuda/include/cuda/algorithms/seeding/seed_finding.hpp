@@ -136,17 +136,23 @@ void operator()(host_internal_spacepoint_container& isp_container,
 				  triplet_counter_container,
 				  triplet_container,
 				  m_mr);
-
     /*
-    traccc::cuda::seed_filtering(m_seedfilter_config,
+    traccc::cuda::seed_selecting(m_seedfilter_config,
 				 isp_container,
-				 doublet_counter,
-				 triplet_counter,
+				 doublet_counter_container,
+				 triplet_counter_container,
 				 triplet_container,
 				 seed_container,
 				 m_mr);
-    */
+    
+    auto n_seeds = seed_container.headers[0];
 
+    //std::cout << n_seeds << std::endl;
+    
+    std::copy(seed_container.items[0].begin(),
+	      seed_container.items[0].begin()+n_seeds,
+	      std::back_inserter(seeds));
+    */
     
     for(size_t i=0; i < m_sp_grid->size(false); ++i){
 	// Get triplets per spM
@@ -186,6 +192,7 @@ void operator()(host_internal_spacepoint_container& isp_container,
 	    }
 	}	
     }           
+    
 }
 
 private:

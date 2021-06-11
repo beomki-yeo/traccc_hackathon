@@ -9,8 +9,26 @@
 #include <algorithm>
 
 namespace traccc {
-
 namespace cuda{
+
+struct pol1_params{
+    scalar p0;
+    scalar p1;
+    
+    size_t operator()(size_t n) const {
+	return size_t( p0+p1*n );
+    }
+};
+    
+struct pol2_params{
+    scalar p0;
+    scalar p1;
+    scalar p2;
+    
+    size_t operator()(size_t n) const {
+	return size_t( p0+p1*n+p2*n*n );
+    }
+};
     
 class tml_stats_config: public stats_config {
 public:

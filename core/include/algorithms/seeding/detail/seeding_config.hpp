@@ -134,6 +134,8 @@ struct seedfilter_config {
   // Tool to apply experiment specific cuts on collected middle space points
 
 
+  size_t max_triplets_per_spM = 5;
+
   // seed weight increase
   float_t good_spB_min_radius = 150.;
   float_t good_spB_weight_increase = 400.;

@@ -165,11 +165,27 @@ void triplet_finding_kernel(const seedfinder_config config,
 	    if (triplet_finding_helper::isCompatible(spM, lb, lt, config,
 						     iSinTheta2, scatteringInRegion2,
 						     curvature, impact_parameter)){
+
+		auto& spB_loc = mid_bot_doublet.sp2;
+		auto& spM_loc = mid_bot_doublet.sp1;		
+		auto& spT_loc = (*mt_it).sp2;
 		
+		triplet aTriplet({spB_loc,
+				  spM_loc,
+				  spT_loc,
+				  curvature,
+				  impact_parameter,
+				  -impact_parameter*filter_config.impactWeightFactor,
+				  lb.Zo});
+		
+		auto& spB = internal_sp_device.items[spB_loc.bin_idx][spB_loc.sp_idx];
+		auto& spT = internal_sp_device.items[spT_loc.bin_idx][spT_loc.sp_idx];
+				
 		size_t pos = triplet_start_idx + n_triplets_per_mb;	  
 		if (pos>=triplets_per_bin.size()) {
 		    continue;
 		}
+
 		
 		triplets_per_bin[pos]
 		    = triplet({mid_bot_doublet.sp2,

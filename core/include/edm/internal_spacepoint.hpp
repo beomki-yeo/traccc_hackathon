@@ -51,8 +51,9 @@ namespace traccc {
 	scalar m_r;
 	scalar m_varianceR;
 	scalar m_varianceZ;
-	const spacepoint& m_sp;
-
+	//const spacepoint& m_sp;
+	spacepoint m_sp;
+	
 	__CUDA_HOST_DEVICE__
 	internal_spacepoint(const spacepoint& sp, const vector3& globalPos,
 			    const vector2& offsetXY,
