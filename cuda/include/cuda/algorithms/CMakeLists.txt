@@ -16,7 +16,7 @@ target_include_directories(traccc_cuda_algorithms
 target_compile_options(traccc_cuda_algorithms
   PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:
   --expt-relaxed-constexpr
-  --fmad=false>)
+  -fmad=false>)
 
 target_link_libraries(traccc_cuda_algorithms PUBLIC traccc::core vecmem::core vecmem::cuda)
 
