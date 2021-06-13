@@ -87,7 +87,7 @@ void operator()(const bin_information& bin_information,
 		if (!doublet_finding_helper::isCompatible(spM,spT,m_config,bottom)){
 		    continue;
 		}
-
+		
 		lin_circle lin = doublet_finding_helper::transform_coordinates(spM,spT,bottom);
 		sp_location spT_location = {bin_idx,sp_idx};		
 		doublets.push_back(doublet({spM_location, spT_location, lin}));
