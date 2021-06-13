@@ -7,6 +7,9 @@
 
 #include <thrust/sort.h>
 #include <thrust/execution_policy.h>
+#include <thrust/functional.h>
+#include <thrust/device_ptr.h>
+
 #include <cuda/algorithms/seeding/seed_selecting.cuh>
 #include <cuda/utils/cuda_helper.cuh>
 #include <algorithm>
@@ -53,6 +56,17 @@ void seed_selecting(const seedfilter_config& filter_config,
 		    vecmem::memory_resource* resource){
     
     auto internal_sp_view = get_data(internal_sp_container, resource);
+
+    /*
+    for (size_t i=0; i<internal_sp_view.headers.m_size; ++i){
+	thrust::device_ptr<triplet> triplet_ptr(&triplet_container.items[i][0]);
+
+	thrust::sort(thrust::device,
+		     triplet_ptr,
+		     triplet_ptr+triplet_container.headers[i],
+		     triplet_spM_ascending());	
+    }
+    */
     auto doublet_counter_container_view = get_data(doublet_counter_container, resource);
     auto triplet_counter_container_view = get_data(triplet_counter_container, resource);
     auto triplet_container_view = get_data(triplet_container, resource);
@@ -60,7 +74,7 @@ void seed_selecting(const seedfilter_config& filter_config,
     
     unsigned int num_threads = WARP_SIZE*1; 
     unsigned int num_blocks = internal_sp_view.headers.m_size;
-    unsigned int sh_mem = sizeof(triplet)*num_threads*filter_config.max_triplets_per_spM;
+    unsigned int sh_mem = sizeof(triplet)*num_threads*filter_config.max_triplets_per_spM;        
     
     seed_selecting_kernel
 	<<< num_blocks,num_threads, sh_mem >>>(filter_config,
