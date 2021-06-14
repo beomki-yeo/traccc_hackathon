@@ -41,7 +41,7 @@ void operator()(const doublet& mid_bot,
     auto& spM_idx = mid_bot.sp1;
     auto& spM = m_isp_container.items[spM_idx.bin_idx][spM_idx.sp_idx];
 
-    scalar iSinTheta2 = 1 + lb.cotTheta * lb.cotTheta;
+    scalar iSinTheta2 = 1 + lb.cotTheta() * lb.cotTheta();
     scalar scatteringInRegion2 = m_config.maxScatteringAngle2 * iSinTheta2;
     scatteringInRegion2 *= m_config.sigmaScattering * m_config.sigmaScattering;
     scalar curvature, impact_parameter;
@@ -61,9 +61,8 @@ void operator()(const doublet& mid_bot,
 			    mid_bot.sp1, // middle
 			    mid_top.sp2, // top
 			    curvature,   // curvature
-			    //impact_parameter, // impact parameter
 			    -impact_parameter*m_filter_config.impactWeightFactor,
-			    lb.Zo});
+			    lb.Zo()});
     }
     
     for (size_t i=0; i<triplets.size(); ++i){

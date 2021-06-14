@@ -18,7 +18,6 @@ namespace traccc{
 	sp_location sp2; // middle
 	sp_location sp3; // top
 	scalar curvature;
-	//scalar impact_parameter;
 	scalar weight;
 	scalar z_vertex;
     };    

@@ -13,7 +13,6 @@ namespace cuda{
 
 __global__
 void triplet_counting_kernel(const seedfinder_config config,
-			     //const seedfilter_config filter_config,
 			     internal_spacepoint_container_view internal_sp_view,
 			     doublet_counter_container_view doublet_counter_view,
 			     doublet_container_view mid_bot_doublet_view,
@@ -21,7 +20,6 @@ void triplet_counting_kernel(const seedfinder_config config,
 			     triplet_counter_container_view triplet_counter_view);
     
 void triplet_counting(const seedfinder_config& config,
-		      //const seedfilter_config& filter_config,
 		      host_internal_spacepoint_container& internal_sp_container,
 		      host_doublet_counter_container& doublet_counter_container,
 		      host_doublet_container& mid_bot_doublet_container,
@@ -42,7 +40,6 @@ void triplet_counting(const seedfinder_config& config,
     
     triplet_counting_kernel
 	<<< num_blocks,num_threads >>>(config,
-				       //filter_config,
 				       internal_sp_view,
 				       doublet_counter_container_view,
 				       mid_bot_doublet_view,
@@ -55,7 +52,6 @@ void triplet_counting(const seedfinder_config& config,
 
 __global__
 void triplet_counting_kernel(const seedfinder_config config,
-			     //const seedfilter_config filter_config,
 			     internal_spacepoint_container_view internal_sp_view,
 			     doublet_counter_container_view doublet_counter_view,
 			     doublet_container_view mid_bot_doublet_view,
@@ -109,7 +105,7 @@ void triplet_counting_kernel(const seedfinder_config config,
 	//auto& lb = lb_per_thread[threadIdx.x];
 	//lb = doublet_finding_helper::transform_coordinates(spM, spB, true);
 	
-	scalar iSinTheta2 = 1 + lb.cotTheta * lb.cotTheta;
+	scalar iSinTheta2 = 1 + lb.cotTheta() * lb.cotTheta();
 	scalar scatteringInRegion2 = config.maxScatteringAngle2 * iSinTheta2;
 	scatteringInRegion2 *= config.sigmaScattering * config.sigmaScattering;
 	scalar curvature, impact_parameter;	

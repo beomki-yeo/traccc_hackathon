@@ -104,20 +104,20 @@ lin_circle doublet_finding_helper::transform_coordinates(const internal_spacepoi
     float cot_theta = deltaZ * iDeltaR * bottomFactor;
     // VERY frequent (SP^3) access
     lin_circle l;
-    l.cotTheta = cot_theta;
+    l.m_cotTheta = cot_theta;
     // location on z-axis of this SP-duplet
-    l.Zo = zM - rM * cot_theta;
-    l.iDeltaR = iDeltaR;
+    l.m_Zo = zM - rM * cot_theta;
+    l.m_iDeltaR = iDeltaR;
     // transformation of circle equation (x,y) into linear equation (u,v)
     // x^2 + y^2 - 2x_0*x - 2y_0*y = 0
     // is transformed into
     // 1 - 2x_0*u - 2y_0*v = 0
     // using the following m_U and m_V
     // (u = A + B*v); A and B are created later on
-    l.U = x * iDeltaR2;
-    l.V = y * iDeltaR2;
+    l.m_U = x * iDeltaR2;
+    l.m_V = y * iDeltaR2;
     // error term for sp-pair without correlation of middle space point
-    l.Er = ((varianceZM + sp2.varianceZ()) +
+    l.m_Er = ((varianceZM + sp2.varianceZ()) +
 	    (cot_theta * cot_theta) * (varianceRM + sp2.varianceR())) *
 	iDeltaR2;
     

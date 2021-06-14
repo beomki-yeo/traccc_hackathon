@@ -15,7 +15,6 @@ namespace traccc{
     struct doublet{	
 	sp_location sp1;
 	sp_location sp2;
-	//lin_circle lin;
     };
 
     __CUDA_HOST_DEVICE__

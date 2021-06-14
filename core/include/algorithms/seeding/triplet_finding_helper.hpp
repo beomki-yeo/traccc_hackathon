@@ -39,11 +39,11 @@ bool triplet_finding_helper::isCompatible(const internal_spacepoint<spacepoint>&
     
     // add errors of spB-spM and spM-spT pairs and add the correlation term
     // for errors on spM
-    float error2 = lt.Er + lb.Er +
-	2 * (lb.cotTheta * lt.cotTheta * spM.varianceR() + spM.varianceZ()) *
-	lb.iDeltaR * lt.iDeltaR;
+    float error2 = lt.Er() + lb.Er() +
+	2 * (lb.cotTheta() * lt.cotTheta() * spM.varianceR() + spM.varianceZ()) *
+	lb.iDeltaR() * lt.iDeltaR();
     
-    float deltaCotTheta = lb.cotTheta - lt.cotTheta;
+    float deltaCotTheta = lb.cotTheta() - lt.cotTheta();
     float deltaCotTheta2 = deltaCotTheta * deltaCotTheta;
     float error;
     float dCotThetaMinusError2;
@@ -66,16 +66,16 @@ bool triplet_finding_helper::isCompatible(const internal_spacepoint<spacepoint>&
     }
     
     // protects against division by 0
-    float dU = lt.U - lb.U;	
+    float dU = lt.U() - lb.U();	
     if (dU == 0.) {
 	return false;
     }
 
     // A and B are evaluated as a function of the circumference parameters
     // x_0 and y_0
-    float A = (lt.V - lb.V) / dU;
+    float A = (lt.V() - lb.V()) / dU;
     float S2 = 1. + A * A;
-    float B = lb.V - A * lb.U;
+    float B = lb.V() - A * lb.U();
     float B2 = B * B;
     // sqrt(S2)/B = 2 * helixradius
     // calculated radius must not be smaller than minimum radius

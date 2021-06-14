@@ -11,15 +11,7 @@
 namespace traccc{
 
 struct lin_circle {
-
-    float Zo;
-    float cotTheta;
-    float iDeltaR;
-    float Er;
-    float U;
-    float V;
     
-    /*
     float m_Zo;
     float m_cotTheta;
     float m_iDeltaR;
@@ -28,23 +20,23 @@ struct lin_circle {
     float m_V;
     
     __CUDA_HOST_DEVICE__
-    const float& Zo() const { return Zo; }
+    const float& Zo() const { return m_Zo; }
 
     __CUDA_HOST_DEVICE__
-    const float& cotTheta() const { return cotTheta; }
+    const float& cotTheta() const { return m_cotTheta; }
 
     __CUDA_HOST_DEVICE__
-    const float& iDeltaR() const { return iDeltaR; }
+    const float& iDeltaR() const { return m_iDeltaR; }
 
     __CUDA_HOST_DEVICE__
-    const float& Er() const { return Er; }
+    const float& Er() const { return m_Er; }
 
-        __CUDA_HOST_DEVICE__
-    const float& U() const { return U; }
+    __CUDA_HOST_DEVICE__
+    const float& U() const { return m_U; }
     
     __CUDA_HOST_DEVICE__
-    const float& V() const { return V; }
-    */
+    const float& V() const { return m_V; }
+
 };
 
 

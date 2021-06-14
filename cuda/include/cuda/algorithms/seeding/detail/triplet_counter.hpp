@@ -15,7 +15,7 @@ namespace cuda{
 
 struct triplet_counter{
     doublet mid_bot_doublet;
-    size_t n_triplets;
+    size_t n_triplets = 0;
 }; 
 
     /// Container of triplet_counter belonging to one detector module

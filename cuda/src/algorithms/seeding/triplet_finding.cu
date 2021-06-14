@@ -121,7 +121,7 @@ void triplet_finding_kernel(const seedfinder_config config,
 	//auto& lb = lb_per_thread[threadIdx.x];
 	//lb = doublet_finding_helper::transform_coordinates(spM, spB, true);
 	
-	scalar iSinTheta2 = 1 + lb.cotTheta * lb.cotTheta;
+	scalar iSinTheta2 = 1 + lb.cotTheta() * lb.cotTheta();
 	scalar scatteringInRegion2 = config.maxScatteringAngle2 * iSinTheta2;
 	scatteringInRegion2 *= config.sigmaScattering * config.sigmaScattering;
 	scalar curvature, impact_parameter;	
@@ -192,7 +192,7 @@ void triplet_finding_kernel(const seedfinder_config config,
 			       mid_top_doublet.sp2,
 			       curvature,
 			       -impact_parameter*filter_config.impactWeightFactor,
-			       lb.Zo});
+			       lb.Zo()});
 
 		num_triplets_per_thread[threadIdx.x]++;
 		n_triplets_per_mb++;	       		
