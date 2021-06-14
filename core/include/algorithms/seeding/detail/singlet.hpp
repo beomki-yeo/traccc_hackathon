@@ -13,7 +13,7 @@ struct sp_location{
     /// index of the bin of the spacepoint grid
     size_t bin_idx;
     /// index of the spacepoint in the bin
-    size_t sp_idx; 
+    size_t sp_idx;
 };       	
 
 __CUDA_HOST_DEVICE__
@@ -36,21 +36,21 @@ bool operator==(const sp_location& lhs, const sp_location& rhs){
 
     /// Convenience declaration for the singlet container type to use in host code
     using host_singlet_container
-    = host_container< int, sp_location >;
+    = host_container< unsigned int, sp_location >;
 
     /// Convenience declaration for the singlet container type to use in device code
     using device_singlet_container
-    = device_container< int, sp_location >;
+    = device_container< unsigned int, sp_location >;
 
     /// Convenience declaration for the singlet container data type to use in host code
     using singlet_container_data
-    = container_data< int, sp_location >;
+    = container_data< unsigned int, sp_location >;
 
     /// Convenience declaration for the singlet container buffer type to use in host code
     using singlet_container_buffer
-    = container_buffer< int, sp_location >;
+    = container_buffer< unsigned int, sp_location >;
 
     /// Convenience declaration for the singlet container view type to use in host code
     using singlet_container_view
-    = container_view< int, sp_location >;        
+    = container_view< unsigned int, sp_location >;        
 }

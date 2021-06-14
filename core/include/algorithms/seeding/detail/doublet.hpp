@@ -7,24 +7,15 @@
 
 #pragma once
 #include <algorithms/seeding/detail/singlet.hpp>
-
+#include <algorithms/seeding/detail/lin_circle.hpp>
 
 namespace traccc{
         
-    struct lin_circle {
-	float Zo;
-	float cotTheta;
-	float iDeltaR;
-	float Er;
-	float U;
-	float V;
-    };
-
     // Middle - Bottom or Middle - Top
     struct doublet{	
 	sp_location sp1;
 	sp_location sp2;
-	lin_circle lin;
+	//lin_circle lin;
     };
 
     __CUDA_HOST_DEVICE__
@@ -49,22 +40,22 @@ namespace traccc{
 
     /// Convenience declaration for the doublet container type to use in host code
     using host_doublet_container
-    = host_container< int, doublet >;
+    = host_container< unsigned int, doublet >;
 
     /// Convenience declaration for the doublet container type to use in device code
     using device_doublet_container
-    = device_container< int, doublet>;
+    = device_container< unsigned int, doublet>;
 
     /// Convenience declaration for the doublet container data type to use in host code
     using doublet_container_data
-    = container_data< int, doublet >;
+    = container_data< unsigned int, doublet >;
 
     /// Convenience declaration for the doublet container buffer type to use in host code
     using doublet_container_buffer
-    = container_buffer< int, doublet >;
+    = container_buffer< unsigned int, doublet >;
 
     /// Convenience declaration for the doublet container view type to use in host code
     using doublet_container_view
-    = container_view< int, doublet >;    
+    = container_view< unsigned int, doublet >;    
     
 } // namespace traccc

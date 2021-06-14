@@ -10,6 +10,7 @@
 #include <edm/internal_spacepoint.hpp>
 #include <algorithms/seeding/detail/doublet.hpp>
 #include <algorithms/seeding/detail/seeding_config.hpp>
+#include <algorithms/seeding/doublet_finding_helper.hpp>
 #include <algorithms/seeding/triplet_finding_helper.hpp>
 #include <algorithms/seeding/seed_selecting_helper.hpp>
 #include <cuda/algorithms/seeding/detail/doublet_counter.hpp>

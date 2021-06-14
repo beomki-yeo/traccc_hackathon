@@ -23,29 +23,33 @@ triplet_finding(seedfinder_config& config, const host_internal_spacepoint_contai
     {}
     
 
-host_triplet_collection operator()(const doublet mid_bot,
-				   const host_doublet_collection& doublets_mid_top){
+host_triplet_collection operator()(const doublet& mid_bot,
+				   const lin_circle& lb,
+				   const host_doublet_collection& doublets_mid_top,
+				   const host_lin_circle_collection& lin_circles_mid_top){
     host_triplet_collection triplets;
-    this->operator()(mid_bot, doublets_mid_top, triplets);
+    this->operator()(mid_bot, lb, doublets_mid_top, lin_circles_mid_top, triplets);
     return triplets;   
 }
     
-void operator()(const doublet mid_bot,
-		const host_doublet_collection doublets_mid_top,
+void operator()(const doublet& mid_bot,
+		const lin_circle& lb,		
+		const host_doublet_collection& doublets_mid_top,
+		const host_lin_circle_collection& lin_circles_mid_top,
 		host_triplet_collection& triplets){
 
     auto& spM_idx = mid_bot.sp1;
     auto& spM = m_isp_container.items[spM_idx.bin_idx][spM_idx.sp_idx];
-    auto& lb = mid_bot.lin;
 
     scalar iSinTheta2 = 1 + lb.cotTheta * lb.cotTheta;
     scalar scatteringInRegion2 = m_config.maxScatteringAngle2 * iSinTheta2;
     scatteringInRegion2 *= m_config.sigmaScattering * m_config.sigmaScattering;
     scalar curvature, impact_parameter;
+
+    for (size_t i=0; i<doublets_mid_top.size(); ++i){
     
-    for (auto& mid_top: doublets_mid_top){
-	
-	auto& lt = mid_top.lin;
+	auto& mid_top = doublets_mid_top[i];	
+	auto& lt = lin_circles_mid_top[i];
 	
 	if (!triplet_finding_helper::isCompatible(spM, lb, lt, m_config,
 						  iSinTheta2, scatteringInRegion2,
@@ -57,7 +61,7 @@ void operator()(const doublet mid_bot,
 			    mid_bot.sp1, // middle
 			    mid_top.sp2, // top
 			    curvature,   // curvature
-			    impact_parameter, // impact parameter
+			    //impact_parameter, // impact parameter
 			    -impact_parameter*m_filter_config.impactWeightFactor,
 			    lb.Zo});
     }

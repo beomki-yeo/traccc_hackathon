@@ -22,23 +22,26 @@ doublet_finding(seedfinder_config& config, const host_internal_spacepoint_contai
     m_isp_container(isp_container)
     {}
     
-host_doublet_collection operator()(const bin_information& bin_information,
-				   const sp_location& spM_location,
-				   bool bottom){
+std::pair< host_doublet_collection, host_lin_circle_collection >
+operator()(const bin_information& bin_information,
+	   const sp_location& spM_location,
+	   bool bottom){
 
     host_doublet_collection doublets;
+    host_lin_circle_collection lin_circles;
 
     this->operator()(bin_information,
 		     spM_location,
 		     doublets,
+		     lin_circles,
 		     bottom);
-    
-    return doublets;
+    return std::make_pair(doublets, lin_circles);
 }
     
 void operator()(const bin_information& bin_information,
 		const sp_location& spM_location,
 		host_doublet_collection& doublets,
+		host_lin_circle_collection& lin_circles,
 		bool bottom){
     const auto& spM = m_isp_container.items[spM_location.bin_idx][spM_location.sp_idx];
     float rM = spM.radius();
@@ -66,7 +69,9 @@ void operator()(const bin_information& bin_information,
 		
 		lin_circle lin = doublet_finding_helper::transform_coordinates(spM,spB,bottom);
 		sp_location spB_location = {bin_idx,sp_idx};
-		doublets.push_back(doublet({spM_location,spB_location,lin}));
+		//doublets.push_back(doublet({spM_location,spB_location,lin}));
+		doublets.push_back(doublet({spM_location,spB_location}));
+		lin_circles.push_back(std::move(lin));
 	    }	    
 	}
     }
@@ -90,7 +95,9 @@ void operator()(const bin_information& bin_information,
 		
 		lin_circle lin = doublet_finding_helper::transform_coordinates(spM,spT,bottom);
 		sp_location spT_location = {bin_idx,sp_idx};		
-		doublets.push_back(doublet({spM_location, spT_location, lin}));
+		//doublets.push_back(doublet({spM_location, spT_location, lin}));
+		doublets.push_back(doublet({spM_location, spT_location}));
+		lin_circles.push_back(std::move(lin));
 	    }		
 	}	
     }

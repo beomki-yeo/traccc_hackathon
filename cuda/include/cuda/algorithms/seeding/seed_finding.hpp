@@ -103,7 +103,7 @@ host_seed_container operator()(host_internal_spacepoint_container& isp_container
 				  m_mr);
    
     traccc::cuda::triplet_counting(m_seedfinder_config,
-				   m_seedfilter_config,
+				   //m_seedfilter_config,
 				   isp_container,
 				   doublet_counter_container,
 				   mid_bot_container,

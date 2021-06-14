@@ -42,6 +42,7 @@ void triplet_finding(const seedfinder_config& config,
     unsigned int num_threads = WARP_SIZE*8; 
     unsigned int num_blocks = internal_sp_view.headers.m_size;
     unsigned int sh_mem = sizeof(int)*num_threads;
+    //sh_mem += sizeof(lin_circle)*num_threads*2;
     
     triplet_finding_kernel
 	<<< num_blocks, num_threads, sh_mem >>>(config,
@@ -93,9 +94,13 @@ void triplet_finding_kernel(const seedfinder_config config,
     size_t n_iter = num_compat_mb_per_bin/blockDim.x + 1;
     
     // zero initialization
-    extern __shared__ int num_triplets_per_thread[];
-    num_triplets_per_thread[threadIdx.x] = 0;        
     num_triplets_per_bin = 0;
+    
+    extern __shared__ int num_triplets_per_thread[];
+    num_triplets_per_thread[threadIdx.x] = 0;
+    //lin_circle* lb_per_thread = (lin_circle*)&num_triplets_per_thread[blockDim.x];
+    //lin_circle* lt_per_thread = &lb_per_thread[blockDim.x];
+    
     __syncthreads();
     
     
@@ -108,8 +113,14 @@ void triplet_finding_kernel(const seedfinder_config config,
 	
 	auto& spM_idx = mid_bot_doublet.sp1.sp_idx;
 	auto& spM = internal_sp_per_bin[spM_idx];
-	auto& lb = mid_bot_doublet.lin;
+	auto& spB_bin = mid_bot_doublet.sp2.bin_idx;
+	auto& spB_idx = mid_bot_doublet.sp2.sp_idx;
+	auto& spB = internal_sp_device.items.at(spB_bin)[spB_idx];
 
+	auto lb = doublet_finding_helper::transform_coordinates(spM, spB, true);
+	//auto& lb = lb_per_thread[threadIdx.x];
+	//lb = doublet_finding_helper::transform_coordinates(spM, spB, true);
+	
 	scalar iSinTheta2 = 1 + lb.cotTheta * lb.cotTheta;
 	scalar scatteringInRegion2 = config.maxScatteringAngle2 * iSinTheta2;
 	scatteringInRegion2 *= config.sigmaScattering * config.sigmaScattering;
@@ -155,24 +166,21 @@ void triplet_finding_kernel(const seedfinder_config config,
 	    triplet_start_idx += triplet_counter_per_bin[i].n_triplets;
 	}
 	
-	// iterate over mid-top doublets	
-	for (auto mt_it = mid_top_doublets_per_bin.begin()+mt_start_idx;
-	     mt_it!= mid_top_doublets_per_bin.begin()+mt_end_idx ;
-	     mt_it++){
+	// iterate over mid-top doublets
+	for (size_t i=mt_start_idx; i<mt_end_idx; ++i){
+	    auto& mid_top_doublet = mid_top_doublets_per_bin[i];
 	    
-	    auto lt = (*mt_it).lin;
-
+	    auto& spT_bin = mid_top_doublet.sp2.bin_idx;
+	    auto& spT_idx = mid_top_doublet.sp2.sp_idx;
+	    auto& spT = internal_sp_device.items.at(spT_bin)[spT_idx];
+	    auto lt = doublet_finding_helper::transform_coordinates(spM, spT, false);
+	    //auto& lt = lt_per_thread[threadIdx.x];
+	    //lt = doublet_finding_helper::transform_coordinates(spM, spT, false);
+	    
 	    if (triplet_finding_helper::isCompatible(spM, lb, lt, config,
 						     iSinTheta2, scatteringInRegion2,
 						     curvature, impact_parameter)){
 
-		auto& spB_loc = mid_bot_doublet.sp2;
-		auto& spM_loc = mid_bot_doublet.sp1;		
-		auto& spT_loc = (*mt_it).sp2;
-
-		auto& spB = internal_sp_device.items[spB_loc.bin_idx][spB_loc.sp_idx];
-		auto& spT = internal_sp_device.items[spT_loc.bin_idx][spT_loc.sp_idx];
-				
 		size_t pos = triplet_start_idx + n_triplets_per_mb;	  
 		if (pos>=triplets_per_bin.size()) {
 		    continue;
@@ -181,9 +189,8 @@ void triplet_finding_kernel(const seedfinder_config config,
 		triplets_per_bin[pos]
 		    = triplet({mid_bot_doublet.sp2,
 			       mid_bot_doublet.sp1,
-			       (*mt_it).sp2,
+			       mid_top_doublet.sp2,
 			       curvature,
-			       impact_parameter,
 			       -impact_parameter*filter_config.impactWeightFactor,
 			       lb.Zo});
 

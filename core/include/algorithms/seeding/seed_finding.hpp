@@ -41,8 +41,6 @@ void operator()(host_seed_collection& seeds){
     
     // iterate over grid bins
     for (size_t i=0; i<m_isp_container.headers.size(); ++i){
-
-	size_t n_triplets_per_bin = 0;
 	
 	auto& bin_information = m_isp_container.headers[i];
 	auto& spM_collection = m_isp_container.items[i];
@@ -56,21 +54,24 @@ void operator()(host_seed_collection& seeds){
 	    sp_location spM_location({i,j});
 	   
 	    // doublet search	    
-	    auto doublets_mid_bot = m_doublet_finding(bin_information, spM_location, true);	    
+	    auto mid_bot = m_doublet_finding(bin_information, spM_location, true); 
 	    
-	    if (doublets_mid_bot.empty()) continue;
+	    if (mid_bot.first.empty()) continue;
 	    
-	    auto doublets_mid_top = m_doublet_finding(bin_information, spM_location, false);
-	    
-	    if (doublets_mid_top.empty()) continue;
+	    auto mid_top = m_doublet_finding(bin_information, spM_location, false);
 
+	    if (mid_top.first.empty()) continue;
 	    
 	    host_triplet_collection triplets_per_spM;
-	    
-	    for (auto mid_bot: doublets_mid_bot){
-		host_triplet_collection triplets = m_triplet_finding(mid_bot, doublets_mid_top);
 
-		n_triplets_per_bin+=triplets.size();
+	    for (size_t i=0; i<mid_bot.first.size(); ++i){
+		auto& doublet_mb = mid_bot.first[i];
+		auto& lb = mid_bot.second[i]; 
+			    
+		host_triplet_collection triplets
+		    = m_triplet_finding(doublet_mb, lb,
+					mid_top.first,
+					mid_top.second);
 		
 		triplets_per_spM.insert(std::end(triplets_per_spM), triplets.begin(), triplets.end());
 	    }
@@ -79,8 +80,8 @@ void operator()(host_seed_collection& seeds){
 			     triplets_per_spM,
 			     seeds);
 	    
-	    stats.n_mid_bot_doublets += doublets_mid_bot.size();
-	    stats.n_mid_top_doublets += doublets_mid_top.size();
+	    stats.n_mid_bot_doublets += mid_bot.first.size();
+	    stats.n_mid_top_doublets += mid_top.first.size();
 	    stats.n_triplets += triplets_per_spM.size();	   
 	}
 

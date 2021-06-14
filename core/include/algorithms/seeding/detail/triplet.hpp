@@ -18,7 +18,7 @@ namespace traccc{
 	sp_location sp2; // middle
 	sp_location sp3; // top
 	scalar curvature;
-	scalar impact_parameter;
+	//scalar impact_parameter;
 	scalar weight;
 	scalar z_vertex;
     };    
@@ -52,22 +52,22 @@ namespace traccc{
 
     /// Convenience declaration for the triplet container type to use in host code
     using host_triplet_container
-    = host_container< int, triplet >;
+    = host_container< unsigned int, triplet >;
 
     /// Convenience declaration for the triplet container type to use in device code
     using device_triplet_container
-    = device_container< int, triplet>;
+    = device_container< unsigned int, triplet>;
 
     /// Convenience declaration for the triplet container data type to use in host code
     using triplet_container_data
-    = container_data< int, triplet >;
+    = container_data< unsigned int, triplet >;
 
     /// Convenience declaration for the triplet container buffer type to use in host code
     using triplet_container_buffer
-    = container_buffer< int, triplet >;
+    = container_buffer< unsigned int, triplet >;
 
     /// Convenience declaration for the triplet container view type to use in host code
     using triplet_container_view
-    = container_view< int, triplet >;        
+    = container_view< unsigned int, triplet >;        
     
 } // namespace traccc

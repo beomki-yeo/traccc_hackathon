@@ -73,9 +73,9 @@ void weight_updating_kernel(const seedfilter_config filter_config,
     for (size_t i_it = 0; i_it < n_iter; ++i_it){
 	auto tr_idx = i_it*blockDim.x + threadIdx.x;
 	auto& triplet = triplets_per_bin[tr_idx];
-	auto spB_idx = triplet.sp1;
-	auto spM_idx = triplet.sp2;
-	auto spT_idx = triplet.sp3;
+	auto& spB_idx = triplet.sp1;
+	auto& spM_idx = triplet.sp2;
+	auto& spT_idx = triplet.sp3;
 	
 	if (tr_idx >= num_triplets_per_bin){
 	    continue;

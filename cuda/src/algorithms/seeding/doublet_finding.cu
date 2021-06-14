@@ -121,7 +121,7 @@ void doublet_finding_kernel(const seedfinder_config config,
 		if (doublet_finding_helper::isCompatible(isp, neigh_isp, config, true)){
 		    
 		    auto spB_loc = sp_location({neigh_bin, spB_idx});
-		    auto lin = doublet_finding_helper::transform_coordinates(isp, neigh_isp, true);
+		    //auto lin = doublet_finding_helper::transform_coordinates(isp, neigh_isp, true);
 		    
 		    if (n_mid_bot_per_spM < doublet_counter_per_bin[gid].n_mid_bot &&
 			num_mid_bot_doublets_per_bin < mid_bot_doublets_per_bin.size()){			
@@ -131,8 +131,8 @@ void doublet_finding_kernel(const seedfinder_config config,
 			}
 			
 			mid_bot_doublets_per_bin[pos] = doublet({spM_loc,
-								 spB_loc,
-								 lin});
+								 spB_loc});
+				    //lin});
 			
 			num_mid_bot_doublets_per_thread[threadIdx.x]++;
 			n_mid_bot_per_spM++;
@@ -144,7 +144,7 @@ void doublet_finding_kernel(const seedfinder_config config,
 		if (doublet_finding_helper::isCompatible(isp, neigh_isp, config, false)){
 		    
 		    auto spT_loc = sp_location({neigh_bin, spB_idx});
-		    auto lin = doublet_finding_helper::transform_coordinates(isp, neigh_isp, false);
+		    //auto lin = doublet_finding_helper::transform_coordinates(isp, neigh_isp, false);
 		    
 		    if (n_mid_top_per_spM < doublet_counter_per_bin[gid].n_mid_top &&
 			num_mid_top_doublets_per_bin < mid_top_doublets_per_bin.size()){
@@ -155,8 +155,8 @@ void doublet_finding_kernel(const seedfinder_config config,
 			}
 		    
 			mid_top_doublets_per_bin[pos] = doublet({spM_loc,
-								 spT_loc,
-								 lin});
+								 spT_loc});
+				    //lin});
 		    
 			num_mid_top_doublets_per_thread[threadIdx.x]++;
 			n_mid_top_per_spM++;			

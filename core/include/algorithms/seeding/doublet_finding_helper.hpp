@@ -77,12 +77,12 @@ bool doublet_finding_helper::isCompatible(const internal_spacepoint<spacepoint>&
 lin_circle doublet_finding_helper::transform_coordinates(const internal_spacepoint<spacepoint>& sp1,
 							 const internal_spacepoint<spacepoint>& sp2,
 							 bool bottom){
-    float xM = sp1.x();
-    float yM = sp1.y();
-    float zM = sp1.z();
-    float rM = sp1.radius();
-    float varianceZM = sp1.varianceZ();
-    float varianceRM = sp1.varianceR();
+    const float& xM = sp1.x();
+    const float& yM = sp1.y();
+    const float& zM = sp1.z();
+    const float& rM = sp1.radius();
+    const float& varianceZM = sp1.varianceZ();
+    const float& varianceRM = sp1.varianceR();
     float cosPhiM = xM / rM;
     float sinPhiM = yM / rM;
     
