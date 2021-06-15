@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "edm/seed.hpp"
+
 namespace traccc {
 
 class experiment_cuts {

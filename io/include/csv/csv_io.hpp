@@ -22,9 +22,13 @@
 #include "edm/cluster.hpp"
 #include "edm/spacepoint.hpp"
 
-namespace traccc {
+#include "definitions/algebra.hpp"
+#include "definitions/primitives.hpp"
+#include "edm/cell.hpp"
+#include "edm/cluster.hpp"
 
 /// reader
+namespace traccc {
 
 struct csv_cell {
     uint64_t geometry_id = 0;

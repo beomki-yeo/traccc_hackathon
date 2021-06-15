@@ -8,6 +8,7 @@
 #pragma once
 
 #include <algorithms/seeding/detail/seeding_config.hpp>
+#include <edm/internal_spacepoint.hpp>
 
 namespace traccc {
 

@@ -5,6 +5,10 @@
  * Mozilla Public License Version 2.0
  */
 
+#include <iostream>
+#include <vecmem/memory/host_memory_resource.hpp>
+
+#include "csv/csv_io.hpp"
 #include "edm/cell.hpp"
 #include "edm/cluster.hpp"
 #include "edm/internal_spacepoint.hpp"
@@ -18,12 +22,8 @@
 #include "algorithms/clusterization/spacepoint_formation.hpp"
 
 // seeding
-#include <iostream>
-#include <vecmem/memory/host_memory_resource.hpp>
-
 #include "algorithms/seeding/seed_finding.hpp"
 #include "algorithms/seeding/spacepoint_grouping.hpp"
-#include "csv/csv_io.hpp"
 
 int seq_run(const std::string& detector_file, const std::string& cells_dir,
             unsigned int events) {

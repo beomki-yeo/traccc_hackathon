@@ -16,39 +16,35 @@
 // This is taken from the acts/detray library
 namespace traccc {
 
-std::array<scalar, 2> operator*(const std::array<scalar, 2> &a, scalar s) {
+inline vector2 operator*(const vector2 &a, scalar s) {
     return {a[0] * s, a[1] * s};
 }
 
-std::array<scalar, 2> operator*(scalar s, const std::array<scalar, 2> &a) {
+inline vector2 operator*(scalar s, const vector2 &a) {
     return {s * a[0], s * a[1]};
 }
 
-std::array<scalar, 2> operator-(const std::array<scalar, 2> &a,
-                                const std::array<scalar, 2> &b) {
+inline vector2 operator-(const vector2 &a, const vector2 &b) {
     return {a[0] - b[0], a[1] - b[1]};
 }
 
-std::array<scalar, 2> operator+(const std::array<scalar, 2> &a,
-                                const std::array<scalar, 2> &b) {
+inline vector2 operator+(const vector2 &a, const vector2 &b) {
     return {a[0] + b[0], a[1] + b[1]};
 }
 
-std::array<scalar, 3> operator*(const std::array<scalar, 3> &a, scalar s) {
+inline vector3 operator*(const vector3 &a, scalar s) {
     return {a[0] * s, a[1] * s, a[2] * s};
 }
 
-std::array<scalar, 3> operator*(scalar s, const std::array<scalar, 3> &a) {
+inline vector3 operator*(scalar s, const vector3 &a) {
     return {s * a[0], s * a[1], s * a[2]};
 }
 
-std::array<scalar, 3> operator-(const std::array<scalar, 3> &a,
-                                const std::array<scalar, 3> &b) {
+inline vector3 operator-(const vector3 &a, const vector3 &b) {
     return {a[0] - b[0], a[1] - b[1], a[2] - b[2]};
 }
 
-std::array<scalar, 3> operator+(const std::array<scalar, 3> &a,
-                                const std::array<scalar, 3> &b) {
+inline vector3 operator+(const vector3 &a, const vector3 &b) {
     return {a[0] + b[0], a[1] + b[1], a[2] + b[2]};
 }
 
@@ -63,8 +59,7 @@ namespace vector {
  *
  * @return a vector (expression) representing the cross product
  **/
-std::array<scalar, 3> cross(const std::array<scalar, 3> &a,
-                            const std::array<scalar, 3> &b) {
+inline vector3 cross(const vector3 &a, const vector3 &b) {
     return {a[1] * b[2] - b[1] * a[2], a[2] * b[0] - b[2] * a[0],
             a[0] * b[1] - b[0] * a[1]};
 }
@@ -103,7 +98,7 @@ auto perp(const vector_type &v) noexcept {
  *
  * @param v the input vector
  **/
-auto norm(const std::array<scalar, 2> &v) {
+inline auto norm(const vector2 &v) {
     return perp(v);
 }
 
@@ -111,7 +106,7 @@ auto norm(const std::array<scalar, 2> &v) {
  *
  * @param v the input vector
  **/
-auto norm(const std::array<scalar, 3> &v) {
+inline auto norm(const vector3 &v) {
     return std::sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
 }
 
@@ -131,7 +126,7 @@ auto eta(const vector_type &v) noexcept {
  **/
 template <unsigned int kROWS, typename matrix_type>
 auto vector(const matrix_type &m, unsigned int row, unsigned int col) noexcept {
-    std::array<scalar, kROWS> subvector;
+    array<scalar, kROWS> subvector;
     for (unsigned int irow = row; irow < row + kROWS; ++irow) {
         subvector[irow - row] = m[col][irow];
     }
@@ -144,7 +139,7 @@ auto vector(const matrix_type &m, unsigned int row, unsigned int col) noexcept {
  **/
 template <unsigned int kROWS, unsigned int kCOLS, typename matrix_type>
 auto block(const matrix_type &m, unsigned int row, unsigned int col) noexcept {
-    std::array<std::array<scalar, kROWS>, kCOLS> submatrix;
+    array<array<scalar, kROWS>, kCOLS> submatrix;
     for (unsigned int icol = col; icol < col + kCOLS; ++icol) {
         for (unsigned int irow = row; irow < row + kROWS; ++irow) {
             submatrix[icol - col][irow - row] = m[icol][irow];
@@ -158,7 +153,7 @@ auto block(const matrix_type &m, unsigned int row, unsigned int col) noexcept {
 /** Transform wrapper class to ensure standard API within differnt plugins
  **/
 struct transform3 {
-    using matrix44 = std::array<std::array<scalar, 4>, 4>;
+    using matrix44 = array<array<scalar, 4>, 4>;
 
     matrix44 _data;
     matrix44 _data_inv;
@@ -229,7 +224,7 @@ struct transform3 {
      *
      * @param ma is the full 4x4 matrix 16 array
      **/
-    transform3(const std::array<scalar, 16> &ma) {
+    transform3(const array<scalar, 16> &ma) {
         _data[0][0] = ma[0];
         _data[0][1] = ma[4];
         _data[0][2] = ma[8];
@@ -446,7 +441,7 @@ namespace vector {
  *
  * @return the scalar dot product value
  **/
-scalar dot(const std::array<scalar, 2> &a, const std::array<scalar, 2> &b) {
+inline scalar dot(const vector2 &a, const vector2 &b) {
     return a[0] * b[0] + a[1] * b[1];
 }
 
@@ -454,7 +449,7 @@ scalar dot(const std::array<scalar, 2> &a, const std::array<scalar, 2> &b) {
  *
  * @param v the input vector
  **/
-std::array<scalar, 3> normalize(const std::array<scalar, 2> &v) {
+inline vector2 normalize(const vector2 &v) {
     scalar oon = 1. / std::sqrt(dot(v, v));
     return {v[0] * oon, v[1] * oon};
 }
@@ -466,7 +461,7 @@ std::array<scalar, 3> normalize(const std::array<scalar, 2> &v) {
  *
  * @return the scalar dot product value
  **/
-scalar dot(const std::array<scalar, 3> &a, const std::array<scalar, 3> &b) {
+inline scalar dot(const vector3 &a, const vector3 &b) {
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
@@ -474,7 +469,7 @@ scalar dot(const std::array<scalar, 3> &a, const std::array<scalar, 3> &b) {
  *
  * @param v the input vector
  **/
-std::array<scalar, 3> normalize(const std::array<scalar, 3> &v) {
+inline vector3 normalize(const vector3 &v) {
     scalar oon = 1. / std::sqrt(dot(v, v));
     return {v[0] * oon, v[1] * oon, v[2] * oon};
 }

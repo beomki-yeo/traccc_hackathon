@@ -6,6 +6,7 @@
  */
 
 #include <algorithms/seeding/detail/experiment_cuts.hpp>
+#include <algorithms/seeding/detail/triplet.hpp>
 
 #pragma once
 

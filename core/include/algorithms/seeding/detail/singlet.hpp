@@ -7,6 +7,9 @@
 
 #pragma once
 
+#include "utils/arch_qualifiers.hpp"
+#include "edm/container.hpp"
+
 namespace traccc {
 
 struct sp_location {
