@@ -58,7 +58,7 @@ void operator()(host_internal_spacepoint_container& isp_container,
 		      return seed1.weight > seed2.weight;
 		  }
 		  else {
-		      return seed1.z_vertex < seed2.z_vertex;
+		      return std::abs(seed1.z_vertex) < std::abs(seed2.z_vertex);
 		      /*
 		      float seed1_sum = 0;
 		      float seed2_sum = 0;

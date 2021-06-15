@@ -17,14 +17,6 @@
 namespace traccc{    
 namespace cuda{
 
-struct triplet_spM_ascending : public thrust::binary_function<triplet,triplet,bool>{
-    __device__
-    bool operator()(const triplet &lhs, const triplet &rhs) const {	
-	return lhs.sp2.sp_idx < rhs.sp2.sp_idx;
-    }
-}; 
-
-    
 struct triplet_weight_descending : public thrust::binary_function<triplet,triplet,bool>{
     __device__
     bool operator()(const triplet &lhs, const triplet &rhs) const {	
@@ -32,10 +24,20 @@ struct triplet_weight_descending : public thrust::binary_function<triplet,triple
 	    return lhs.weight > rhs.weight;
 	}
 	else {
-	    return lhs.z_vertex < rhs.z_vertex;
+	    return fabs(lhs.z_vertex) < fabs(rhs.z_vertex);
 	}	
     }
 }; 
+
+__device__    
+static bool triplet_weight_compare(const triplet& lhs, const triplet& rhs){
+    if (lhs.weight != rhs.weight){
+	return lhs.weight < rhs.weight;
+    }
+    else {	
+	return fabs(lhs.z_vertex) > fabs(rhs.z_vertex);
+    }    	
+}
     
 __global__
 void seed_selecting_kernel(const seedfilter_config filter_config,
@@ -57,16 +59,6 @@ void seed_selecting(const seedfilter_config& filter_config,
     
     auto internal_sp_view = get_data(internal_sp_container, resource);
 
-    /*
-    for (size_t i=0; i<internal_sp_view.headers.m_size; ++i){
-	thrust::device_ptr<triplet> triplet_ptr(&triplet_container.items[i][0]);
-
-	thrust::sort(thrust::device,
-		     triplet_ptr,
-		     triplet_ptr+triplet_container.headers[i],
-		     triplet_spM_ascending());	
-    }
-    */
     auto doublet_counter_container_view = get_data(doublet_counter_container, resource);
     auto triplet_counter_container_view = get_data(triplet_counter_container, resource);
     auto triplet_container_view = get_data(triplet_container, resource);
@@ -165,14 +157,43 @@ void seed_selecting_kernel(const seedfilter_config filter_config,
 		if (n_triplets_per_spM >= filter_config.max_triplets_per_spM){
 		    int begin_idx = stride;
 		    int end_idx = stride+filter_config.max_triplets_per_spM;
+
+		    // Note: min_index method gives a result different
+		    //       from sorting method when there are the cases where
+		    //       weight & z_vertex are same.
+		    //
+		    //       So min_index method reduces seed matching ratio
+		    //       since the cpu version is using sorting method.
+		    //
+		    //       But that doesn't mean min_index method
+		    //       is wrong of course
+		    //
+		    //       Let's not be so obsessed about achieving
+		    //       perfectly same result :))))))))
 		    
+		    int min_index
+			= std::min_element(triplets_per_spM+begin_idx,
+					   triplets_per_spM+end_idx,
+					   triplet_weight_compare)
+			- triplets_per_spM;		    		    
+		    
+		    auto& min_weight = triplets_per_spM[min_index].weight;
+
+		    if (aTriplet.weight > min_weight){
+			triplets_per_spM[min_index] = aTriplet;
+		    }
+		    
+		    // sorting method -> good for seed matching ratio but slow
+		    /*
 		    thrust::sort(thrust::seq,
 				 triplets_per_spM+begin_idx,
 				 triplets_per_spM+end_idx,
 				 triplet_weight_descending());
+		    
 		    if (aTriplet.weight >= triplets_per_spM[end_idx-1].weight){
 			triplets_per_spM[end_idx-1] = aTriplet;
-		    }		    
+		    }
+		    */
 		}
 
 		else if (n_triplets_per_spM < filter_config.max_triplets_per_spM){
@@ -183,7 +204,7 @@ void seed_selecting_kernel(const seedfilter_config filter_config,
 	}
 		
 	// sort the triplets per spM
-	//sequential version of thrust sorting algorithm is used
+	// sequential version of thrust sorting algorithm is used
 	thrust::sort(thrust::seq,
 		     triplets_per_spM+stride,
 		     triplets_per_spM+stride+n_triplets_per_spM,
@@ -211,12 +232,12 @@ void seed_selecting_kernel(const seedfilter_config filter_config,
 		    break;
 		}		
 		n_seeds_per_spM++;
+		
 		seeds[pos] = seed({spB.m_sp,
 				   spM.m_sp,
 				   spT.m_sp,
 				   aTriplet.weight,
-				   aTriplet.z_vertex});		
-
+				   aTriplet.z_vertex});				
 	    }
 	    
 	}
