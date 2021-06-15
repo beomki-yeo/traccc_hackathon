@@ -1,7 +1,7 @@
 /** TRACCC library, part of the ACTS project (R&D line)
- * 
+ *
  * (c) 2021 CERN for the benefit of the ACTS project
- * 
+ *
  * Mozilla Public License Version 2.0
  */
 
@@ -9,74 +9,68 @@
 
 #include <algorithms/seeding/detail/seeding_config.hpp>
 
-namespace traccc{
+namespace traccc {
 
 // helper function used for both cpu and gpu
-struct doublet_finding_helper{
-    
-static __CUDA_HOST_DEVICE__
-bool isCompatible(const internal_spacepoint<spacepoint>& sp1,
-		  const internal_spacepoint<spacepoint>& sp2,
-		  const seedfinder_config& config,
-		  bool bottom);
+struct doublet_finding_helper {
+    static __CUDA_HOST_DEVICE__ bool isCompatible(
+        const internal_spacepoint<spacepoint>& sp1,
+        const internal_spacepoint<spacepoint>& sp2,
+        const seedfinder_config& config, bool bottom);
 
-
-static __CUDA_HOST_DEVICE__
-lin_circle transform_coordinates(const internal_spacepoint<spacepoint>& sp1,
-				 const internal_spacepoint<spacepoint>& sp2,
-				 bool bottom);
-
+    static __CUDA_HOST_DEVICE__ lin_circle transform_coordinates(
+        const internal_spacepoint<spacepoint>& sp1,
+        const internal_spacepoint<spacepoint>& sp2, bool bottom);
 };
-    
-bool doublet_finding_helper::isCompatible(const internal_spacepoint<spacepoint>& sp1,
-					  const internal_spacepoint<spacepoint>& sp2,
-					  const seedfinder_config& config,
-					  bool bottom){
-    if (bottom){
-	float deltaR = sp1.radius() - sp2.radius();
-	// if r-distance is too big, try next SP in bin
-	if (deltaR > config.deltaRMax) {
-	    return false;
-	}
-	// if r-distance is too small, continue because bins are NOT r-sorted
-	if (deltaR < config.deltaRMin) {
-	    return false;
-	}
-	float cotTheta = (sp1.z() - sp2.z())/deltaR;
-	if (std::fabs(cotTheta) > config.cotThetaMax){
-	    return false;
-	}
-	float zOrigin = sp1.z() - sp1.radius() * cotTheta;
-	if (zOrigin < config.collisionRegionMin ||
-	    zOrigin > config.collisionRegionMax) {
-	    return false;
-	}	    	    
-    }
-    else if (!bottom){
-	float deltaR = sp2.radius() - sp1.radius();
-	if (deltaR > config.deltaRMax) {
-	    return false;
-	}
-	// if r-distance is too small, continue because bins are NOT r-sorted
-	if (deltaR < config.deltaRMin) {
-	    return false;
-	}
-	float cotTheta = (sp2.z() - sp1.z())/deltaR;
-	if (std::fabs(cotTheta) > config.cotThetaMax){
-	    return false;
-	}
-	float zOrigin = sp1.z() - sp1.radius() * cotTheta;
-	if (zOrigin < config.collisionRegionMin ||
-	    zOrigin > config.collisionRegionMax) {
-	    return false;
-	}	    	    	
+
+bool doublet_finding_helper::isCompatible(
+    const internal_spacepoint<spacepoint>& sp1,
+    const internal_spacepoint<spacepoint>& sp2, const seedfinder_config& config,
+    bool bottom) {
+    if (bottom) {
+        float deltaR = sp1.radius() - sp2.radius();
+        // if r-distance is too big, try next SP in bin
+        if (deltaR > config.deltaRMax) {
+            return false;
+        }
+        // if r-distance is too small, continue because bins are NOT r-sorted
+        if (deltaR < config.deltaRMin) {
+            return false;
+        }
+        float cotTheta = (sp1.z() - sp2.z()) / deltaR;
+        if (std::fabs(cotTheta) > config.cotThetaMax) {
+            return false;
+        }
+        float zOrigin = sp1.z() - sp1.radius() * cotTheta;
+        if (zOrigin < config.collisionRegionMin ||
+            zOrigin > config.collisionRegionMax) {
+            return false;
+        }
+    } else if (!bottom) {
+        float deltaR = sp2.radius() - sp1.radius();
+        if (deltaR > config.deltaRMax) {
+            return false;
+        }
+        // if r-distance is too small, continue because bins are NOT r-sorted
+        if (deltaR < config.deltaRMin) {
+            return false;
+        }
+        float cotTheta = (sp2.z() - sp1.z()) / deltaR;
+        if (std::fabs(cotTheta) > config.cotThetaMax) {
+            return false;
+        }
+        float zOrigin = sp1.z() - sp1.radius() * cotTheta;
+        if (zOrigin < config.collisionRegionMin ||
+            zOrigin > config.collisionRegionMax) {
+            return false;
+        }
     }
     return true;
 }
 
-lin_circle doublet_finding_helper::transform_coordinates(const internal_spacepoint<spacepoint>& sp1,
-							 const internal_spacepoint<spacepoint>& sp2,
-							 bool bottom){
+lin_circle doublet_finding_helper::transform_coordinates(
+    const internal_spacepoint<spacepoint>& sp1,
+    const internal_spacepoint<spacepoint>& sp2, bool bottom) {
     const float& xM = sp1.x();
     const float& yM = sp1.y();
     const float& zM = sp1.z();
@@ -85,7 +79,7 @@ lin_circle doublet_finding_helper::transform_coordinates(const internal_spacepoi
     const float& varianceRM = sp1.varianceR();
     float cosPhiM = xM / rM;
     float sinPhiM = yM / rM;
-    
+
     float deltaX = sp2.x() - xM;
     float deltaY = sp2.y() - yM;
     float deltaZ = sp2.z() - zM;
@@ -118,14 +112,10 @@ lin_circle doublet_finding_helper::transform_coordinates(const internal_spacepoi
     l.m_V = y * iDeltaR2;
     // error term for sp-pair without correlation of middle space point
     l.m_Er = ((varianceZM + sp2.varianceZ()) +
-	    (cot_theta * cot_theta) * (varianceRM + sp2.varianceR())) *
-	iDeltaR2;
-    
+              (cot_theta * cot_theta) * (varianceRM + sp2.varianceR())) *
+             iDeltaR2;
+
     return l;
 }
 
-    
-}// namespace traccc
-
-
-    
+}  // namespace traccc
