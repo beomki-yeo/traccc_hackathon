@@ -19,9 +19,6 @@
 // seeding (cuda)
 #include "cuda/algorithms/seeding/seed_finding.hpp"
 
-// cuda utils 
-#include "cuda/utils/warming_up.cuh"
-
 // io
 #include "csv/csv_io.hpp"
 
