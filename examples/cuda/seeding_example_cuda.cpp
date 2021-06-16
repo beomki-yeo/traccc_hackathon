@@ -40,9 +40,6 @@
 int seq_run(const std::string& detector_file, const std::string& hits_dir,
             unsigned int skip_events, unsigned int events, bool skip_cpu,
             bool skip_write) {
-    // Do warmup
-    //traccc::cuda::warming_up();
-    
     // Read the surface transforms
     std::string io_detector_file = detector_file;
     traccc::surface_reader sreader(
@@ -217,7 +214,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
         /*-----------------------
           seed finding -- cuda
           -----------------------*/
-
+	
         /*time*/ auto start_seeding_cuda = std::chrono::system_clock::now();
         auto seeds_cuda = sf_cuda(internal_sp_per_event);
         n_seeds_cuda += seeds_cuda.headers[0];
