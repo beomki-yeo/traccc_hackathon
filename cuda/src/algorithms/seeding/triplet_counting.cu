@@ -34,7 +34,7 @@ void triplet_counting(const seedfinder_config& config,
     auto triplet_counter_container_view =
         get_data(triplet_counter_container, resource);
 
-    unsigned int num_threads = WARP_SIZE * 8;
+    unsigned int num_threads = WARP_SIZE * 10;
     unsigned int num_blocks = internal_sp_view.headers.m_size;
     // unsigned int sh_mem = sizeof(lin_circle)*num_threads*1;
     // unsigned int sh_mem = sizeof(lin_circle)*num_threads*2;
@@ -115,11 +115,11 @@ __global__ void triplet_counting_kernel(
         scatteringInRegion2 *= config.sigmaScattering * config.sigmaScattering;
         scalar curvature, impact_parameter;
 
-        size_t mb_end_idx = 0;
-        size_t mt_start_idx = 0;
-        size_t mt_end_idx = 0;
+        unsigned int mb_end_idx = 0;
+        unsigned int mt_start_idx = 0;
+        unsigned int mt_end_idx = 0;
 
-        for (int i = 0; i < num_compat_spM_per_bin; ++i) {
+        for (unsigned int i = 0; i < num_compat_spM_per_bin; ++i) {
             mb_end_idx += doublet_counter_per_bin[i].n_mid_bot;
             mt_end_idx += doublet_counter_per_bin[i].n_mid_top;
 
@@ -137,10 +137,10 @@ __global__ void triplet_counting_kernel(
             continue;
         }
 
-        int n_triplets = 0;
+        unsigned int n_triplets = 0;
 
         // iterate over mid-top doublets
-        for (size_t i = mt_start_idx; i < mt_end_idx; ++i) {
+        for (unsigned int i = mt_start_idx; i < mt_end_idx; ++i) {
             auto& mid_top_doublet = mid_top_doublets_per_bin[i];
 
             auto& spT_bin = mid_top_doublet.sp2.bin_idx;

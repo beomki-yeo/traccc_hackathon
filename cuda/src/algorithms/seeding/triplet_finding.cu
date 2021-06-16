@@ -125,19 +125,19 @@ __global__ void triplet_finding_kernel(
         scatteringInRegion2 *= config.sigmaScattering * config.sigmaScattering;
         scalar curvature, impact_parameter;
 
-        size_t mb_end_idx = 0;
-        size_t mt_start_idx = 0;
-        size_t mt_end_idx = 0;
-        size_t ref_idx;
+        unsigned int mb_end_idx = 0;
+        unsigned int mt_start_idx = 0;
+        unsigned int mt_end_idx = 0;
+        unsigned int ref_idx;
 
-        for (int i = 0; i < num_mid_bot_doublets_per_bin; i++) {
+        for (unsigned int i = 0; i < num_mid_bot_doublets_per_bin; i++) {
             if (mid_bot_doublet == mid_bot_doublets_per_bin[i]) {
                 ref_idx = i;
                 break;
             }
         }
 
-        for (int i = 0; i < num_compat_spM_per_bin; ++i) {
+        for (unsigned int i = 0; i < num_compat_spM_per_bin; ++i) {
             mb_end_idx += doublet_counter_per_bin[i].n_mid_bot;
             mt_end_idx += doublet_counter_per_bin[i].n_mid_top;
 
@@ -156,15 +156,15 @@ __global__ void triplet_finding_kernel(
             continue;
         }
 
-        size_t n_triplets_per_mb = 0;
-        size_t triplet_start_idx = 0;
+        unsigned int n_triplets_per_mb = 0;
+        unsigned int triplet_start_idx = 0;
 
-        for (size_t i = 0; i < gid; i++) {
+        for (unsigned int i = 0; i < gid; i++) {
             triplet_start_idx += triplet_counter_per_bin[i].n_triplets;
         }
 
         // iterate over mid-top doublets
-        for (size_t i = mt_start_idx; i < mt_end_idx; ++i) {
+        for (unsigned int i = mt_start_idx; i < mt_end_idx; ++i) {
             auto& mid_top_doublet = mid_top_doublets_per_bin[i];
 
             auto& spT_bin = mid_top_doublet.sp2.bin_idx;
