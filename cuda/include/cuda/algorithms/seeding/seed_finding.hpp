@@ -110,7 +110,6 @@ struct seed_finding {
             mid_bot_container, mid_top_container, m_mr);
 
         traccc::cuda::triplet_counting(m_seedfinder_config,
-                                       // m_seedfilter_config,
                                        isp_container, doublet_counter_container,
                                        mid_bot_container, mid_top_container,
                                        triplet_counter_container, m_mr);

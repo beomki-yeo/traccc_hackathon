@@ -19,6 +19,9 @@
 // seeding (cuda)
 #include "cuda/algorithms/seeding/seed_finding.hpp"
 
+// cuda utils 
+#include "cuda/utils/warming_up.cuh"
+
 // io
 #include "csv/csv_io.hpp"
 
@@ -37,6 +40,9 @@
 int seq_run(const std::string& detector_file, const std::string& hits_dir,
             unsigned int skip_events, unsigned int events, bool skip_cpu,
             bool skip_write) {
+    // Do warmup
+    //traccc::cuda::warming_up();
+    
     // Read the surface transforms
     std::string io_detector_file = detector_file;
     traccc::surface_reader sreader(
