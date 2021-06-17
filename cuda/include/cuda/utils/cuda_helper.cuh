@@ -36,18 +36,56 @@ struct cuda_helper {
                 array[tid] += array[i * WARP_SIZE];
             }
         }
-
-        // deprecated version
-        /*
-        for(size_t i=1; i<block_size; i=i*2){
-            if(tid % (2*i) == 0) {
-                array[tid] += array[tid + i];
-            }
-            __syncthreads();
-        }
-        */
     }
+
+
+    template <typename T>    
+    static __device__ void get_bin_idx(const unsigned int& n_bins, const vecmem::jagged_device_vector<T>& jag_vec, unsigned int& bin_idx, unsigned int& ref_block_idx){
+	
+	unsigned int nblocks_accum = 0;
+	
+	for (unsigned int i=0; i< n_bins; ++i){
+	    unsigned int nblocks_per_bin = jag_vec[i].size() / blockDim.x + 1;
+	    nblocks_accum += nblocks_per_bin;
+
+	    if (blockIdx.x < nblocks_accum){
+		bin_idx = i;
+
+		break;
+	    }
+		
+	    ref_block_idx += nblocks_per_bin;
+	}
+
+    }
+
+    template <typename header_t, typename item_t>    
+    static __device__ void get_bin_idx(const unsigned int& n_bins, const device_container<header_t, item_t>& container, unsigned int& bin_idx, unsigned int& ref_block_idx){
+	
+	unsigned int nblocks_accum = 0;
+	
+	for (unsigned int i=0; i< n_bins; ++i){
+	    unsigned int nblocks_per_bin = container.headers[i] / blockDim.x + 1;
+	    nblocks_accum += nblocks_per_bin;
+
+	    if (blockIdx.x < nblocks_accum){
+		bin_idx = i;
+
+		break;
+	    }
+		
+	    ref_block_idx += nblocks_per_bin;
+	}
+
+	/*
+	if (threadIdx.x==0 && bin_idx==76){
+	    printf("hi \n");
+	}
+	*/
+    }
+    
 };
 
+    
 }  // namespace cuda
 }  // namespace traccc

@@ -58,23 +58,37 @@ __global__ void doublet_finding_kernel(
     device_doublet_container mid_top_doublet_device(
         {mid_top_doublet_view.headers, mid_top_doublet_view.items});
 
-    auto bin_info = internal_sp_device.headers.at(blockIdx.x);
-    auto internal_sp_per_bin = internal_sp_device.items.at(blockIdx.x);
+    unsigned int n_bins = internal_sp_device.headers.size();
+    unsigned int bin_idx = 0;
+    unsigned int ref_block_idx = 0;
+
+    cuda_helper::get_bin_idx(n_bins,
+			     doublet_counter_device,
+			     bin_idx,
+			     ref_block_idx);
+    
+    auto bin_info = internal_sp_device.headers.at(bin_idx);
+    auto internal_sp_per_bin = internal_sp_device.items.at(bin_idx);
 
     auto& num_compat_spM_per_bin =
-        doublet_counter_device.headers.at(blockIdx.x);
-    auto doublet_counter_per_bin = doublet_counter_device.items.at(blockIdx.x);
+        doublet_counter_device.headers.at(bin_idx);
+    auto doublet_counter_per_bin = doublet_counter_device.items.at(bin_idx);
 
     auto& num_mid_bot_doublets_per_bin =
-        mid_bot_doublet_device.headers.at(blockIdx.x);
-    auto mid_bot_doublets_per_bin = mid_bot_doublet_device.items.at(blockIdx.x);
+        mid_bot_doublet_device.headers.at(bin_idx);
+    auto mid_bot_doublets_per_bin = mid_bot_doublet_device.items.at(bin_idx);
 
     auto& num_mid_top_doublets_per_bin =
-        mid_top_doublet_device.headers.at(blockIdx.x);
-    auto mid_top_doublets_per_bin = mid_top_doublet_device.items.at(blockIdx.x);
-
+        mid_top_doublet_device.headers.at(bin_idx);
+    auto mid_top_doublets_per_bin = mid_top_doublet_device.items.at(bin_idx);
+    
     size_t n_iter = num_compat_spM_per_bin / blockDim.x + 1;
 
+    /*
+    if (threadIdx.x==0){
+	printf("%d %d \n", int(num_compat_spM_per_bin), int(n_iter));
+    }
+    */
     // zero initialization
     extern __shared__ int num_doublets_per_thread[];
     int* num_mid_bot_doublets_per_thread = num_doublets_per_thread;
@@ -83,96 +97,90 @@ __global__ void doublet_finding_kernel(
     num_mid_bot_doublets_per_thread[threadIdx.x] = 0;
     num_mid_top_doublets_per_thread[threadIdx.x] = 0;
 
-    num_mid_bot_doublets_per_bin = 0;
-    num_mid_top_doublets_per_bin = 0;
     __syncthreads();
 
-    for (size_t i_it = 0; i_it < n_iter; ++i_it) {
-        auto gid = i_it * blockDim.x + threadIdx.x;
+    //for (size_t i_it = 0; i_it < n_iter; ++i_it) {
+    //auto gid = i_it * blockDim.x + threadIdx.x;
+    auto gid = (blockIdx.x - ref_block_idx) * blockDim.x + threadIdx.x;
+    
+    if (gid >= num_compat_spM_per_bin) {
+	//continue;
+	return;
+    }
+    
+    auto sp_idx = doublet_counter_per_bin[gid].spM.sp_idx;
+    
+    if (sp_idx >= doublet_counter_per_bin.size()) {
+	//continue;
+	return;
+    }
+    
+    //auto spM_loc = sp_location({blockIdx.x, sp_idx});
+    auto spM_loc = sp_location({bin_idx, sp_idx});
+    auto isp = internal_sp_per_bin[sp_idx];
+    
+    size_t n_mid_bot_per_spM = 0;
+    size_t n_mid_top_per_spM = 0;
+    
+    size_t mid_bot_start_idx = 0;
+    size_t mid_top_start_idx = 0;
+    
+    for (size_t i = 0; i < gid; i++) {
+	mid_bot_start_idx += doublet_counter_per_bin[i].n_mid_bot;
+	mid_top_start_idx += doublet_counter_per_bin[i].n_mid_top;
+    }
+    
+    for (size_t i_n = 0; i_n < bin_info.bottom_idx.counts; ++i_n) {
+	auto neigh_bin = bin_info.bottom_idx.vector_indices[i_n];
+	auto neigh_internal_sp_per_bin =
+	    internal_sp_device.items.at(neigh_bin);
+	
+	for (size_t spB_idx = 0; spB_idx < neigh_internal_sp_per_bin.size();
+	     ++spB_idx) {
+	    auto neigh_isp = neigh_internal_sp_per_bin[spB_idx];
+	    if (doublet_finding_helper::isCompatible(isp, neigh_isp, config,
+						     true)) {
+		auto spB_loc = sp_location({neigh_bin, spB_idx});
+		
+		if (n_mid_bot_per_spM <
+		    doublet_counter_per_bin[gid].n_mid_bot &&
+		    num_mid_bot_doublets_per_bin <
+		    mid_bot_doublets_per_bin.size()) {
+		    size_t pos = mid_bot_start_idx + n_mid_bot_per_spM;
+		    if (pos >= mid_bot_doublets_per_bin.size()) {
+			continue;
+		    }
+		    
+		    mid_bot_doublets_per_bin[pos] =
+			doublet({spM_loc, spB_loc});
 
-        if (gid >= num_compat_spM_per_bin) {
-            continue;
-        }
 
-        auto sp_idx = doublet_counter_per_bin[gid].spM.sp_idx;
+		    num_mid_bot_doublets_per_thread[threadIdx.x]++;
+		    n_mid_bot_per_spM++;
+		}
+	    }
+	    
+	    if (doublet_finding_helper::isCompatible(isp, neigh_isp, config,
+						     false)) {
+		auto spT_loc = sp_location({neigh_bin, spB_idx});
 
-        if (sp_idx >= doublet_counter_per_bin.size()) {
-            continue;
-        }
-
-        auto spM_loc = sp_location({blockIdx.x, sp_idx});
-        auto isp = internal_sp_per_bin[sp_idx];
-
-        size_t n_mid_bot_per_spM = 0;
-        size_t n_mid_top_per_spM = 0;
-
-        size_t mid_bot_start_idx = 0;
-        size_t mid_top_start_idx = 0;
-
-        for (size_t i = 0; i < gid; i++) {
-            mid_bot_start_idx += doublet_counter_per_bin[i].n_mid_bot;
-            mid_top_start_idx += doublet_counter_per_bin[i].n_mid_top;
-        }
-
-        for (size_t i_n = 0; i_n < bin_info.bottom_idx.counts; ++i_n) {
-            auto neigh_bin = bin_info.bottom_idx.vector_indices[i_n];
-            auto neigh_internal_sp_per_bin =
-                internal_sp_device.items.at(neigh_bin);
-
-            for (size_t spB_idx = 0; spB_idx < neigh_internal_sp_per_bin.size();
-                 ++spB_idx) {
-                auto neigh_isp = neigh_internal_sp_per_bin[spB_idx];
-                if (doublet_finding_helper::isCompatible(isp, neigh_isp, config,
-                                                         true)) {
-                    auto spB_loc = sp_location({neigh_bin, spB_idx});
-                    // auto lin =
-                    // doublet_finding_helper::transform_coordinates(isp,
-                    // neigh_isp, true);
-
-                    if (n_mid_bot_per_spM <
-                            doublet_counter_per_bin[gid].n_mid_bot &&
-                        num_mid_bot_doublets_per_bin <
-                            mid_bot_doublets_per_bin.size()) {
-                        size_t pos = mid_bot_start_idx + n_mid_bot_per_spM;
-                        if (pos >= mid_bot_doublets_per_bin.size()) {
-                            continue;
-                        }
-
-                        mid_bot_doublets_per_bin[pos] =
-                            doublet({spM_loc, spB_loc});
-                        // lin});
-
-                        num_mid_bot_doublets_per_thread[threadIdx.x]++;
-                        n_mid_bot_per_spM++;
-                    }
-                }
-
-                if (doublet_finding_helper::isCompatible(isp, neigh_isp, config,
-                                                         false)) {
-                    auto spT_loc = sp_location({neigh_bin, spB_idx});
-                    // auto lin =
-                    // doublet_finding_helper::transform_coordinates(isp,
-                    // neigh_isp, false);
-
-                    if (n_mid_top_per_spM <
-                            doublet_counter_per_bin[gid].n_mid_top &&
-                        num_mid_top_doublets_per_bin <
-                            mid_top_doublets_per_bin.size()) {
-                        size_t pos = mid_top_start_idx + n_mid_top_per_spM;
-                        if (pos >= mid_top_doublets_per_bin.size()) {
-                            continue;
-                        }
-
-                        mid_top_doublets_per_bin[pos] =
-                            doublet({spM_loc, spT_loc});
-                        // lin});
-
-                        num_mid_top_doublets_per_thread[threadIdx.x]++;
-                        n_mid_top_per_spM++;
-                    }
-                }
-            }
-        }
+		if (n_mid_top_per_spM <
+		    doublet_counter_per_bin[gid].n_mid_top &&
+		    num_mid_top_doublets_per_bin <
+		    mid_top_doublets_per_bin.size()) {
+		    size_t pos = mid_top_start_idx + n_mid_top_per_spM;
+		    if (pos >= mid_top_doublets_per_bin.size()) {
+			continue;
+		    }
+		    
+		    mid_top_doublets_per_bin[pos] =
+			doublet({spM_loc, spT_loc});
+		    
+		    num_mid_top_doublets_per_thread[threadIdx.x]++;
+		    n_mid_top_per_spM++;
+		}
+	    }
+	}
     }
 
     __syncthreads();
@@ -181,10 +189,18 @@ __global__ void doublet_finding_kernel(
     __syncthreads();
     cuda_helper::reduce_sum<int>(blockDim.x, threadIdx.x,
                                  num_mid_top_doublets_per_thread);
-
+    
     if (threadIdx.x == 0) {
-        num_mid_bot_doublets_per_bin = num_mid_bot_doublets_per_thread[0];
-        num_mid_top_doublets_per_bin = num_mid_top_doublets_per_thread[0];
+	atomicAdd(&num_mid_bot_doublets_per_bin, num_mid_bot_doublets_per_thread[0]);
+	atomicAdd(&num_mid_top_doublets_per_bin, num_mid_top_doublets_per_thread[0]);
+	
+	//num_mid_bot_doublets_per_bin = num_mid_bot_doublets_per_thread[0];
+        //num_mid_top_doublets_per_bin = num_mid_top_doublets_per_thread[0];
+	/*
+	if (bin_idx==76){
+	    printf("%d %d %d \n", int(num_mid_bot_doublets_per_bin), int(num_mid_bot_doublets_per_thread[0]), int(mid_top_doublets_per_bin.size()));
+	}
+	*/
     }
 }
 
