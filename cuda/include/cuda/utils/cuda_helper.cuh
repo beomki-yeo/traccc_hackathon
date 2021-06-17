@@ -63,9 +63,9 @@ struct cuda_helper {
     static __device__ void get_bin_idx(const unsigned int& n_bins, const device_container<header_t, item_t>& container, unsigned int& bin_idx, unsigned int& ref_block_idx){
 	
 	unsigned int nblocks_accum = 0;
-	
+	unsigned int nblocks_per_bin = 0;
 	for (unsigned int i=0; i< n_bins; ++i){
-	    unsigned int nblocks_per_bin = container.headers[i] / blockDim.x + 1;
+	    nblocks_per_bin = container.headers[i] / blockDim.x + 1;
 	    nblocks_accum += nblocks_per_bin;
 
 	    if (blockIdx.x < nblocks_accum){
@@ -79,7 +79,7 @@ struct cuda_helper {
 
 	/*
 	if (threadIdx.x==0 && bin_idx==76){
-	    printf("hi \n");
+	    printf("%d \n", int(nblocks_per_bin));
 	}
 	*/
     }

@@ -25,17 +25,22 @@ void doublet_finding(const seedfinder_config& config,
                      host_doublet_container& mid_bot_doublet_container,
                      host_doublet_container& mid_top_doublet_container,
                      vecmem::memory_resource* resource) {
-    auto internal_sp_data = get_data(internal_sp_container, resource);
+    auto internal_sp_view = get_data(internal_sp_container, resource);
     auto doublet_counter_view = get_data(doublet_counter_container, resource);
     auto mid_bot_doublet_view = get_data(mid_bot_doublet_container, resource);
     auto mid_top_doublet_view = get_data(mid_top_doublet_container, resource);
 
-    unsigned int num_threads = WARP_SIZE * 10;
-    unsigned int num_blocks = internal_sp_data.headers.m_size;
+    unsigned int num_threads = WARP_SIZE * 1;
+
+    unsigned int num_blocks = 0;
+    for (size_t i=0; i<internal_sp_view.headers.m_size; ++i){
+	num_blocks += doublet_counter_view.items.m_ptr[i].m_size / num_threads +1;
+    }
+       
     unsigned int sh_mem = sizeof(int) * num_threads * 2;
 
     doublet_finding_kernel<<<num_blocks, num_threads, sh_mem>>>(
-        config, internal_sp_data, doublet_counter_view, mid_bot_doublet_view,
+        config, internal_sp_view, doublet_counter_view, mid_bot_doublet_view,
         mid_top_doublet_view);
 
     CUDA_ERROR_CHECK(cudaGetLastError());
@@ -84,11 +89,6 @@ __global__ void doublet_finding_kernel(
     
     size_t n_iter = num_compat_spM_per_bin / blockDim.x + 1;
 
-    /*
-    if (threadIdx.x==0){
-	printf("%d %d \n", int(num_compat_spM_per_bin), int(n_iter));
-    }
-    */
     // zero initialization
     extern __shared__ int num_doublets_per_thread[];
     int* num_mid_bot_doublets_per_thread = num_doublets_per_thread;
@@ -99,23 +99,18 @@ __global__ void doublet_finding_kernel(
 
     __syncthreads();
 
-    //for (size_t i_it = 0; i_it < n_iter; ++i_it) {
-    //auto gid = i_it * blockDim.x + threadIdx.x;
     auto gid = (blockIdx.x - ref_block_idx) * blockDim.x + threadIdx.x;
     
     if (gid >= num_compat_spM_per_bin) {
-	//continue;
 	return;
     }
     
     auto sp_idx = doublet_counter_per_bin[gid].spM.sp_idx;
     
     if (sp_idx >= doublet_counter_per_bin.size()) {
-	//continue;
 	return;
     }
     
-    //auto spM_loc = sp_location({blockIdx.x, sp_idx});
     auto spM_loc = sp_location({bin_idx, sp_idx});
     auto isp = internal_sp_per_bin[sp_idx];
     
@@ -193,14 +188,6 @@ __global__ void doublet_finding_kernel(
     if (threadIdx.x == 0) {
 	atomicAdd(&num_mid_bot_doublets_per_bin, num_mid_bot_doublets_per_thread[0]);
 	atomicAdd(&num_mid_top_doublets_per_bin, num_mid_top_doublets_per_thread[0]);
-	
-	//num_mid_bot_doublets_per_bin = num_mid_bot_doublets_per_thread[0];
-        //num_mid_top_doublets_per_bin = num_mid_top_doublets_per_thread[0];
-	/*
-	if (bin_idx==76){
-	    printf("%d %d %d \n", int(num_mid_bot_doublets_per_bin), int(num_mid_bot_doublets_per_thread[0]), int(mid_top_doublets_per_bin.size()));
-	}
-	*/
     }
 }
 
