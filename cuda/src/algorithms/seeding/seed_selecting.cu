@@ -164,7 +164,7 @@ __global__ void seed_selecting_kernel(
                     //
                     //       Let's not be so obsessed about achieving
                     //       perfectly same result :))))))))
-
+		    
                     int min_index =
                         std::min_element(triplets_per_spM + begin_idx,
                                          triplets_per_spM + end_idx,
@@ -176,8 +176,8 @@ __global__ void seed_selecting_kernel(
                     if (aTriplet.weight > min_weight) {
                         triplets_per_spM[min_index] = aTriplet;
                     }
-
-                    // sorting method -> good for seed matching ratio but slow
+		    
+                    // (deprecated) sorting method -> good for seed matching ratio but slow
                     /*
                     thrust::sort(thrust::seq,
                                  triplets_per_spM+begin_idx,

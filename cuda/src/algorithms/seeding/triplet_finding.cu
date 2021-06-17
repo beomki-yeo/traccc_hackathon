@@ -36,12 +36,12 @@ void triplet_finding(const seedfinder_config& config,
     auto triplet_counter_view = get_data(triplet_counter_container, resource);
     auto triplet_view = get_data(triplet_container, resource);
 
-    unsigned int num_threads = WARP_SIZE * 8;
-    //unsigned int num_blocks = internal_sp_view.headers.m_size;
+    unsigned int num_threads = WARP_SIZE * 2;
 
     unsigned int num_blocks = 0;
     for (size_t i=0; i<internal_sp_view.headers.m_size; ++i){
-	num_blocks += triplet_counter_view.items.m_ptr[i].m_size / num_threads +1;
+	//num_blocks += triplet_counter_view.items.m_ptr[i].m_size / num_threads +1;
+	num_blocks += triplet_counter_container.headers[i] / num_threads +1;
     }
     
     unsigned int sh_mem = sizeof(int) * num_threads;
@@ -86,15 +86,14 @@ __global__ void triplet_finding_kernel(
 			     bin_idx,
 			     ref_block_idx);
     
-    auto bin_info = internal_sp_device.headers.at(bin_idx);
     auto internal_sp_per_bin = internal_sp_device.items.at(bin_idx);
     auto& num_compat_spM_per_bin =
         doublet_counter_device.headers.at(bin_idx);
     auto doublet_counter_per_bin = doublet_counter_device.items.at(bin_idx);
-    auto num_mid_bot_doublets_per_bin =
+    const auto& num_mid_bot_doublets_per_bin =
         mid_bot_doublet_device.headers.at(bin_idx);
     auto mid_bot_doublets_per_bin = mid_bot_doublet_device.items.at(bin_idx);
-    auto num_mid_top_doublets_per_bin =
+    const auto& num_mid_top_doublets_per_bin =
         mid_top_doublet_device.headers.at(bin_idx);
     auto mid_top_doublets_per_bin = mid_top_doublet_device.items.at(bin_idx);
 
@@ -104,18 +103,14 @@ __global__ void triplet_finding_kernel(
     auto& num_triplets_per_bin = triplet_device.headers.at(bin_idx);
     auto triplets_per_bin = triplet_device.items.at(bin_idx);
 
-    //size_t n_iter = num_compat_mb_per_bin / blockDim.x + 1;
 
     extern __shared__ int num_triplets_per_thread[];
     num_triplets_per_thread[threadIdx.x] = 0;
 
     __syncthreads();
 
-    //for (size_t i_it = 0; i_it < n_iter; ++i_it) {
-    //auto gid = i_it * blockDim.x + threadIdx.x;
     auto gid = (blockIdx.x - ref_block_idx) * blockDim.x + threadIdx.x;
     if (gid >= num_compat_mb_per_bin) {
-	//continue;
 	return;
     }
     auto& mid_bot_doublet = triplet_counter_per_bin[gid].mid_bot_doublet;
@@ -161,7 +156,6 @@ __global__ void triplet_finding_kernel(
     }
     
     if (mt_start_idx >= mid_top_doublets_per_bin.size()) {
-	//continue;
 	return;
     }
     
@@ -207,7 +201,6 @@ __global__ void triplet_finding_kernel(
                                  num_triplets_per_thread);
 
     if (threadIdx.x == 0) {
-        //num_triplets_per_bin = num_triplets_per_thread[0];
 	atomicAdd(&num_triplets_per_bin, num_triplets_per_thread[0]);
     }
 }

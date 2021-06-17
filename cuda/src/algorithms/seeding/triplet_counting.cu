@@ -38,7 +38,8 @@ void triplet_counting(const seedfinder_config& config,
     //unsigned int num_blocks = internal_sp_view.headers.m_size;
     unsigned int num_blocks = 0;
     for (size_t i=0; i<internal_sp_view.headers.m_size; ++i){
-	num_blocks += mid_bot_doublet_view.items.m_ptr[i].m_size / num_threads +1;
+	//num_blocks += mid_bot_doublet_view.items.m_ptr[i].m_size / num_threads +1;
+	num_blocks += mid_bot_doublet_container.headers[i] / num_threads +1;
     }
     
     triplet_counting_kernel<<<num_blocks, num_threads>>>(
@@ -77,15 +78,15 @@ __global__ void triplet_counting_kernel(
 			     mid_bot_doublet_device,
 			     bin_idx,
 			     ref_block_idx);
-
+    
     auto internal_sp_per_bin = internal_sp_device.items.at(bin_idx);
     auto& num_compat_spM_per_bin =
         doublet_counter_device.headers.at(bin_idx);
     auto doublet_counter_per_bin = doublet_counter_device.items.at(bin_idx);
-    auto num_mid_bot_doublets_per_bin =
+    const auto& num_mid_bot_doublets_per_bin =
         mid_bot_doublet_device.headers.at(bin_idx);
     auto mid_bot_doublets_per_bin = mid_bot_doublet_device.items.at(bin_idx);
-    auto num_mid_top_doublets_per_bin =
+    const auto& num_mid_top_doublets_per_bin =
         mid_top_doublet_device.headers.at(bin_idx);
     auto mid_top_doublets_per_bin = mid_top_doublet_device.items.at(bin_idx);
     auto& num_compat_mb_per_bin = triplet_counter_device.headers.at(bin_idx);

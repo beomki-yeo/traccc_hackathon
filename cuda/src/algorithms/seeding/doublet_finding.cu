@@ -30,11 +30,12 @@ void doublet_finding(const seedfinder_config& config,
     auto mid_bot_doublet_view = get_data(mid_bot_doublet_container, resource);
     auto mid_top_doublet_view = get_data(mid_top_doublet_container, resource);
 
-    unsigned int num_threads = WARP_SIZE * 1;
+    unsigned int num_threads = WARP_SIZE * 2;
 
     unsigned int num_blocks = 0;
     for (size_t i=0; i<internal_sp_view.headers.m_size; ++i){
-	num_blocks += doublet_counter_view.items.m_ptr[i].m_size / num_threads +1;
+	//num_blocks += doublet_counter_view.items.m_ptr[i].m_size / num_threads +1;
+	num_blocks += doublet_counter_container.headers[i] / num_threads +1;
     }
        
     unsigned int sh_mem = sizeof(int) * num_threads * 2;
@@ -72,7 +73,7 @@ __global__ void doublet_finding_kernel(
 			     bin_idx,
 			     ref_block_idx);
     
-    auto bin_info = internal_sp_device.headers.at(bin_idx);
+    const auto& bin_info = internal_sp_device.headers.at(bin_idx);
     auto internal_sp_per_bin = internal_sp_device.items.at(bin_idx);
 
     auto& num_compat_spM_per_bin =
@@ -87,8 +88,6 @@ __global__ void doublet_finding_kernel(
         mid_top_doublet_device.headers.at(bin_idx);
     auto mid_top_doublets_per_bin = mid_top_doublet_device.items.at(bin_idx);
     
-    size_t n_iter = num_compat_spM_per_bin / blockDim.x + 1;
-
     // zero initialization
     extern __shared__ int num_doublets_per_thread[];
     int* num_mid_bot_doublets_per_thread = num_doublets_per_thread;
@@ -114,11 +113,11 @@ __global__ void doublet_finding_kernel(
     auto spM_loc = sp_location({bin_idx, sp_idx});
     auto isp = internal_sp_per_bin[sp_idx];
     
-    size_t n_mid_bot_per_spM = 0;
-    size_t n_mid_top_per_spM = 0;
+    unsigned int n_mid_bot_per_spM = 0;
+    unsigned int n_mid_top_per_spM = 0;
     
-    size_t mid_bot_start_idx = 0;
-    size_t mid_top_start_idx = 0;
+    unsigned int mid_bot_start_idx = 0;
+    unsigned int mid_top_start_idx = 0;
     
     for (size_t i = 0; i < gid; i++) {
 	mid_bot_start_idx += doublet_counter_per_bin[i].n_mid_bot;

@@ -76,14 +76,7 @@ struct cuda_helper {
 		
 	    ref_block_idx += nblocks_per_bin;
 	}
-
-	/*
-	if (threadIdx.x==0 && bin_idx==76){
-	    printf("%d \n", int(nblocks_per_bin));
-	}
-	*/
-    }
-    
+    }    
 };
 
     

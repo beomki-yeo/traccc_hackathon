@@ -29,7 +29,7 @@ void doublet_counting(const seedfinder_config& config,
     
     unsigned int num_blocks = 0;
     for (size_t i=0; i<internal_sp_view.headers.m_size; ++i){
-	num_blocks += internal_sp_view.items.m_ptr[i].m_size / num_threads +1;
+	num_blocks += internal_sp_view.items.m_ptr[i].m_size / num_threads + 1;
     }
         
     doublet_counting_kernel<<<num_blocks, num_threads>>>(
@@ -55,7 +55,7 @@ __global__ void doublet_counting_kernel(
 
     cuda_helper::get_bin_idx(n_bins, internal_sp_device.items, bin_idx, ref_block_idx);
     
-    auto bin_info = internal_sp_device.headers.at(bin_idx);
+    const auto& bin_info = internal_sp_device.headers.at(bin_idx);
     auto internal_sp_per_bin = internal_sp_device.items.at(bin_idx);
     auto& num_compat_spM_per_bin =
         doublet_counter_device.headers.at(bin_idx);
@@ -71,8 +71,8 @@ __global__ void doublet_counting_kernel(
 	return;
     }
     
-    int n_mid_bot = 0;
-    int n_mid_top = 0;
+    unsigned int n_mid_bot = 0;
+    unsigned int n_mid_top = 0;
     
     auto spM_loc = sp_location({bin_idx, sp_idx});
     auto isp = internal_sp_per_bin[sp_idx];
