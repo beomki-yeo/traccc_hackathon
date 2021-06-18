@@ -62,7 +62,7 @@ __global__ void doublet_counting_kernel(
     auto doublet_counter_per_bin = doublet_counter_device.items.at(bin_idx);
 
     // zero initialization
-    num_compat_spM_per_bin = 0;
+    //num_compat_spM_per_bin = 0;
     __syncthreads();
 
     auto sp_idx = (blockIdx.x - ref_block_idx) * blockDim.x + threadIdx.x;

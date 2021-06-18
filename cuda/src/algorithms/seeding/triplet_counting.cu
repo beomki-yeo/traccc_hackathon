@@ -35,10 +35,8 @@ void triplet_counting(const seedfinder_config& config,
         get_data(triplet_counter_container, resource);
 
     unsigned int num_threads = WARP_SIZE * 8;
-    //unsigned int num_blocks = internal_sp_view.headers.m_size;
     unsigned int num_blocks = 0;
     for (size_t i=0; i<internal_sp_view.headers.m_size; ++i){
-	//num_blocks += mid_bot_doublet_view.items.m_ptr[i].m_size / num_threads +1;
 	num_blocks += mid_bot_doublet_container.headers[i] / num_threads +1;
     }
     

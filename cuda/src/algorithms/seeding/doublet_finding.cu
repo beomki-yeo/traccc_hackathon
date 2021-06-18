@@ -31,10 +31,8 @@ void doublet_finding(const seedfinder_config& config,
     auto mid_top_doublet_view = get_data(mid_top_doublet_container, resource);
 
     unsigned int num_threads = WARP_SIZE * 2;
-
     unsigned int num_blocks = 0;
     for (size_t i=0; i<internal_sp_view.headers.m_size; ++i){
-	//num_blocks += doublet_counter_view.items.m_ptr[i].m_size / num_threads +1;
 	num_blocks += doublet_counter_container.headers[i] / num_threads +1;
     }
        
