@@ -29,7 +29,7 @@ void weight_updating(const seedfilter_config& filter_config,
 
     unsigned int num_threads = WARP_SIZE * 2;
     unsigned int num_blocks = 0;
-    for (size_t i=0; i<internal_sp_view.headers.m_size; ++i){
+    for (size_t i=0; i<internal_sp_view.headers.size(); ++i){
 	num_blocks += triplet_container.headers[i] / num_threads +1;
     }
     

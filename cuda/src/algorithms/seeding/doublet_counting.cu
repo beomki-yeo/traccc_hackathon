@@ -28,8 +28,8 @@ void doublet_counting(const seedfinder_config& config,
     unsigned int num_threads = WARP_SIZE * 2;
     
     unsigned int num_blocks = 0;
-    for (size_t i=0; i<internal_sp_view.headers.m_size; ++i){
-	num_blocks += internal_sp_view.items.m_ptr[i].m_size / num_threads + 1;
+    for (size_t i=0; i<internal_sp_view.headers.size(); ++i){
+	num_blocks += internal_sp_view.items.m_ptr[i].size() / num_threads + 1;
     }
         
     doublet_counting_kernel<<<num_blocks, num_threads>>>(

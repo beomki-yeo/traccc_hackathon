@@ -29,14 +29,14 @@ set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY
 list( APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" )
 include( traccc-compiler-options )
 
+# Build the necessary externals.
+add_subdirectory(extern)
+include( traccc-vecmem )
+
 # Set GPU-related options
 if( TRACCC_BUILD_CUDA )
   add_subdirectory( cuda )
 endif()
-
-# Build the necessary externals.
-add_subdirectory(extern)
-include( traccc-vecmem )
 
 # Build the traccc code.
 add_subdirectory(core)
