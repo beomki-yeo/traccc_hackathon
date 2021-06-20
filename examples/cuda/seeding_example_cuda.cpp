@@ -31,7 +31,6 @@
 #include <iomanip>
 
 // custom
-#include "atlas_cuts.hpp"
 #include "tml_stats_config.hpp"
 
 int seq_run(const std::string& detector_file, const std::string& hits_dir,
@@ -117,9 +116,8 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
 
     traccc::spacepoint_grouping sg(config, grid_config);
 
-    traccc::atlas_cuts cuts;
     traccc::cuda::tml_stats_config tml_cfg;
-    traccc::cuda::seed_finding sf_cuda(config, sg.get_spgrid(), &tml_cfg, &cuts,
+    traccc::cuda::seed_finding sf_cuda(config, sg.get_spgrid(), &tml_cfg,
                                        &mng_mr);
 
     /*time*/ auto start_wall_time = std::chrono::system_clock::now();
@@ -193,7 +191,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
         traccc::host_seed_collection seeds;
 
         traccc::seed_finding sf =
-            traccc::seed_finding(config, internal_sp_per_event, &cuts);
+            traccc::seed_finding(config, internal_sp_per_event);
         if (skip_cpu == false) {
             seeds = sf();
             n_seeds += seeds.size();

@@ -51,8 +51,8 @@ void seed_selecting(const seedfilter_config& filter_config,
                     host_triplet_container& triplet_container,
                     host_seed_container& seed_container,
                     vecmem::memory_resource* resource) {
+    
     auto internal_sp_view = get_data(internal_sp_container, resource);
-
     auto doublet_counter_container_view =
         get_data(doublet_counter_container, resource);
     auto triplet_counter_container_view =
@@ -148,10 +148,10 @@ __global__ void seed_selecting_kernel(
 	    internal_sp_device.items[spT_loc.bin_idx][spT_loc.sp_idx];
 	
 	if (spM_loc == aTriplet.sp2) {
-	    seed_selecting_helper::seed_weight(filter_config, spB, spT,
+	    seed_selecting_helper::seed_weight(filter_config, spM, spB, spT,
 					       aTriplet.weight);
 	    
-	    if (!seed_selecting_helper::single_seed_cut(filter_config, spB,
+	    if (!seed_selecting_helper::single_seed_cut(filter_config, spM, spB, spT,
 							aTriplet.weight)) {
 		continue;
 	    }
@@ -227,7 +227,10 @@ __global__ void seed_selecting_kernel(
 	    break;
 	}
 	
-	if (seed_selecting_helper::cut_per_middle_sp(filter_config, spB,
+	if (seed_selecting_helper::cut_per_middle_sp(filter_config,
+						     spM.sp(),
+						     spB.sp(),
+						     spT.sp(),
 						     aTriplet.weight) ||
 	    n_seeds_per_spM == 0) {
 	    auto pos = atomicAdd(&num_seeds, 1);

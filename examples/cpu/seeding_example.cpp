@@ -27,9 +27,6 @@
 #include <chrono>
 #include <iomanip>
 
-// custom
-#include "atlas_cuts.hpp"
-
 int seq_run(const std::string& detector_file, const std::string& hits_dir,
             unsigned int events) {
     // Read the surface transforms
@@ -140,14 +137,12 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
 
         /*time*/ binning_cpu += time_binning_cpu.count();
 
-        traccc::atlas_cuts cuts;
-
         /*-----------------------
           seed finding -- cpu
           -----------------------*/
         /*time*/ auto start_seeding_cpu = std::chrono::system_clock::now();
 
-        traccc::seed_finding sf(config, internal_sp_per_event, &cuts);
+        traccc::seed_finding sf(config, internal_sp_per_event);
         auto seeds = sf();
 
         /*time*/ auto end_seeding_cpu = std::chrono::system_clock::now();

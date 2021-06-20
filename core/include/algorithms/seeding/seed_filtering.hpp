@@ -5,19 +5,16 @@
  * Mozilla Public License Version 2.0
  */
 
-#include <algorithms/seeding/detail/experiment_cuts.hpp>
 #include <algorithms/seeding/detail/triplet.hpp>
+#include <edm/seed.hpp>
+#include <algorithms/seeding/seed_selecting_helper.hpp>
 
 #pragma once
 
 namespace traccc {
 
 struct seed_filtering {
-    seed_filtering(experiment_cuts* exp_cuts = nullptr
-                   // const host_internal_spacepoint_container& isp_container,
-                   )
-        :  // m_isp_container(isp_container),
-          m_exp_cuts(exp_cuts) {}
+    seed_filtering(){}
 
     void operator()(host_internal_spacepoint_container& isp_container,
                     host_triplet_collection& triplets,
@@ -37,13 +34,16 @@ struct seed_filtering {
             auto spT_idx = triplet.sp3;
             auto spT = isp_container.items[spT_idx.bin_idx][spT_idx.sp_idx];
 
-            if (m_exp_cuts != nullptr) {
-                m_exp_cuts->seedWeight(triplet.weight, spB, spM, spT);
-                if (!m_exp_cuts->singleSeedCut(triplet.weight, spB, spM, spT)) {
-                    continue;
-                }
-            }
+	    seed_selecting_helper::seed_weight(m_filter_config,
+					       spM, spB, spT,
+					       triplet.weight);
 
+	    if (!seed_selecting_helper::single_seed_cut(m_filter_config,
+						       spM, spB, spT,
+						       triplet.weight)){
+		continue;
+	    }
+	    
             seeds_per_spM.push_back({spB.m_sp, spM.m_sp, spT.m_sp,
                                      triplet.weight, triplet.z_vertex});
         }
@@ -73,10 +73,25 @@ struct seed_filtering {
                           */
                       }
                   });
-        if (m_exp_cuts != nullptr) {
-            seeds_per_spM =
-                m_exp_cuts->cutPerMiddleSP(std::move(seeds_per_spM));
-        }
+
+	host_seed_collection new_seeds;	
+	if (seeds_per_spM.size() > 1) {
+	    new_seeds.push_back(seeds_per_spM[0]);
+	    
+	    size_t itLength = std::min(seeds_per_spM.size(), m_filter_config.max_triplets_per_spM);
+	    // don't cut first element
+	    for (size_t i = 1; i < itLength; i++) {
+		if (seed_selecting_helper::cut_per_middle_sp(m_filter_config,
+							     seeds_per_spM[i].spM,
+							     seeds_per_spM[i].spB,
+							     seeds_per_spM[i].spT,
+							     seeds_per_spM[i].weight)){
+		    new_seeds.push_back(std::move(seeds_per_spM[i]));
+		} 
+	    }
+	    seeds_per_spM = std::move(new_seeds);
+	}
+	
         unsigned int maxSeeds = seeds_per_spM.size();
 
         if (maxSeeds > m_filter_config.maxSeedsPerSpM) {
@@ -96,8 +111,6 @@ struct seed_filtering {
 
    private:
     seedfilter_config m_filter_config;
-    // const host_internal_spacepoint_container& m_isp_container;
-    experiment_cuts* m_exp_cuts;
 };
 
 }  // namespace traccc

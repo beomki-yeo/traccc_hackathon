@@ -20,11 +20,9 @@ namespace traccc {
 
 struct seed_finding {
     seed_finding(seedfinder_config& config,
-                 host_internal_spacepoint_container& isp_container,
-                 experiment_cuts* exp_cuts = nullptr)
+                 host_internal_spacepoint_container& isp_container)
         : m_doublet_finding(config, isp_container),
           m_triplet_finding(config, isp_container),
-          m_seed_filtering(exp_cuts),
           m_isp_container(isp_container) {}
 
     host_seed_collection operator()() {

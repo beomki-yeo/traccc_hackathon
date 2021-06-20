@@ -28,10 +28,9 @@ namespace cuda {
 struct seed_finding {
     seed_finding(seedfinder_config& config,
                  std::shared_ptr<spacepoint_grid> sp_grid,
-                 stats_config* stats_cfg, experiment_cuts* exp_cuts = nullptr,
+                 stats_config* stats_cfg,
                  vecmem::memory_resource* mr = nullptr)
         : m_seedfinder_config(config),
-          m_seed_filtering(exp_cuts),
           m_sp_grid(sp_grid),
           m_stats_config(stats_cfg),
           m_mr(mr),
