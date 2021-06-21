@@ -15,9 +15,9 @@ namespace traccc {
 /// location of spacepoint in internal spacepoint container
 struct sp_location {
     /// index of the bin of the spacepoint grid
-    size_t bin_idx;
+    unsigned int bin_idx;
     /// index of the spacepoint in the bin
-    size_t sp_idx;
+    unsigned int sp_idx;
 };
 
 __CUDA_HOST_DEVICE__
