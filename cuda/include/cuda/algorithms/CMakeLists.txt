@@ -18,6 +18,7 @@ target_compile_options(traccc_cuda_algorithms
   #-arch=sm_52 
   #-gencode=arch=compute_75,code=sm_75 
   --expt-relaxed-constexpr
+  #--use_fast_math>)
   -fmad=false>)
 
 target_link_libraries(traccc_cuda_algorithms PUBLIC traccc::core vecmem::cuda)
