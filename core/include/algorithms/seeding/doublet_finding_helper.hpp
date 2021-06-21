@@ -12,13 +12,29 @@
 
 namespace traccc {
 
-// helper function used for both cpu and gpu
+// helper functions used for both cpu and gpu
 struct doublet_finding_helper {
+
+    /// Check if two spacepoints form doublets
+    ///
+    /// @param sp1 is middle spacepoint
+    /// @param sp2 is bottom or top spacepoint
+    /// @param config is configuration parameter
+    /// @param bottom is whether it is for middle-bottom or middle-top doublet
+    ///
+    /// @return boolean value for compatibility
     static __CUDA_HOST_DEVICE__ bool isCompatible(
         const internal_spacepoint<spacepoint>& sp1,
         const internal_spacepoint<spacepoint>& sp2,
         const seedfinder_config& config, bool bottom);
 
+    /// Do the conformal transformation on doublet's coordinate
+    ///
+    /// @param sp1 is middle spacepoint
+    /// @param sp2 is bottom or top spacepoint
+    /// @param bottom is whether it is for middle-bottom or middle-top doublet
+    ///
+    /// @reutrn lin_circle which contains the transformed coordinate information
     static __CUDA_HOST_DEVICE__ lin_circle transform_coordinates(
         const internal_spacepoint<spacepoint>& sp1,
         const internal_spacepoint<spacepoint>& sp2, bool bottom);

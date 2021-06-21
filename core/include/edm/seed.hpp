@@ -11,6 +11,9 @@
 
 namespace traccc {
 
+/// Header: unsigned int for number of seeds
+    
+/// Item: seed consisting of three spacepoints, z origin and weight
 struct seed {
     spacepoint spB;
     spacepoint spM;
@@ -33,21 +36,36 @@ inline bool operator==(const seed& lhs, const seed& rhs) {
     return (lhs.spB == rhs.spB && lhs.spM == rhs.spM && lhs.spT == rhs.spT);
 }
 
+/// Container of internal_spacepoint for an event
 template <template <typename> class vector_t>
 using seed_collection = vector_t<seed>;
 
+/// Convenience declaration for the seed collection type to use
+/// in host code
 using host_seed_collection = seed_collection<vecmem::vector>;
 
+/// Convenience declaration for the seed collection type to use
+/// in device code    
 using device_seed_collection = seed_collection<vecmem::device_vector>;
 
-using host_seed_container = host_container<int, seed>;
+/// Convenience declaration for the seed container type to use in
+/// host code    
+using host_seed_container = host_container<unsigned int, seed>;
 
-using device_seed_container = device_container<int, seed>;
+/// Convenience declaration for the seed container type to use in
+/// device code        
+using device_seed_container = device_container<unsigned int, seed>;
 
-using seed_container_data = container_data<int, seed>;
+/// Convenience declaration for the seed container data type to
+/// use in host code    
+using seed_container_data = container_data<unsigned int, seed>;
 
-using seed_container_buffer = container_buffer<int, seed>;
+/// Convenience declaration for the seed container buffer type to
+/// use in host code        
+using seed_container_buffer = container_buffer<unsigned int, seed>;
 
-using seed_container_view = container_view<int, seed>;
+/// Convenience declaration for the seed container view type to
+/// use in host code            
+using seed_container_view = container_view<unsigned int, seed>;
 
 };  // namespace traccc

@@ -26,7 +26,10 @@ namespace traccc {
 
 struct neighbor_idx {
     size_t counts;
+    /// global_indices: the global indices of neighbor bins provided by axis class
+    /// size of 9 is from (3 neighbors on z-axis) x (3 neighbors on phi-axis)
     size_t global_indices[9];
+    /// vector_indices: the actual indices of neighbor bins, which are used for navigating internal_spacepoint_container
     size_t vector_indices[9];
 };
 
@@ -50,7 +53,6 @@ struct internal_spacepoint {
     scalar m_r;
     scalar m_varianceR;
     scalar m_varianceZ;
-    // const spacepoint& m_sp;
     spacepoint m_sp;
 
     __CUDA_HOST_DEVICE__
@@ -112,7 +114,7 @@ struct internal_spacepoint {
     const spacepoint& sp() const { return m_sp; }
 };
 
-/// Container of internal_spacepoint belonging to one detector module
+/// Container of internal_spacepoint belonging to one spacepoint bin
 template <template <typename> class vector_t>
 using internal_spacepoint_collection =
     vector_t<internal_spacepoint<spacepoint> >;
@@ -128,8 +130,7 @@ using device_internal_spacepoint_collection =
     internal_spacepoint_collection<vecmem::device_vector>;
 
 /// Convenience declaration for the internal_spacepoint container type to use in
-/// host code header: global bin index / neighborhood index item  : internal
-/// spacepoint
+/// host code
 using host_internal_spacepoint_container =
     host_container<bin_information, internal_spacepoint<spacepoint> >;
 
@@ -174,6 +175,8 @@ inline void fill_vector_id(neighbor_idx& neighbor,
     }
 }
 
+/// Fill vector_indices of header of internal_spacepoint_container
+///
 inline void fill_vector_id(host_internal_spacepoint_container& isp_container) {
     for (size_t i = 0; i < isp_container.headers.size(); ++i) {
         auto& bot_neighbors = isp_container.headers[i].bottom_idx;

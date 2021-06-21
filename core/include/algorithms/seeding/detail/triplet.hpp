@@ -11,13 +11,21 @@
 
 namespace traccc {
 
-// Bottom - Middle - Top
+/// Header: unsigned int for the number of triplets per spacepoint bin    
+    
+/// Item: triplets of middle-bottom-top
 struct triplet {
-    sp_location sp1;  // bottom
-    sp_location sp2;  // middle
-    sp_location sp3;  // top
+    // middle spacepoint location in internal spacepoint container
+    sp_location sp1;
+    // bottom spacepoint location in internal spacepoint container    
+    sp_location sp2;
+    // top spacepoint location in internal spacepoint container
+    sp_location sp3;
+    // curvtaure of circle estimated from triplet
     scalar curvature;
+    // weight of triplet
     scalar weight;
+    // z origin of triplet    
     scalar z_vertex;
 };
 

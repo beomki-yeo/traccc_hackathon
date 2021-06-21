@@ -11,9 +11,13 @@
 
 namespace traccc {
 
-// Middle - Bottom or Middle - Top
+/// Header: unsigned int for the number of doublets per spacepoint bin
+    
+/// Item: doublet of middle-bottom or middle-top
 struct doublet {
+    // midle spacepoint location in internal spacepoint container   
     sp_location sp1;
+    // bottom (or top) spacepoint location in internal spacepoint container
     sp_location sp2;
 };
 

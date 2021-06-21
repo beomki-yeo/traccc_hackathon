@@ -13,9 +13,18 @@
 
 namespace traccc {
 
+/// Seed filtering to filter out the bad triplets 
 struct seed_filtering {
     seed_filtering(){}
 
+    /// Callable operator for the seed filtering
+    ///
+    /// @param isp_container is internal spacepoint container
+    /// @param triplets is the vector of triplets per middle spacepoint
+    ///
+    /// void interface
+    ///
+    /// @return seeds are the vector of seeds where the new compatible seeds are added 
     void operator()(host_internal_spacepoint_container& isp_container,
                     host_triplet_collection& triplets,
                     host_seed_collection& seeds) {

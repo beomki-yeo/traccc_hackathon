@@ -10,12 +10,21 @@
 
 namespace traccc {
 
+/// Header: unsigned int for the number of lin_circles per spacepoint bin
+
+/// Item: transformed coordinate of doublet of middle-bottom or middle-top    
 struct lin_circle {
+    // z origin
     float m_Zo;
+    // cotangent of pitch angle
     float m_cotTheta;
+    // reciprocal of square of distance between two spacepoints
     float m_iDeltaR;
+    // error term for sp-pair without correlation of middle space point
     float m_Er;
+    // u component in transformed coordinate
     float m_U;
+    // v component in transformed coordinate
     float m_V;
 
     __CUDA_HOST_DEVICE__
@@ -52,22 +61,22 @@ using device_lin_circle_collection =
 
 /// Convenience declaration for the lin_circle container type to use in host
 /// code
-using host_lin_circle_container = host_container<int, lin_circle>;
+using host_lin_circle_container = host_container<unsigned int, lin_circle>;
 
 /// Convenience declaration for the lin_circle container type to use in device
 /// code
-using device_lin_circle_container = device_container<int, lin_circle>;
+using device_lin_circle_container = device_container<unsigned int, lin_circle>;
 
 /// Convenience declaration for the lin_circle container data type to use in
 /// host code
-using lin_circle_container_data = container_data<int, lin_circle>;
+using lin_circle_container_data = container_data<unsigned int, lin_circle>;
 
 /// Convenience declaration for the lin_circle container buffer type to use in
 /// host code
-using lin_circle_container_buffer = container_buffer<int, lin_circle>;
+using lin_circle_container_buffer = container_buffer<unsigned int, lin_circle>;
 
 /// Convenience declaration for the lin_circle container view type to use in
 /// host code
-using lin_circle_container_view = container_view<int, lin_circle>;
+using lin_circle_container_view = container_view<unsigned int, lin_circle>;
 
 }  // namespace traccc

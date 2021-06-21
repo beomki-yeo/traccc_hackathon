@@ -12,6 +12,7 @@
 
 namespace traccc {
 
+/// location of spacepoint in internal spacepoint container
 struct sp_location {
     /// index of the bin of the spacepoint grid
     size_t bin_idx;

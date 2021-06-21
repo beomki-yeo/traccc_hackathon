@@ -14,6 +14,14 @@ namespace traccc {
 
 // helper function used for both cpu and gpu
 struct seed_selecting_helper {
+    
+    /// Update the weights of triplets
+    ///
+    /// @param filter_config is seed filtering configuration parameters
+    /// @param spM is middle (internal) spacepoint
+    /// @param spB is bottom (internal) spacepoint
+    /// @param spT is top (internal) spacepoint
+    /// @param triplet_weight is the weight of triplet to be updated
     static __CUDA_HOST_DEVICE__ void seed_weight(
         const seedfilter_config& filter_config,
 	const internal_spacepoint<spacepoint>& spM,
@@ -33,6 +41,15 @@ struct seed_selecting_helper {
         return;
     }
 
+    /// Cut triplets with criteria
+    ///
+    /// @param filter_config is seed filtering configuration parameters
+    /// @param spM is middle (internal) spacepoint
+    /// @param spB is bottom (internal) spacepoint
+    /// @param spT is top (internal) spacepoint
+    /// @param triplet_weight is the weight of triplet
+    ///
+    /// @return boolean value
     static __CUDA_HOST_DEVICE__ bool single_seed_cut(
         const seedfilter_config& filter_config,
 	const internal_spacepoint<spacepoint>& spM,
@@ -43,6 +60,15 @@ struct seed_selecting_helper {
                  triplet_weight < filter_config.good_spB_min_weight);
     }
 
+    /// Cut triplets with criteria
+    ///
+    /// @param filter_config is seed filtering configuration parameters
+    /// @param spM is middle spacepoint
+    /// @param spB is bottom spacepoint
+    /// @param spT is top spacepoint
+    /// @param triplet_weight is the weight of triplet
+    ///
+    /// @return boolean value    
     static __CUDA_HOST_DEVICE__ bool cut_per_middle_sp(
         const seedfilter_config& filter_config,
 	const spacepoint& spM,

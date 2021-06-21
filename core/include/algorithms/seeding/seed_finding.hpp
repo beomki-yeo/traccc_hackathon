@@ -18,13 +18,22 @@
 
 namespace traccc {
 
+/// Seed finding
 struct seed_finding {
+
+    /// Constructor for the seed finding
+    ///
+    /// @param config is seed finder configuration parameters
+    /// @param isp_container is internal spacepoint container
     seed_finding(seedfinder_config& config,
                  host_internal_spacepoint_container& isp_container)
         : m_doublet_finding(config, isp_container),
           m_triplet_finding(config, isp_container),
           m_isp_container(isp_container) {}
 
+    /// Callable operator for the seed finding
+    ///
+    /// @return seed_collection is the vector of seeds per event
     host_seed_collection operator()() {
         host_seed_collection seed_collection;
         this->operator()(seed_collection);
@@ -32,12 +41,18 @@ struct seed_finding {
         return seed_collection;
     }
 
+    /// Callable operator for the seed finding
+    ///
+    /// void interface
+    ///
+    /// @return seed_collection is the vector of seeds per event    
     void operator()(host_seed_collection& seeds) {
         // iterate over grid bins
         for (size_t i = 0; i < m_isp_container.headers.size(); ++i) {
             auto& bin_information = m_isp_container.headers[i];
             auto& spM_collection = m_isp_container.items[i];
 
+	    // multiplet statistics for GPU vector size estimation
             multiplet_statistics stats({0, 0, 0, 0});
             stats.n_spM = spM_collection.size();
 
@@ -45,13 +60,14 @@ struct seed_finding {
             for (size_t j = 0; j < spM_collection.size(); ++j) {
                 sp_location spM_location({i, j});
 
-                // doublet search
+                // middule-bottom doublet search
                 auto mid_bot =
                     m_doublet_finding(bin_information, spM_location, true);
 
                 if (mid_bot.first.empty())
                     continue;
 
+                // middule-top doublet search		
                 auto mid_top =
                     m_doublet_finding(bin_information, spM_location, false);
 
@@ -60,6 +76,7 @@ struct seed_finding {
 
                 host_triplet_collection triplets_per_spM;
 
+                // triplet search from the combinations of two doublets which share middle spacepoint
                 for (size_t i = 0; i < mid_bot.first.size(); ++i) {
                     auto& doublet_mb = mid_bot.first[i];
                     auto& lb = mid_bot.second[i];
@@ -71,6 +88,7 @@ struct seed_finding {
                                             triplets.begin(), triplets.end());
                 }
 
+		// seed filtering
                 m_seed_filtering(m_isp_container, triplets_per_spM, seeds);
 
                 stats.n_mid_bot_doublets += mid_bot.first.size();
