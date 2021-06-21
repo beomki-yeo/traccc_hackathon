@@ -62,7 +62,6 @@ __global__ void doublet_counting_kernel(
     auto doublet_counter_per_bin = doublet_counter_device.items.at(bin_idx);
 
     // zero initialization
-    //num_compat_spM_per_bin = 0;
     __syncthreads();
 
     auto sp_idx = (blockIdx.x - ref_block_idx) * blockDim.x + threadIdx.x;
@@ -75,19 +74,19 @@ __global__ void doublet_counting_kernel(
     unsigned int n_mid_top = 0;
     
     auto spM_loc = sp_location({bin_idx, sp_idx});
-    auto isp = internal_sp_per_bin[sp_idx];
+    const auto& isp = internal_sp_per_bin[sp_idx];
     
     doublet_counter_per_bin[sp_idx].n_mid_bot = 0;
     doublet_counter_per_bin[sp_idx].n_mid_top = 0;
     
     for (size_t i_n = 0; i_n < bin_info.bottom_idx.counts; ++i_n) {
-	auto neigh_bin = bin_info.bottom_idx.vector_indices[i_n];
-	auto neigh_internal_sp_per_bin =
+	const auto& neigh_bin = bin_info.bottom_idx.vector_indices[i_n];
+	const auto& neigh_internal_sp_per_bin =
 	    internal_sp_device.items.at(neigh_bin);
 	
 	for (size_t spB_idx = 0; spB_idx < neigh_internal_sp_per_bin.size();
 	     ++spB_idx) {
-	    auto neigh_isp = neigh_internal_sp_per_bin[spB_idx];
+	    const auto& neigh_isp = neigh_internal_sp_per_bin[spB_idx];
 	    if (doublet_finding_helper::isCompatible(isp, neigh_isp, config,
 						     true)) {
 		n_mid_bot++;

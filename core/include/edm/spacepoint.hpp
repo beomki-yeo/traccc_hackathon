@@ -9,6 +9,7 @@
 
 #include <definitions/primitives.hpp>
 #include <vector>
+#include <utils/arch_qualifiers.hpp>
 
 #include "container.hpp"
 
@@ -19,9 +20,13 @@ struct spacepoint {
     point3 global = {0., 0., 0.};
     variance3 variance = {0., 0., 0.};
 
-    scalar x() const { return global[0]; }
-    scalar y() const { return global[1]; }
-    scalar z() const { return global[2]; }
+    __CUDA_HOST_DEVICE__
+    const scalar& x() const { return global[0]; }
+    __CUDA_HOST_DEVICE__
+    const scalar& y() const { return global[1]; }
+    __CUDA_HOST_DEVICE__
+    const scalar& z() const { return global[2]; }
+    __CUDA_HOST_DEVICE__
     scalar radius() const {
         return std::sqrt(global[0] * global[0] + global[1] * global[1]);
     }

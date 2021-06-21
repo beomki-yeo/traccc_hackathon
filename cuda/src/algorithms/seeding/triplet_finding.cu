@@ -112,13 +112,13 @@ __global__ void triplet_finding_kernel(
     if (gid >= num_compat_mb_per_bin) {
 	return;
     }
-    auto& mid_bot_doublet = triplet_counter_per_bin[gid].mid_bot_doublet;
+    const auto& mid_bot_doublet = triplet_counter_per_bin[gid].mid_bot_doublet;
 
-    auto& spM_idx = mid_bot_doublet.sp1.sp_idx;
-    auto& spM = internal_sp_per_bin[spM_idx];
-    auto& spB_bin = mid_bot_doublet.sp2.bin_idx;
-    auto& spB_idx = mid_bot_doublet.sp2.sp_idx;
-    auto& spB = internal_sp_device.items.at(spB_bin)[spB_idx];
+    const auto& spM_idx = mid_bot_doublet.sp1.sp_idx;
+    const auto& spM = internal_sp_per_bin[spM_idx];
+    const auto& spB_bin = mid_bot_doublet.sp2.bin_idx;
+    const auto& spB_idx = mid_bot_doublet.sp2.sp_idx;
+    const auto& spB = internal_sp_device.items.at(spB_bin)[spB_idx];
     
     auto lb = doublet_finding_helper::transform_coordinates(spM, spB, true);
     
@@ -167,11 +167,11 @@ __global__ void triplet_finding_kernel(
     
     // iterate over mid-top doublets
     for (unsigned int i = mt_start_idx; i < mt_end_idx; ++i) {
-	auto& mid_top_doublet = mid_top_doublets_per_bin[i];
+	const auto& mid_top_doublet = mid_top_doublets_per_bin[i];
 	
-	auto& spT_bin = mid_top_doublet.sp2.bin_idx;
-	auto& spT_idx = mid_top_doublet.sp2.sp_idx;
-	auto& spT = internal_sp_device.items.at(spT_bin)[spT_idx];
+	const auto& spT_bin = mid_top_doublet.sp2.bin_idx;
+	const auto& spT_idx = mid_top_doublet.sp2.sp_idx;
+	const auto& spT = internal_sp_device.items.at(spT_bin)[spT_idx];
 	auto lt =
 	    doublet_finding_helper::transform_coordinates(spM, spT, false);
 	
