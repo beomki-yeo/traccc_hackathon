@@ -14,8 +14,8 @@ namespace cuda {
 
 struct doublet_counter {
     sp_location spM;
-    size_t n_mid_bot = 0;
-    size_t n_mid_top = 0;
+    unsigned int n_mid_bot = 0;
+    unsigned int n_mid_top = 0;
 };
 
 /// Container of doublet_counter belonging to one detector module
