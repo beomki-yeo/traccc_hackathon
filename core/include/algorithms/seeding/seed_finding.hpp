@@ -77,9 +77,9 @@ struct seed_finding {
                 host_triplet_collection triplets_per_spM;
 
                 // triplet search from the combinations of two doublets which share middle spacepoint
-                for (size_t i = 0; i < mid_bot.first.size(); ++i) {
-                    auto& doublet_mb = mid_bot.first[i];
-                    auto& lb = mid_bot.second[i];
+                for (size_t k = 0; k < mid_bot.first.size(); ++k) {
+                    auto& doublet_mb = mid_bot.first[k];
+                    auto& lb = mid_bot.second[k];
 
                     host_triplet_collection triplets = m_triplet_finding(
                         doublet_mb, lb, mid_top.first, mid_top.second);
