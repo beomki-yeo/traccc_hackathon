@@ -5,15 +5,15 @@
  * Mozilla Public License Version 2.0
  */
 
+#include <cuda/seeding/detail/doublet_counter.hpp>
+#include <cuda/seeding/detail/triplet_counter.hpp>
+#include <cuda/utils/definitions.hpp>
+#include <edm/internal_spacepoint.hpp>
 #include <seeding/detail/doublet.hpp>
 #include <seeding/detail/seeding_config.hpp>
 #include <seeding/detail/triplet.hpp>
 #include <seeding/doublet_finding_helper.hpp>
 #include <seeding/triplet_finding_helper.hpp>
-#include <cuda/seeding/detail/doublet_counter.hpp>
-#include <cuda/seeding/detail/triplet_counter.hpp>
-#include <cuda/utils/definitions.hpp>
-#include <edm/internal_spacepoint.hpp>
 
 #pragma once
 

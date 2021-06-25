@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define WARP_SIZE 32
 

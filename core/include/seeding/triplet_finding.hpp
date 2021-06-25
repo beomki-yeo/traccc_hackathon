@@ -7,20 +7,20 @@
 
 #pragma once
 
+#include <edm/internal_spacepoint.hpp>
 #include <seeding/detail/doublet.hpp>
 #include <seeding/detail/triplet.hpp>
 #include <seeding/triplet_finding_helper.hpp>
-#include <edm/internal_spacepoint.hpp>
 
 namespace traccc {
 
-/// Triplet finding to search the compatible combintations of two doublets which share same middle spacepoint    
+/// Triplet finding to search the compatible combintations of two doublets which
+/// share same middle spacepoint
 struct triplet_finding {
-
     /// Constructor for the triplet finding
     ///
     /// @param seedfinder_config is the configuration parameters
-    /// @param isp_container is the internal spacepoint container        
+    /// @param isp_container is the internal spacepoint container
     triplet_finding(seedfinder_config& config,
                     const host_internal_spacepoint_container& isp_container)
         : m_config(config), m_isp_container(isp_container) {}
@@ -29,8 +29,10 @@ struct triplet_finding {
     ///
     /// @param mid_bot is the current middle-bottom doublets
     /// @param lb is transformed coordinate of mid_bot
-    /// @param doublets_mid_top is the vector of middle-top doublets which share same middle spacepoint with current middle-bottom doublet
-    /// @param lin_circles_mid_top is transformed coordinates of doublets_mid_top
+    /// @param doublets_mid_top is the vector of middle-top doublets which share
+    /// same middle spacepoint with current middle-bottom doublet
+    /// @param lin_circles_mid_top is transformed coordinates of
+    /// doublets_mid_top
     ///
     /// @return a vector of triplets
     host_triplet_collection operator()(
@@ -47,12 +49,14 @@ struct triplet_finding {
     ///
     /// @param mid_bot is the current middle-bottom doublets
     /// @param lb is transformed coordinate of mid_bot
-    /// @param doublets_mid_top is the vector of middle-top doublets which share same middle spacepoint with current middle-bottom doublet
-    /// @param lin_circles_mid_top is transformed coordinates of doublets_mid_top
+    /// @param doublets_mid_top is the vector of middle-top doublets which share
+    /// same middle spacepoint with current middle-bottom doublet
+    /// @param lin_circles_mid_top is transformed coordinates of
+    /// doublets_mid_top
     ///
     /// void interface
     ///
-    /// @return a vector of triplets    
+    /// @return a vector of triplets
     void operator()(const doublet& mid_bot, const lin_circle& lb,
                     const host_doublet_collection& doublets_mid_top,
                     const host_lin_circle_collection& lin_circles_mid_top,

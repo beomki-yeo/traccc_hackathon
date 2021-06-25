@@ -7,10 +7,10 @@
 
 #pragma once
 
-#include <seeding/detail/seeding_config.hpp>
-#include <seeding/detail/triplet.hpp>
 #include <cuda/seeding/detail/triplet_counter.hpp>
 #include <edm/internal_spacepoint.hpp>
+#include <seeding/detail/seeding_config.hpp>
+#include <seeding/detail/triplet.hpp>
 
 namespace traccc {
 namespace cuda {

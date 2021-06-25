@@ -22,11 +22,6 @@
 #include "edm/cluster.hpp"
 #include "edm/spacepoint.hpp"
 
-#include "definitions/algebra.hpp"
-#include "definitions/primitives.hpp"
-#include "edm/cell.hpp"
-#include "edm/cluster.hpp"
-
 /// reader
 namespace traccc {
 

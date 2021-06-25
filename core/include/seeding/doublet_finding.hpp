@@ -7,20 +7,19 @@
 
 #pragma once
 
+#include <edm/internal_spacepoint.hpp>
 #include <seeding/detail/doublet.hpp>
 #include <seeding/detail/singlet.hpp>
 #include <seeding/doublet_finding_helper.hpp>
-#include <edm/internal_spacepoint.hpp>
 
 namespace traccc {
 
 /// Doublet finding to search the combinations of two compatible spacepoints
 struct doublet_finding {
-
     /// Constructor for the doublet finding
     ///
     /// @param seedfinder_config is the configuration parameters
-    /// @param isp_container is the internal spacepoint container    
+    /// @param isp_container is the internal spacepoint container
     doublet_finding(seedfinder_config& config,
                     const host_internal_spacepoint_container& isp_container)
         : m_config(config), m_isp_container(isp_container) {}
@@ -28,10 +27,11 @@ struct doublet_finding {
     /// Callable operator for doublet finding per middle spacepoint
     ///
     /// @param bin_information is the information of current bin
-    /// @param spM_location is the location of the current middle spacepoint in internal spacepoint container
+    /// @param spM_location is the location of the current middle spacepoint in
+    /// internal spacepoint container
     /// @param bottom is whether it is for bottom or top spacepoints
     ///
-    /// @return a pair of vectors of doublets and transformed coordinates    
+    /// @return a pair of vectors of doublets and transformed coordinates
     std::pair<host_doublet_collection, host_lin_circle_collection> operator()(
         const bin_information& bin_information, const sp_location& spM_location,
         bool bottom) {
@@ -46,11 +46,12 @@ struct doublet_finding {
     /// Callable operator for doublet finding of a middle spacepoint
     ///
     /// @param bin_information is the information of current bin
-    /// @param spM_location is the location of the current middle spacepoint in internal spacepoint container
+    /// @param spM_location is the location of the current middle spacepoint in
+    /// internal spacepoint container
     ///
     /// void interface
     ///
-    /// @return a pair of vectors of doublets and transformed coordinates        
+    /// @return a pair of vectors of doublets and transformed coordinates
     void operator()(const bin_information& bin_information,
                     const sp_location& spM_location,
                     host_doublet_collection& doublets,
@@ -65,7 +66,7 @@ struct doublet_finding {
         auto& counts = bin_information.bottom_idx.counts;
         auto& bottom_bin_indices = bin_information.bottom_idx.vector_indices;
 
-	// for middle-bottom doublets
+        // for middle-bottom doublets
         if (bottom) {
             for (size_t i = 0; i < counts; ++i) {
                 auto& bin_idx = bottom_bin_indices[i];
@@ -90,7 +91,7 @@ struct doublet_finding {
             }
         }
 
-	// for middle-top doublets
+        // for middle-top doublets
         else if (!bottom) {
             auto& counts = bin_information.top_idx.counts;
             auto& top_bin_indices = bin_information.top_idx.vector_indices;

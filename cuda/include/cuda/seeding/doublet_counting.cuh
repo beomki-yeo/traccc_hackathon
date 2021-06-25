@@ -7,11 +7,11 @@
 
 #pragma once
 
+#include <cuda/seeding/detail/doublet_counter.hpp>
+#include <edm/internal_spacepoint.hpp>
 #include <seeding/detail/doublet.hpp>
 #include <seeding/detail/seeding_config.hpp>
 #include <seeding/doublet_finding_helper.hpp>
-#include <cuda/seeding/detail/doublet_counter.hpp>
-#include <edm/internal_spacepoint.hpp>
 
 namespace traccc {
 namespace cuda {

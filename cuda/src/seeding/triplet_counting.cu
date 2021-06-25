@@ -36,10 +36,10 @@ void triplet_counting(const seedfinder_config& config,
 
     unsigned int num_threads = WARP_SIZE * 8;
     unsigned int num_blocks = 0;
-    for (size_t i=0; i<internal_sp_view.headers.size(); ++i){
-	num_blocks += mid_bot_doublet_container.headers[i] / num_threads +1;
+    for (size_t i = 0; i < internal_sp_view.headers.size(); ++i) {
+        num_blocks += mid_bot_doublet_container.headers[i] / num_threads + 1;
     }
-    
+
     triplet_counting_kernel<<<num_blocks, num_threads>>>(
         config, internal_sp_view, doublet_counter_container_view,
         mid_bot_doublet_view, mid_top_doublet_view,
@@ -67,19 +67,15 @@ __global__ void triplet_counting_kernel(
     device_triplet_counter_container triplet_counter_device(
         {triplet_counter_view.headers, triplet_counter_view.items});
 
-    
     unsigned int n_bins = internal_sp_device.headers.size();
     unsigned int bin_idx = 0;
     unsigned int ref_block_idx = 0;
 
-    cuda_helper::get_bin_idx(n_bins,
-			     mid_bot_doublet_device,
-			     bin_idx,
-			     ref_block_idx);
-    
+    cuda_helper::get_bin_idx(n_bins, mid_bot_doublet_device, bin_idx,
+                             ref_block_idx);
+
     auto internal_sp_per_bin = internal_sp_device.items.at(bin_idx);
-    auto& num_compat_spM_per_bin =
-        doublet_counter_device.headers.at(bin_idx);
+    auto& num_compat_spM_per_bin = doublet_counter_device.headers.at(bin_idx);
     auto doublet_counter_per_bin = doublet_counter_device.items.at(bin_idx);
     const auto& num_mid_bot_doublets_per_bin =
         mid_bot_doublet_device.headers.at(bin_idx);
@@ -88,78 +84,78 @@ __global__ void triplet_counting_kernel(
         mid_top_doublet_device.headers.at(bin_idx);
     auto mid_top_doublets_per_bin = mid_top_doublet_device.items.at(bin_idx);
     auto& num_compat_mb_per_bin = triplet_counter_device.headers.at(bin_idx);
-    auto triplet_counter_per_bin = triplet_counter_device.items.at(bin_idx);    
-    
+    auto triplet_counter_per_bin = triplet_counter_device.items.at(bin_idx);
+
     __syncthreads();
 
     auto mb_idx = (blockIdx.x - ref_block_idx) * blockDim.x + threadIdx.x;
-    
+
     if (mb_idx >= num_mid_bot_doublets_per_bin) {
-	return;
+        return;
     }
-    
+
     const auto& mid_bot_doublet = mid_bot_doublets_per_bin[mb_idx];
-    
+
     const auto& spM_idx = mid_bot_doublet.sp1.sp_idx;
     const auto& spM = internal_sp_per_bin[spM_idx];
-    
+
     const auto& spB_bin = mid_bot_doublet.sp2.bin_idx;
     const auto& spB_idx = mid_bot_doublet.sp2.sp_idx;
     const auto& spB = internal_sp_device.items.at(spB_bin)[spB_idx];
-    
+
     auto lb = doublet_finding_helper::transform_coordinates(spM, spB, true);
-    
+
     scalar iSinTheta2 = 1 + lb.cotTheta() * lb.cotTheta();
     scalar scatteringInRegion2 = config.maxScatteringAngle2 * iSinTheta2;
     scatteringInRegion2 *= config.sigmaScattering * config.sigmaScattering;
     scalar curvature, impact_parameter;
-    
+
     unsigned int mb_end_idx = 0;
     unsigned int mt_start_idx = 0;
     unsigned int mt_end_idx = 0;
-    
+
     for (unsigned int i = 0; i < num_compat_spM_per_bin; ++i) {
-	mb_end_idx += doublet_counter_per_bin[i].n_mid_bot;
-	mt_end_idx += doublet_counter_per_bin[i].n_mid_top;
-	
-	if (mb_end_idx > mb_idx) {
-	    break;
-	}
-	mt_start_idx += doublet_counter_per_bin[i].n_mid_top;
+        mb_end_idx += doublet_counter_per_bin[i].n_mid_bot;
+        mt_end_idx += doublet_counter_per_bin[i].n_mid_top;
+
+        if (mb_end_idx > mb_idx) {
+            break;
+        }
+        mt_start_idx += doublet_counter_per_bin[i].n_mid_top;
     }
-    
+
     if (mt_end_idx >= mid_top_doublets_per_bin.size()) {
-	mt_end_idx = fmin(mid_top_doublets_per_bin.size(), mt_end_idx);
+        mt_end_idx = fmin(mid_top_doublets_per_bin.size(), mt_end_idx);
     }
-    
+
     if (mt_start_idx >= mid_top_doublets_per_bin.size()) {
-	return;
+        return;
     }
-    
+
     unsigned int n_triplets = 0;
-    
+
     // iterate over mid-top doublets
     for (unsigned int i = mt_start_idx; i < mt_end_idx; ++i) {
-	const auto& mid_top_doublet = mid_top_doublets_per_bin[i];
-	
-	const auto& spT_bin = mid_top_doublet.sp2.bin_idx;
-	const auto& spT_idx = mid_top_doublet.sp2.sp_idx;
-	const auto& spT = internal_sp_device.items.at(spT_bin)[spT_idx];
-	
-	auto lt =
-	    doublet_finding_helper::transform_coordinates(spM, spT, false);
-	
-	if (triplet_finding_helper::isCompatible(
-						 spM, lb, lt, config, iSinTheta2, scatteringInRegion2,
-						 curvature, impact_parameter)) {
-	    n_triplets++;
-	}
+        const auto& mid_top_doublet = mid_top_doublets_per_bin[i];
+
+        const auto& spT_bin = mid_top_doublet.sp2.bin_idx;
+        const auto& spT_idx = mid_top_doublet.sp2.sp_idx;
+        const auto& spT = internal_sp_device.items.at(spT_bin)[spT_idx];
+
+        auto lt =
+            doublet_finding_helper::transform_coordinates(spM, spT, false);
+
+        if (triplet_finding_helper::isCompatible(
+                spM, lb, lt, config, iSinTheta2, scatteringInRegion2, curvature,
+                impact_parameter)) {
+            n_triplets++;
+        }
     }
-    
+
     if (n_triplets > 0) {
-	auto pos = atomicAdd(&num_compat_mb_per_bin, 1);
-	triplet_counter_per_bin[pos].n_triplets = n_triplets;
-	triplet_counter_per_bin[pos].mid_bot_doublet = mid_bot_doublet;
+        auto pos = atomicAdd(&num_compat_mb_per_bin, 1);
+        triplet_counter_per_bin[pos].n_triplets = n_triplets;
+        triplet_counter_per_bin[pos].mid_bot_doublet = mid_bot_doublet;
     }
 }
 

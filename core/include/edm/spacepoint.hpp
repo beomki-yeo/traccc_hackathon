@@ -8,8 +8,8 @@
 #pragma once
 
 #include <definitions/primitives.hpp>
-#include <vector>
 #include <utils/arch_qualifiers.hpp>
+#include <vector>
 
 #include "container.hpp"
 

@@ -7,14 +7,13 @@
 
 #pragma once
 
-#include <seeding/detail/seeding_config.hpp>
 #include <edm/internal_spacepoint.hpp>
+#include <seeding/detail/seeding_config.hpp>
 
 namespace traccc {
 
 // helper functions used for both cpu and gpu
 struct doublet_finding_helper {
-
     /// Check if two spacepoints form doublets
     ///
     /// @param sp1 is middle spacepoint

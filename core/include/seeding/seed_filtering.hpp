@@ -5,17 +5,17 @@
  * Mozilla Public License Version 2.0
  */
 
+#include <edm/seed.hpp>
 #include <seeding/detail/triplet.hpp>
 #include <seeding/seed_selecting_helper.hpp>
-#include <edm/seed.hpp>
 
 #pragma once
 
 namespace traccc {
 
-/// Seed filtering to filter out the bad triplets 
+/// Seed filtering to filter out the bad triplets
 struct seed_filtering {
-    seed_filtering(){}
+    seed_filtering() {}
 
     /// Callable operator for the seed filtering
     ///
@@ -24,7 +24,8 @@ struct seed_filtering {
     ///
     /// void interface
     ///
-    /// @return seeds are the vector of seeds where the new compatible seeds are added 
+    /// @return seeds are the vector of seeds where the new compatible seeds are
+    /// added
     void operator()(host_internal_spacepoint_container& isp_container,
                     host_triplet_collection& triplets,
                     host_seed_collection& seeds) {
@@ -43,16 +44,14 @@ struct seed_filtering {
             auto spT_idx = triplet.sp3;
             auto spT = isp_container.items[spT_idx.bin_idx][spT_idx.sp_idx];
 
-	    seed_selecting_helper::seed_weight(m_filter_config,
-					       spM, spB, spT,
-					       triplet.weight);
+            seed_selecting_helper::seed_weight(m_filter_config, spM, spB, spT,
+                                               triplet.weight);
 
-	    if (!seed_selecting_helper::single_seed_cut(m_filter_config,
-						       spM, spB, spT,
-						       triplet.weight)){
-		continue;
-	    }
-	    
+            if (!seed_selecting_helper::single_seed_cut(
+                    m_filter_config, spM, spB, spT, triplet.weight)) {
+                continue;
+            }
+
             seeds_per_spM.push_back({spB.m_sp, spM.m_sp, spT.m_sp,
                                      triplet.weight, triplet.z_vertex});
         }
@@ -83,24 +82,24 @@ struct seed_filtering {
                       }
                   });
 
-	host_seed_collection new_seeds;	
-	if (seeds_per_spM.size() > 1) {
-	    new_seeds.push_back(seeds_per_spM[0]);
-	    
-	    size_t itLength = std::min(seeds_per_spM.size(), m_filter_config.max_triplets_per_spM);
-	    // don't cut first element
-	    for (size_t i = 1; i < itLength; i++) {
-		if (seed_selecting_helper::cut_per_middle_sp(m_filter_config,
-							     seeds_per_spM[i].spM,
-							     seeds_per_spM[i].spB,
-							     seeds_per_spM[i].spT,
-							     seeds_per_spM[i].weight)){
-		    new_seeds.push_back(std::move(seeds_per_spM[i]));
-		} 
-	    }
-	    seeds_per_spM = std::move(new_seeds);
-	}
-	
+        host_seed_collection new_seeds;
+        if (seeds_per_spM.size() > 1) {
+            new_seeds.push_back(seeds_per_spM[0]);
+
+            size_t itLength = std::min(seeds_per_spM.size(),
+                                       m_filter_config.max_triplets_per_spM);
+            // don't cut first element
+            for (size_t i = 1; i < itLength; i++) {
+                if (seed_selecting_helper::cut_per_middle_sp(
+                        m_filter_config, seeds_per_spM[i].spM,
+                        seeds_per_spM[i].spB, seeds_per_spM[i].spT,
+                        seeds_per_spM[i].weight)) {
+                    new_seeds.push_back(std::move(seeds_per_spM[i]));
+                }
+            }
+            seeds_per_spM = std::move(new_seeds);
+        }
+
         unsigned int maxSeeds = seeds_per_spM.size();
 
         if (maxSeeds > m_filter_config.maxSeedsPerSpM) {

@@ -7,14 +7,13 @@
 
 #pragma once
 
-#include <seeding/detail/seeding_config.hpp>
 #include <edm/internal_spacepoint.hpp>
+#include <seeding/detail/seeding_config.hpp>
 
 namespace traccc {
 
 // helper function used for both cpu and gpu
 struct seed_selecting_helper {
-    
     /// Update the weights of triplets
     ///
     /// @param filter_config is seed filtering configuration parameters
@@ -24,10 +23,9 @@ struct seed_selecting_helper {
     /// @param triplet_weight is the weight of triplet to be updated
     static __CUDA_HOST_DEVICE__ void seed_weight(
         const seedfilter_config& filter_config,
-	const internal_spacepoint<spacepoint>& spM,
+        const internal_spacepoint<spacepoint>& spM,
         const internal_spacepoint<spacepoint>& spB,
-        const internal_spacepoint<spacepoint>& spT,
-	scalar& triplet_weight) {
+        const internal_spacepoint<spacepoint>& spT, scalar& triplet_weight) {
         float weight = 0;
 
         if (spB.radius() > filter_config.good_spB_min_radius) {
@@ -52,9 +50,9 @@ struct seed_selecting_helper {
     /// @return boolean value
     static __CUDA_HOST_DEVICE__ bool single_seed_cut(
         const seedfilter_config& filter_config,
-	const internal_spacepoint<spacepoint>& spM,
+        const internal_spacepoint<spacepoint>& spM,
         const internal_spacepoint<spacepoint>& spB,
-	const internal_spacepoint<spacepoint>& spT,
+        const internal_spacepoint<spacepoint>& spT,
         const scalar& triplet_weight) {
         return !(spB.radius() > filter_config.good_spB_min_radius &&
                  triplet_weight < filter_config.good_spB_min_weight);
@@ -68,12 +66,10 @@ struct seed_selecting_helper {
     /// @param spT is top spacepoint
     /// @param triplet_weight is the weight of triplet
     ///
-    /// @return boolean value    
+    /// @return boolean value
     static __CUDA_HOST_DEVICE__ bool cut_per_middle_sp(
-        const seedfilter_config& filter_config,
-	const spacepoint& spM,
-        const spacepoint& spB,
-	const spacepoint& spT,
+        const seedfilter_config& filter_config, const spacepoint& spM,
+        const spacepoint& spB, const spacepoint& spT,
         const scalar& triplet_weight) {
         return (triplet_weight > filter_config.seed_min_weight ||
                 spB.radius() > filter_config.spB_min_radius);

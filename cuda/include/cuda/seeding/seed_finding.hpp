@@ -8,7 +8,6 @@
 #pragma once
 
 #include <algorithm>
-#include <seeding/detail/seeding_config.hpp>
 #include <cuda/seeding/detail/doublet_counter.hpp>
 #include <cuda/seeding/detail/stats_config.hpp>
 #include <cuda/seeding/doublet_counting.cuh>
@@ -20,6 +19,7 @@
 #include <edm/internal_spacepoint.hpp>
 #include <edm/seed.hpp>
 #include <iostream>
+#include <seeding/detail/seeding_config.hpp>
 
 namespace traccc {
 
@@ -28,8 +28,7 @@ namespace cuda {
 struct seed_finding {
     seed_finding(seedfinder_config& config,
                  std::shared_ptr<spacepoint_grid> sp_grid,
-                 stats_config* stats_cfg,
-                 vecmem::memory_resource* mr = nullptr)
+                 stats_config* stats_cfg, vecmem::memory_resource* mr = nullptr)
         : m_seedfinder_config(config),
           m_sp_grid(sp_grid),
           m_stats_config(stats_cfg),
@@ -108,8 +107,8 @@ struct seed_finding {
             m_seedfinder_config, isp_container, doublet_counter_container,
             mid_bot_container, mid_top_container, m_mr);
 
-        traccc::cuda::triplet_counting(m_seedfinder_config,
-                                       isp_container, doublet_counter_container,
+        traccc::cuda::triplet_counting(m_seedfinder_config, isp_container,
+                                       doublet_counter_container,
                                        mid_bot_container, mid_top_container,
                                        triplet_counter_container, m_mr);
 

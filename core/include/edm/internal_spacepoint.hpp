@@ -26,10 +26,12 @@ namespace traccc {
 
 struct neighbor_idx {
     size_t counts;
-    /// global_indices: the global indices of neighbor bins provided by axis class
-    /// size of 9 is from (3 neighbors on z-axis) x (3 neighbors on phi-axis)
+    /// global_indices: the global indices of neighbor bins provided by axis
+    /// class size of 9 is from (3 neighbors on z-axis) x (3 neighbors on
+    /// phi-axis)
     size_t global_indices[9];
-    /// vector_indices: the actual indices of neighbor bins, which are used for navigating internal_spacepoint_container
+    /// vector_indices: the actual indices of neighbor bins, which are used for
+    /// navigating internal_spacepoint_container
     size_t vector_indices[9];
 };
 

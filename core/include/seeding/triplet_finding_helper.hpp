@@ -7,15 +7,14 @@
 
 #pragma once
 
+#include <edm/internal_spacepoint.hpp>
 #include <seeding/detail/doublet.hpp>
 #include <seeding/detail/triplet.hpp>
-#include <edm/internal_spacepoint.hpp>
 
 namespace traccc {
 
 // helper function used for both cpu and gpu
 struct triplet_finding_helper {
-    
     /// Check if two doublets with common middle spacepoint can form a triplet
     ///
     /// @param spM is middle spacepoint
@@ -23,11 +22,12 @@ struct triplet_finding_helper {
     /// @param lt is transformed coordinate of middle-bottom doublet
     /// @param config is configuration parameter
     /// @param iSinTheta2 is the square of sin of pitch angle
-    /// @param scatteringInRegion2 is the threshold for scattering angle for the lower pT cut
+    /// @param scatteringInRegion2 is the threshold for scattering angle for the
+    /// lower pT cut
     /// @param curvature is curvature of triplet
     /// @param impact_parameter is impact parameter of triplet
     ///
-    /// @return boolean value for compatibility    
+    /// @return boolean value for compatibility
     static __CUDA_HOST_DEVICE__ bool isCompatible(
         const internal_spacepoint<spacepoint>& spM, const lin_circle& lb,
         const lin_circle& lt, const seedfinder_config& config,

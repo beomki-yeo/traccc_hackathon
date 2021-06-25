@@ -7,20 +7,19 @@
 
 #pragma once
 
+#include <edm/internal_spacepoint.hpp>
+#include <edm/seed.hpp>
+#include <iostream>
 #include <seeding/detail/seeding_config.hpp>
 #include <seeding/detail/statistics.hpp>
 #include <seeding/doublet_finding.hpp>
 #include <seeding/seed_filtering.hpp>
 #include <seeding/triplet_finding.hpp>
-#include <edm/internal_spacepoint.hpp>
-#include <edm/seed.hpp>
-#include <iostream>
 
 namespace traccc {
 
 /// Seed finding
 struct seed_finding {
-
     /// Constructor for the seed finding
     ///
     /// @param config is seed finder configuration parameters
@@ -45,14 +44,14 @@ struct seed_finding {
     ///
     /// void interface
     ///
-    /// @return seed_collection is the vector of seeds per event    
+    /// @return seed_collection is the vector of seeds per event
     void operator()(host_seed_collection& seeds) {
         // iterate over grid bins
         for (size_t i = 0; i < m_isp_container.headers.size(); ++i) {
             auto& bin_information = m_isp_container.headers[i];
             auto& spM_collection = m_isp_container.items[i];
 
-	    // multiplet statistics for GPU vector size estimation
+            // multiplet statistics for GPU vector size estimation
             multiplet_statistics stats({0, 0, 0, 0});
             stats.n_spM = spM_collection.size();
 
@@ -67,7 +66,7 @@ struct seed_finding {
                 if (mid_bot.first.empty())
                     continue;
 
-                // middule-top doublet search		
+                // middule-top doublet search
                 auto mid_top =
                     m_doublet_finding(bin_information, spM_location, false);
 
@@ -76,7 +75,8 @@ struct seed_finding {
 
                 host_triplet_collection triplets_per_spM;
 
-                // triplet search from the combinations of two doublets which share middle spacepoint
+                // triplet search from the combinations of two doublets which
+                // share middle spacepoint
                 for (size_t k = 0; k < mid_bot.first.size(); ++k) {
                     auto& doublet_mb = mid_bot.first[k];
                     auto& lb = mid_bot.second[k];
@@ -88,7 +88,7 @@ struct seed_finding {
                                             triplets.begin(), triplets.end());
                 }
 
-		// seed filtering
+                // seed filtering
                 m_seed_filtering(m_isp_container, triplets_per_spM, seeds);
 
                 stats.n_mid_bot_doublets += mid_bot.first.size();
