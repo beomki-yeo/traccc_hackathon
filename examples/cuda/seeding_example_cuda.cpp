@@ -14,10 +14,10 @@
 #include "geometry/pixel_segmentation.hpp"
 
 // seeding (cpu)
-#include "algorithms/seeding/seed_finding.hpp"
-#include "algorithms/seeding/spacepoint_grouping.hpp"
+#include "seeding/seed_finding.hpp"
+#include "seeding/spacepoint_grouping.hpp"
 // seeding (cuda)
-#include "cuda/algorithms/seeding/seed_finding.hpp"
+#include "cuda/seeding/seed_finding.hpp"
 
 // io
 #include "csv/csv_io.hpp"

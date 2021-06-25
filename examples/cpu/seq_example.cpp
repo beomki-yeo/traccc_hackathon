@@ -17,13 +17,13 @@
 #include "geometry/pixel_segmentation.hpp"
 
 // clusterization
-#include "algorithms/clusterization/component_connection.hpp"
-#include "algorithms/clusterization/measurement_creation.hpp"
-#include "algorithms/clusterization/spacepoint_formation.hpp"
+#include "clusterization/component_connection.hpp"
+#include "clusterization/measurement_creation.hpp"
+#include "clusterization/spacepoint_formation.hpp"
 
 // seeding
-#include "algorithms/seeding/seed_finding.hpp"
-#include "algorithms/seeding/spacepoint_grouping.hpp"
+#include "seeding/seed_finding.hpp"
+#include "seeding/spacepoint_grouping.hpp"
 
 int seq_run(const std::string& detector_file, const std::string& cells_dir,
             unsigned int events) {

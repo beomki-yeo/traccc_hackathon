@@ -14,8 +14,8 @@
 #include "geometry/pixel_segmentation.hpp"
 
 // seeding
-#include "algorithms/seeding/seed_finding.hpp"
-#include "algorithms/seeding/spacepoint_grouping.hpp"
+#include "seeding/seed_finding.hpp"
+#include "seeding/spacepoint_grouping.hpp"
 
 // io
 #include "csv/csv_io.hpp"

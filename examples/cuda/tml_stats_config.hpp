@@ -6,7 +6,7 @@
  */
 #include <algorithm>
 
-#include "cuda/algorithms/seeding/detail/stats_config.hpp"
+#include "cuda/seeding/detail/stats_config.hpp"
 
 namespace traccc {
 namespace cuda {
