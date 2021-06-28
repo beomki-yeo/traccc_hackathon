@@ -25,6 +25,8 @@
 /// reader
 namespace traccc {
 
+/// reader
+
 struct csv_cell {
     uint64_t geometry_id = 0;
     uint64_t hit_id = 0;
