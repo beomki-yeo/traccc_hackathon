@@ -33,6 +33,9 @@ include( traccc-compiler-options )
 add_subdirectory(extern)
 include( traccc-vecmem )
 
+#acts
+find_package(Acts)
+
 # Set GPU-related options
 if( TRACCC_BUILD_CUDA )
   add_subdirectory( cuda )
@@ -40,6 +43,7 @@ endif()
 
 # Build the traccc code.
 add_subdirectory(core)
+add_subdirectory(algorithms)
 add_subdirectory(io)
 add_subdirectory(examples)
 add_subdirectory(tests)

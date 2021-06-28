@@ -19,6 +19,12 @@
 // seeding (cuda)
 #include "cuda/seeding/seed_finding.hpp"
 
+// track finding (cpu)
+#include "track_finding/track_finding_algorithm.hpp"
+
+// track finding (cuda)
+#include "cuda/propagator/propagator.hpp"
+
 // io
 #include "csv/csv_io.hpp"
 
@@ -64,9 +70,9 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
     float seeding_cpu(0);
     float seeding_cuda(0);
 
-    /*-------------------------------
+    /*------------------------------
       Spacepoint grid configuration
-     --------------------------------*/
+      ------------------------------*/
 
     // Seed finder config
     traccc::seedfinder_config config;
@@ -120,12 +126,20 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
     traccc::cuda::seed_finding sf_cuda(config, sg.get_spgrid(), &tml_cfg,
                                        &mng_mr);
 
-    /*time*/ auto start_wall_time = std::chrono::system_clock::now();
+    /*----------------------------
+      Track finding configuration
+      ----------------------------*/
+    
+    // traccc_cuda
+    traccc::cuda::propagator cuda_propagator;
+    
 
     /*-----------------
       hit reading
       -----------------*/
 
+    /*time*/ auto start_wall_time = std::chrono::system_clock::now();
+    
     std::vector<traccc::host_spacepoint_container> all_spacepoints;
 
     // Loop over events
@@ -188,13 +202,15 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
 
         /*time*/ auto start_seeding_cpu = std::chrono::system_clock::now();
 
-        traccc::host_seed_collection seeds;
+        //traccc::host_seed_collection seeds;
+	traccc::host_seed_container seeds;
 
         traccc::seed_finding sf =
             traccc::seed_finding(config, internal_sp_per_event);
         if (skip_cpu == false) {
             seeds = sf();
-            n_seeds += seeds.size();
+            //n_seeds += seeds.size();
+	    n_seeds += seeds.headers[0];
 
             /*time*/ auto end_seeding_cpu = std::chrono::system_clock::now();
             /*time*/ std::chrono::duration<double> time_seeding_cpu =
@@ -206,6 +222,11 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
             }
         }
 
+        /*-----------------------
+          track finding -- cpu
+          -----------------------*/
+
+	
         /*-----------------------
           seed finding -- cuda
           -----------------------*/
@@ -219,13 +240,19 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
             end_seeding_cuda - start_seeding_cuda;
         /*time*/ seeding_cuda += time_seeding_cuda.count();
 
+        /*-----------------------
+          track finding -- cuda
+          -----------------------*/
+
+	
         /*----------------------------------
           compare seeds from cpu and cuda
           ----------------------------------*/
 
         if (!skip_cpu) {
             int n_match = 0;
-            for (auto seed : seeds) {
+            //for (auto seed : seeds) {
+	    for (auto seed : seeds.items[0]) {
                 if (std::find(
                         seeds_cuda.items[0].begin(),
                         seeds_cuda.items[0].begin() + seeds_cuda.headers[0],
@@ -234,7 +261,8 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
                     n_match++;
                 }
             }
-            float matching_rate = float(n_match) / seeds.size();
+            //float matching_rate = float(n_match) / seeds.size();
+	    float matching_rate = float(n_match) / seeds.headers[0];
             std::cout << "event " << std::to_string(skip_events + event)
                       << " seed matching rate: " << matching_rate << std::endl;
         }
@@ -280,12 +308,13 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
 
             traccc::seed_writer sd_writer{"event" + event_string +
                                           "-seeds.csv"};
-            for (size_t i = 0; i < seeds.size(); ++i) {
-                auto weight = seeds[i].weight;
-                auto z_vertex = seeds[i].z_vertex;
-                auto spB = seeds[i].spB;
-                auto spM = seeds[i].spM;
-                auto spT = seeds[i].spT;
+            //for (size_t i = 0; i < seeds.size(); ++i) {
+	    for (auto seed: seeds.items[0]) {
+                auto weight = seed.weight;
+                auto z_vertex = seed.z_vertex;
+                auto spB = seed.spB;
+                auto spM = seed.spM;
+                auto spT = seed.spT;
 
                 sd_writer.append({weight, z_vertex, spB.x(), spB.y(), spB.z(),
                                   0, 0, spM.x(), spM.y(), spM.z(), 0, 0,

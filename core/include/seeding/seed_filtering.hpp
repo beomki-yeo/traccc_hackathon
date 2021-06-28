@@ -28,7 +28,7 @@ struct seed_filtering {
     /// added
     void operator()(host_internal_spacepoint_container& isp_container,
                     host_triplet_collection& triplets,
-                    host_seed_collection& seeds) {
+                    host_seed_container& seeds) {
         host_seed_collection seeds_per_spM;
 
         for (auto& triplet : triplets) {
@@ -113,7 +113,9 @@ struct seed_filtering {
         // weight seeds
 
         for (; it < itBegin + maxSeeds; ++it) {
-            seeds.push_back(*it);
+            //seeds.push_back(*it);
+	    seeds.headers[0]++;
+	    seeds.items[0].push_back(*it);
         }
     }
 
