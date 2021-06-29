@@ -121,7 +121,8 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
     grid_config.cotThetaMax = config.cotThetaMax;
 
     traccc::spacepoint_grouping sg(config, grid_config);
-
+    traccc::seed_finding sf(config);
+    
     traccc::cuda::tml_stats_config tml_cfg;
     traccc::cuda::seed_finding sf_cuda(config, sg.get_spgrid(), &tml_cfg,
                                        &mng_mr);
@@ -205,10 +206,8 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
         //traccc::host_seed_collection seeds;
 	traccc::host_seed_container seeds;
 
-        traccc::seed_finding sf =
-            traccc::seed_finding(config, internal_sp_per_event);
         if (skip_cpu == false) {
-            seeds = sf();
+            seeds = sf(internal_sp_per_event);
             //n_seeds += seeds.size();
 	    n_seeds += seeds.headers[0];
 

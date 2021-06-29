@@ -21,9 +21,7 @@ struct triplet_finding {
     ///
     /// @param seedfinder_config is the configuration parameters
     /// @param isp_container is the internal spacepoint container
-    triplet_finding(seedfinder_config& config,
-                    const host_internal_spacepoint_container& isp_container)
-        : m_config(config), m_isp_container(isp_container) {}
+    triplet_finding(seedfinder_config& config) : m_config(config) {}
 
     /// Callable operator for triplet finding per middle-bottom doublet
     ///
@@ -36,12 +34,13 @@ struct triplet_finding {
     ///
     /// @return a vector of triplets
     host_triplet_collection operator()(
+        const host_internal_spacepoint_container& isp_container,
         const doublet& mid_bot, const lin_circle& lb,
         const host_doublet_collection& doublets_mid_top,
         const host_lin_circle_collection& lin_circles_mid_top) {
         host_triplet_collection triplets;
-        this->operator()(mid_bot, lb, doublets_mid_top, lin_circles_mid_top,
-                         triplets);
+        this->operator()(isp_container, mid_bot, lb, doublets_mid_top,
+                         lin_circles_mid_top, triplets);
         return triplets;
     }
 
@@ -57,12 +56,13 @@ struct triplet_finding {
     /// void interface
     ///
     /// @return a vector of triplets
-    void operator()(const doublet& mid_bot, const lin_circle& lb,
+    void operator()(const host_internal_spacepoint_container& isp_container,
+                    const doublet& mid_bot, const lin_circle& lb,
                     const host_doublet_collection& doublets_mid_top,
                     const host_lin_circle_collection& lin_circles_mid_top,
                     host_triplet_collection& triplets) {
         auto& spM_idx = mid_bot.sp1;
-        auto& spM = m_isp_container.items[spM_idx.bin_idx][spM_idx.sp_idx];
+        auto& spM = isp_container.items[spM_idx.bin_idx][spM_idx.sp_idx];
 
         scalar iSinTheta2 = 1 + lb.cotTheta() * lb.cotTheta();
         scalar scatteringInRegion2 = m_config.maxScatteringAngle2 * iSinTheta2;
@@ -93,8 +93,8 @@ struct triplet_finding {
             auto& current_triplet = triplets[i];
             auto& spT_idx = current_triplet.sp3;
             auto& current_spT =
-                m_isp_container.items[spT_idx.bin_idx][spT_idx.sp_idx];
-            float currentTop_r = current_spT.radius();
+                isp_container.items[spT_idx.bin_idx][spT_idx.sp_idx];
+            const auto& currentTop_r = current_spT.radius();
 
             // if two compatible seeds with high distance in r are found,
             // compatible seeds span 5 layers
@@ -113,11 +113,11 @@ struct triplet_finding {
                 auto& other_triplet = triplets[j];
                 auto& other_spT_idx = other_triplet.sp3;
                 auto& other_spT =
-                    m_isp_container
+                    isp_container
                         .items[other_spT_idx.bin_idx][other_spT_idx.sp_idx];
 
                 // compared top SP should have at least deltaRMin distance
-                float otherTop_r = other_spT.radius();
+                const auto& otherTop_r = other_spT.radius();
                 float deltaR = currentTop_r - otherTop_r;
                 if (std::abs(deltaR) < m_filter_config.deltaRMin) {
                     continue;
@@ -162,7 +162,6 @@ struct triplet_finding {
    private:
     seedfinder_config m_config;
     seedfilter_config m_filter_config;
-    const host_internal_spacepoint_container& m_isp_container;
 };
 
 }  // namespace traccc

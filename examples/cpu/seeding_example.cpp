@@ -142,8 +142,8 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
           -----------------------*/
         /*time*/ auto start_seeding_cpu = std::chrono::system_clock::now();
 
-        traccc::seed_finding sf(config, internal_sp_per_event);
-        auto seeds = sf();
+        traccc::seed_finding sf(config);
+        auto seeds = sf(internal_sp_per_event);
 
         /*time*/ auto end_seeding_cpu = std::chrono::system_clock::now();
         //n_seeds += seeds.size();

@@ -26,7 +26,7 @@ struct seed_filtering {
     ///
     /// @return seeds are the vector of seeds where the new compatible seeds are
     /// added
-    void operator()(host_internal_spacepoint_container& isp_container,
+    void operator()(const host_internal_spacepoint_container& isp_container,
                     host_triplet_collection& triplets,
                     host_seed_container& seeds) {
         host_seed_collection seeds_per_spM;
@@ -113,9 +113,9 @@ struct seed_filtering {
         // weight seeds
 
         for (; it < itBegin + maxSeeds; ++it) {
-            //seeds.push_back(*it);
-	    seeds.headers[0]++;
-	    seeds.items[0].push_back(*it);
+            // seeds.push_back(*it);
+            seeds.headers[0]++;
+            seeds.items[0].push_back(*it);
         }
     }
 
