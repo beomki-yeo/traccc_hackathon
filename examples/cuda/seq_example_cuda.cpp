@@ -72,11 +72,13 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
     float wall_time(0);
 
     float file_reading_cpu(0);
+    float clusterization_cpu(0);	
     float measurement_creation_cpu(0);
     float spacepoint_formation_cpu(0);
     float binning_cpu(0);
     float seeding_cpu(0);
 
+    float clusterization_cuda(0);	
     float measurement_creation_cuda(0);
     float spacepoint_formation_cuda(0);
     float binning_cuda(0);
@@ -179,31 +181,6 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
         /*-----------------------------
           spacepoint formation - cpu
           -----------------------------*/
-	/*
-	traccc::host_spacepoint_container spacepoints_per_event;
-        spacepoints_per_event.headers.reserve(measurements_per_event.headers.size());
-        spacepoints_per_event.items.reserve(measurements_per_event.headers.size());
-	
-        for (std::size_t i = 0; i < measurements_per_event.items.size(); ++i) {
-            auto& module = measurements_per_event.headers[i];
-            module.pixel =
-                traccc::pixel_segmentation{-8.425, -36.025, 0.05, 0.05};
-
-	    auto& measurements_per_module = measurements_per_event.items[i];
-	    
-            // The algorithmic code part: start
-	    traccc::host_spacepoint_collection spacepoints_per_module =
-                sp(module, measurements_per_module);
-            // The algorithmnic code part: end
-
-            n_measurements += measurements_per_module.size();
-            n_spacepoints += spacepoints_per_module.size();
-
-            spacepoints_per_event.items.push_back(
-                std::move(spacepoints_per_module));
-            spacepoints_per_event.headers.push_back(module.module);
-        }
-	*/
 	
         traccc::host_measurement_container measurements_per_event;
         traccc::host_spacepoint_container spacepoints_per_event;
@@ -217,11 +194,18 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
             module.pixel =
                 traccc::pixel_segmentation{-8.425, -36.025, 0.05, 0.05};
 
+	    /*time*/ auto start_clusterization_cpu = std::chrono::system_clock::now();
+	    
             // The algorithmic code part: start
             traccc::cluster_collection clusters_per_module =
                 cc(cells_per_event.items[i], cells_per_event.headers[i]);
             clusters_per_module.position_from_cell = module.pixel;
 
+	    /*time*/ auto end_clusterization_cpu = std::chrono::system_clock::now();
+	    /*time*/ std::chrono::duration<double> time_clusterization_cpu =
+		end_clusterization_cpu - start_clusterization_cpu;
+	    /*time*/ clusterization_cpu += time_clusterization_cpu.count();
+	    
 	    /*time*/ auto start_measurement_creation_cpu = std::chrono::system_clock::now();
 	    
             traccc::host_measurement_collection measurements_per_module =
@@ -402,6 +386,10 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
               << wall_time << std::endl;
     std::cout << "file reading (cpu)       " << std::setw(10) << std::left
               << file_reading_cpu << std::endl;
+    std::cout << "clusterization_time (cpu)" << std::setw(10) << std::left
+              << clusterization_cpu << std::endl;    
+    std::cout << "ms_creation_time (cpu)   " << std::setw(10) << std::left
+              << measurement_creation_cpu << std::endl;    
     std::cout << "sp_formation_time (cpu)  " << std::setw(10) << std::left
               << spacepoint_formation_cpu << std::endl;    
     std::cout << "binning_time (cpu)       " << std::setw(10) << std::left
