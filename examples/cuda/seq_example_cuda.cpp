@@ -27,12 +27,6 @@
 // seeding (cuda)
 #include "cuda/seeding/seed_finding.hpp"
 
-// track finding (cpu)
-#include "track_finding/track_finding_algorithm.hpp"
-
-// track finding (cuda)
-#include "cuda/propagator/propagator.hpp"
-
 // io
 #include "csv/csv_io.hpp"
 
@@ -106,8 +100,8 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
     config.deltaRMax = 160.;
     config.collisionRegionMin = -250.;
     config.collisionRegionMax = 250.;
-    // config.zMin = -2800.; // this value introduces redundant bins without any
-    // spacepoints config.zMax = 2800.;
+    //config.zMin = -2800.; // this value introduces redundant bins without any
+    //config.zMax = 2800.;
     config.zMin = -1186.;
     config.zMax = 1186.;
     config.maxSeedsPerSpM = 5;
@@ -159,16 +153,14 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
 
         // Read the cells from the relevant event file
 	/*time*/ auto start_file_reading_cpu = std::chrono::system_clock::now();
+	
         std::string event_string = "000000000";
         std::string event_number = std::to_string(event);
         event_string.replace(event_string.size() - event_number.size(),
-                             event_number.size(), event_number);	
-
-	// skip cell reading for the moment
-	// will be fixed once ACTS digitization can generate cell files
+                             event_number.size(), event_number);
 	
-	/*
-        std::string io_cells_file = data_directory + cells_dir +
+	
+        std::string io_cells_file = cells_dir +
                                     std::string("/event") + event_string +
                                     std::string("-cells.csv");
         traccc::cell_reader creader(
@@ -177,17 +169,8 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
         traccc::host_cell_container cells_per_event =
             traccc::read_cells(creader, resource, surface_transforms);
         n_modules += cells_per_event.headers.size();
-	*/
-
-        std::string io_measurements_file = cells_dir +
-	    std::string("/event") + event_string +
-	    std::string("-measurements.csv");
-
-        traccc::measurement_reader mreader(io_measurements_file, {"geometry_id", "local_key", "local0", "local1", "phi", "theta", "time", "var_local0", "var_local1", "var_phi", "var_theta", "var_time"});
-        traccc::host_measurement_container measurements_per_event =
-            traccc::read_measurements(mreader, mng_mr, surface_transforms);
-        n_modules += measurements_per_event.headers.size();
-
+	
+	
         /*time*/ auto end_file_reading_cpu = std::chrono::system_clock::now();
         /*time*/ std::chrono::duration<double> time_file_reading_cpu =
             end_file_reading_cpu - start_file_reading_cpu;
@@ -196,12 +179,10 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
         /*-----------------------------
           spacepoint formation - cpu
           -----------------------------*/
-
+	/*
 	traccc::host_spacepoint_container spacepoints_per_event;
         spacepoints_per_event.headers.reserve(measurements_per_event.headers.size());
         spacepoints_per_event.items.reserve(measurements_per_event.headers.size());
-
-	/*time*/ auto start_spacepoint_formation_cpu = std::chrono::system_clock::now();
 	
         for (std::size_t i = 0; i < measurements_per_event.items.size(); ++i) {
             auto& module = measurements_per_event.headers[i];
@@ -222,14 +203,8 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
                 std::move(spacepoints_per_module));
             spacepoints_per_event.headers.push_back(module.module);
         }
-
-        /*time*/ auto end_spacepoint_formation_cpu = std::chrono::system_clock::now();
-        /*time*/ std::chrono::duration<double> time_spacepoint_formation_cpu =
-            end_spacepoint_formation_cpu - start_spacepoint_formation_cpu;
-        /*time*/ spacepoint_formation_cpu += time_spacepoint_formation_cpu.count();
+	*/
 	
-	// will be fixed once ACTS digitization can generate cell files	
-	/*
         traccc::host_measurement_container measurements_per_event;
         traccc::host_spacepoint_container spacepoints_per_event;
         measurements_per_event.headers.reserve(cells_per_event.headers.size());
@@ -247,16 +222,31 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
                 cc(cells_per_event.items[i], cells_per_event.headers[i]);
             clusters_per_module.position_from_cell = module.pixel;
 
+	    /*time*/ auto start_measurement_creation_cpu = std::chrono::system_clock::now();
+	    
             traccc::host_measurement_collection measurements_per_module =
                 mt(clusters_per_module, module);
+
+	    /*time*/ auto end_measurement_creation_cpu = std::chrono::system_clock::now();
+	    /*time*/ std::chrono::duration<double> time_measurement_creation_cpu =
+		end_measurement_creation_cpu - start_measurement_creation_cpu;
+	    /*time*/ measurement_creation_cpu += time_measurement_creation_cpu.count();
+	    
+	    /*time*/ auto start_spacepoint_formation_cpu = std::chrono::system_clock::now();
+	    
             traccc::host_spacepoint_collection spacepoints_per_module =
                 sp(module, measurements_per_module);
-            // The algorithmnic code part: end
 
+	    /*time*/ auto end_spacepoint_formation_cpu = std::chrono::system_clock::now();
+	    /*time*/ std::chrono::duration<double> time_spacepoint_formation_cpu =
+		end_spacepoint_formation_cpu - start_spacepoint_formation_cpu;
+	    /*time*/ spacepoint_formation_cpu += time_spacepoint_formation_cpu.count();
+            // The algorithmnic code part: end
+	    
             n_cells += cells_per_event.items[i].size();
             n_clusters += clusters_per_module.items.size();
             n_measurements += measurements_per_module.size();
-            n_space_points += spacepoints_per_module.size();
+            n_spacepoints += spacepoints_per_module.size();
 
             measurements_per_event.items.push_back(
                 std::move(measurements_per_module));
@@ -266,8 +256,7 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
                 std::move(spacepoints_per_module));
             spacepoints_per_event.headers.push_back(module.module);
         }
-	*/
-	
+		
         /*-------------------
           spacepoint binning
           -------------------*/
@@ -395,8 +384,17 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
     std::cout << "==> Statistics ... " << std::endl;
     std::cout << "- read    " << n_spacepoints << " spacepoints from "
               << n_modules << " modules" << std::endl;
+    std::cout << "- created        " << n_cells
+              << " cells           " << std::endl;
+    std::cout << "- created        " << n_clusters
+              << " clusters        " << std::endl;        
+    std::cout << "- created        " << n_measurements
+              << " meaurements     " << std::endl;
+    std::cout << "- created        " << n_spacepoints
+              << " spacepoints     " << std::endl;
     std::cout << "- created        " << n_internal_spacepoints
               << " internal spacepoints" << std::endl;
+
     std::cout << "- created (cpu)  " << n_seeds << " seeds" << std::endl;
     std::cout << "- created (cuda) " << n_seeds_cuda << " seeds" << std::endl;
     std::cout << "==> Elpased time ... " << std::endl;

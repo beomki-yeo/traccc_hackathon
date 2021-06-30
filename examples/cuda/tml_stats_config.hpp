@@ -33,6 +33,8 @@ class tml_stats_config : public stats_config {
     tml_stats_config() {
         safety_factor = 2.0;
         safety_adder = 10;
+	//safety_factor = 10.0;
+        //safety_adder = 50000;
         par_for_mb_doublets = {1, 28.77, 0.4221};
         par_for_mt_doublets = {1, 19.73, 0.232};
         par_for_triplets = {1, 0, 0.02149};

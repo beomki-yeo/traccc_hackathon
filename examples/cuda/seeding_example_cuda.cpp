@@ -19,12 +19,6 @@
 // seeding (cuda)
 #include "cuda/seeding/seed_finding.hpp"
 
-// track finding (cpu)
-#include "track_finding/track_finding_algorithm.hpp"
-
-// track finding (cuda)
-#include "cuda/propagator/propagator.hpp"
-
 // io
 #include "csv/csv_io.hpp"
 

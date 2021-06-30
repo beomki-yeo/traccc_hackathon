@@ -43,7 +43,6 @@ endif()
 
 # Build the traccc code.
 add_subdirectory(core)
-add_subdirectory(algorithms)
 add_subdirectory(io)
 add_subdirectory(examples)
 add_subdirectory(tests)
