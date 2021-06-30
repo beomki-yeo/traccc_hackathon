@@ -38,7 +38,7 @@ find_package(Acts)
 
 # Set GPU-related options
 if( TRACCC_BUILD_CUDA )
-  add_subdirectory( cuda )
+  add_subdirectory( device/cuda )
 endif()
 
 # Build the traccc code.
