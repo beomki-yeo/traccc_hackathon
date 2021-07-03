@@ -119,15 +119,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
     
     traccc::cuda::tml_stats_config tml_cfg;
     traccc::cuda::seed_finding sf_cuda(config, sg.get_spgrid(), &tml_cfg,
-                                       &mng_mr);    
-    
-    /*----------------------------
-      Track finding configuration
-      ----------------------------*/
-    
-    // traccc_cuda
-    //traccc::cuda::propagator cuda_propagator;
-    
+                                       &mng_mr);        
 
     /*-----------------
       hit reading
@@ -213,11 +205,6 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
                 n_internal_spacepoints += internal_sp_per_event.items[i].size();
             }
         }
-
-        /*-----------------------
-          track finding -- cpu
-          -----------------------*/
-		
 	
         /*-----------------------
           seed finding -- cuda
@@ -232,11 +219,6 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
             end_seeding_cuda - start_seeding_cuda;
         /*time*/ seeding_cuda += time_seeding_cuda.count();
 
-        /*-----------------------
-          track finding -- cuda
-          -----------------------*/
-
-	
         /*----------------------------------
           compare seeds from cpu and cuda
           ----------------------------------*/
