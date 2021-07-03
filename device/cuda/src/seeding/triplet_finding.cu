@@ -191,8 +191,7 @@ __global__ void triplet_finding_kernel(
     }
 
     __syncthreads();
-    cuda_helper::reduce_sum<int>(blockDim.x, threadIdx.x,
-                                 num_triplets_per_thread);
+    cuda_helper::reduce_sum<int>(num_triplets_per_thread);
 
     if (threadIdx.x == 0) {
         atomicAdd(&num_triplets_per_bin, num_triplets_per_thread[0]);

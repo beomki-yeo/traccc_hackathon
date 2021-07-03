@@ -170,11 +170,9 @@ __global__ void doublet_finding_kernel(
     }
 
     __syncthreads();
-    cuda_helper::reduce_sum<int>(blockDim.x, threadIdx.x,
-                                 num_mid_bot_doublets_per_thread);
+    cuda_helper::reduce_sum<int>(num_mid_bot_doublets_per_thread);
     __syncthreads();
-    cuda_helper::reduce_sum<int>(blockDim.x, threadIdx.x,
-                                 num_mid_top_doublets_per_thread);
+    cuda_helper::reduce_sum<int>(num_mid_top_doublets_per_thread);
 
     if (threadIdx.x == 0) {
         atomicAdd(&num_mid_bot_doublets_per_bin,
