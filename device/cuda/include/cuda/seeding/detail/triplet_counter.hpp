@@ -12,8 +12,16 @@
 namespace traccc {
 namespace cuda {
 
+/// Definition the container for triplet counter
+///    
+/// header element: number of the mid-bot doublet which have positive number (>0) of compatible triplet
+/// item element: triplet counter    
 struct triplet_counter {
+
+    /// indices of two spacepoints of mid-bot doublet
     doublet mid_bot_doublet;
+
+    /// number of compatible triplets for a given mid-bot doublet
     unsigned int n_triplets = 0;
 };
 

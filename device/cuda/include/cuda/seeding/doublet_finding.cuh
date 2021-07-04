@@ -16,6 +16,15 @@
 namespace traccc {
 namespace cuda {
 
+/// Forward declaration of doublet finding function
+/// The mid-bot and mid-top doublets are found for the compatible middle spacepoints which was recorded by doublet_counting
+///    
+/// @param config seed finder config
+/// @param internal_sp_container vecmem container for internal spacepoint
+/// @param doublet_counter_container vecmem container for doublet_counter
+/// @param mid_bot_doublet_container vecmem container for mid-bot doublets
+/// @param mid_top_doublet_container vecmem container for mid-top doublets
+/// @param resource vecmem memory resource        
 void doublet_finding(const seedfinder_config& config,
                      host_internal_spacepoint_container& internal_sp_container,
                      host_doublet_counter_container& doublet_counter_container,

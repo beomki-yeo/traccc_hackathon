@@ -291,7 +291,7 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
         /*time*/ std::chrono::duration<double> time_seeding_cuda =
             end_seeding_cuda - start_seeding_cuda;
         /*time*/ seeding_cuda += time_seeding_cuda.count();
-
+	
         /*----------------------------------
           compare seeds from cpu and cuda
           ----------------------------------*/

@@ -14,6 +14,7 @@
 
 #define WARP_SIZE 32
 
+/// Helper macro used for checking @c cudaError_t type return values.
 #define CUDA_ERROR_CHECK(ans) \
     { cudaAssert((ans), __FILE__, __LINE__); }
 inline void cudaAssert(cudaError_t code, const char *file, int line,

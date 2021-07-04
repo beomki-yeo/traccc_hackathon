@@ -20,6 +20,18 @@
 namespace traccc {
 namespace cuda {
 
+/// Forward declaration of triplet finding function
+/// The triplets per mid-bot doublets are found for the compatible mid-bot doublets which were recorded during triplet_counting
+///    
+/// @param config seed finder config
+/// @param filter_config seed filter config
+/// @param internal_sp_view vecmem container for internal spacepoint
+/// @param doublet_counter_container vecmem container for doublet_counter
+/// @param mid_bot_doublet_container vecmem container for mid-bot doublets
+/// @param mid_top_doublet_container vecmem container for mid-top doublets
+/// @param triplet_counter_container vecmem container for triplet counters
+/// @param triplet_container vecmem container for triplets
+/// @param resource vecmem memory resource                
 void triplet_finding(const seedfinder_config& config,
                      const seedfilter_config& filter_config,
                      host_internal_spacepoint_container& internal_sp_container,
