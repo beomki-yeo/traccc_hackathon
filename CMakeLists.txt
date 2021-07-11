@@ -36,9 +36,6 @@ include( traccc-compiler-options )
 add_subdirectory(extern)
 include( traccc-vecmem )
 
-#acts
-find_package(Acts)
-
 # Set GPU-related options
 if( TRACCC_BUILD_CUDA )
   add_subdirectory( device/cuda )
