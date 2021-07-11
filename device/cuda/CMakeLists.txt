@@ -8,9 +8,11 @@ set( TRACCC_CUDA_UTILS_SOURCE_DIR ${TRACCC_CUDA_DIR}/src/utils )
 
 add_subdirectory(include/cuda/utils)
 add_subdirectory(include/cuda/seeding)
+add_subdirectory(include/cuda/fitter)
 
 add_library(traccc_cuda INTERFACE)
 target_link_libraries(traccc_cuda INTERFACE
   traccc::cuda::utils
-  traccc::cuda::seeding)
+  traccc::cuda::seeding
+  traccc::cuda::fitter)
 add_library(traccc::cuda ALIAS traccc_cuda)
