@@ -8,7 +8,6 @@
 #pragma once
 
 #include <seeding/detail/spacepoint_grid.hpp>
-#include <utils/grid.hpp>
 
 namespace traccc {
 
@@ -29,7 +28,7 @@ class bin_finder {
     /// @param binnedSP phi-z grid containing all bins
     std::vector<size_t> find_bins(size_t phi_bin, size_t z_bin,
                                   const spacepoint_grid* binned_sp) {
-        return binned_sp->neighborhood_indices({phi_bin, z_bin}).collect();
+        return binned_sp->neighborHoodIndices({phi_bin, z_bin}).collect();
     }
 };
 

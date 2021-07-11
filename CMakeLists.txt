@@ -24,7 +24,10 @@ set( CMAKE_LIBRARY_OUTPUT_DIRECTORY
 set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY
    "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}" CACHE PATH
    "Directory for the built static libraries" )
-  
+ 
+# Add acts core
+find_package(Acts) 
+ 
 # Include the traccc CMake code.
 list( APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" )
 include( traccc-compiler-options )
@@ -32,9 +35,6 @@ include( traccc-compiler-options )
 # Build the necessary externals.
 add_subdirectory(extern)
 include( traccc-vecmem )
-
-#acts
-find_package(Acts)
 
 # Set GPU-related options
 if( TRACCC_BUILD_CUDA )
