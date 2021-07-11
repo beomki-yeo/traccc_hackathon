@@ -68,7 +68,6 @@ struct internal_spacepoint {
         m_varianceR = variance[0];
         m_varianceZ = variance[1];
     }
-
     __CUDA_HOST_DEVICE__
     internal_spacepoint(const internal_spacepoint<spacepoint>& sp)
         : m_sp(sp.sp()) {
