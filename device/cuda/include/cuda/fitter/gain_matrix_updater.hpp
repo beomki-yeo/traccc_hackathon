@@ -7,21 +7,58 @@
 
 #pragma once
 
-#include <cuda/fitter/detail/gain_matrix_updater_helper.hpp>
+#include <cuda/fitter/detail/gain_matrix_updater_impl.cuh>
+#include <edm/track_parameters.hpp>
+
+// Acts
+#include <Acts/Definitions/TrackParametrization.hpp>
 
 namespace traccc {
 namespace cuda {
-
-template < typename T, int dim, int batch_size >
+    
+template<typename scalar_t,
+	 int meas_dim,
+	 int params_dim,
+	 int batch_size>
 class gain_matrix_updater{
+public:
+        
+    gain_matrix_updater() = default;
 
-template<typename track_state_container>
-void update(const track_state_container& track_states) {
-    m_helper.update();
-}
+    ~gain_matrix_updater() = default;
+
+    template <typename track_state_container_t>
+    void update(track_state_container_t& track_states) {
+	const scalar_t* meas_array[batch_size];
+	const scalar_t* proj_array[batch_size];
+	const scalar_t* pred_vector_array[batch_size];
+	const scalar_t* pred_cov_array[batch_size];
+
+	scalar_t* proj2_array[batch_size];
+	
+	//std::cout << track_states.items[0].predicted().covariance() << std::endl;
+	
+	for (unsigned int i_b=0; i_b<batch_size; i_b++){
+	    auto& tr_state = track_states.items[i_b];	    
+	    meas_array[i_b] = &(tr_state.measurement().get_local()[0]);
+	    proj_array[i_b] = &(tr_state.projector()(0));	   
+	    pred_vector_array[i_b] = &(tr_state.predicted().vector()(0));
+	    pred_cov_array[i_b] = &(tr_state.predicted().covariance()(0));
+
+	    proj2_array[i_b] = &(tr_state.projector2()(0));
+	}
+
+	//std::cout << track_states.items[0].predicted().covariance() << std::endl;
+	
+	//for (int i=0; i<36; i++){
+	//    std::cout << *(pred_cov_array[0]+i) << std::endl;
+	//}
+	
+	m_impl.update(meas_array, proj_array,proj2_array, pred_vector_array, pred_cov_array);
+    }
 	
 private:
-    gain_matrix_updater_helper<T, dim, batch_size> m_helper;    
+    gain_matrix_updater_impl<scalar_t, meas_dim, params_dim, batch_size> m_impl;    
 };
 
 

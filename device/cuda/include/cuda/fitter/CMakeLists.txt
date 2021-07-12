@@ -11,4 +11,6 @@ target_compile_options(traccc_cuda_fitter
   INTERFACE $<$<COMPILE_LANGUAGE:CUDA>:  
   --fmad=false>)
 
+target_link_libraries(traccc_cuda_fitter INTERFACE traccc::core CUDA::cudart CUDA::cublas)
+
 add_library(traccc::cuda::fitter ALIAS traccc_cuda_fitter)

@@ -1,10 +1,11 @@
 enable_language(CUDA)
 
-find_library(CUDART_LIBRARY cudart ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
+find_package(CUDAToolkit REQUIRED)
 
 set( TRACCC_CUDA_DIR ${CMAKE_CURRENT_SOURCE_DIR} )
 set( TRACCC_CUDA_SEEDING_SOURCE_DIR ${TRACCC_CUDA_DIR}/src/seeding )
 set( TRACCC_CUDA_UTILS_SOURCE_DIR ${TRACCC_CUDA_DIR}/src/utils )
+set( TRACCC_CUDA_FITTER_SOURCE_DIR ${TRACCC_CUDA_DIR}/src/fitter )
 
 add_subdirectory(include/cuda/utils)
 add_subdirectory(include/cuda/seeding)
