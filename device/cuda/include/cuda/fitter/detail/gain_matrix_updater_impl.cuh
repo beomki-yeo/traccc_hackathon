@@ -75,34 +75,6 @@ public:
     };
     */
     
-    /*
-    // matrices for cublas calculation
-    template< int n_row, int n_col >
-    struct internal_matrix{
-	// constructor for internal matrix
-	internal_matrix(){
-	    n_size = n_row*n_col;
-	    for (int i_b=0; i_b<batch_size; i_b++){
-		cudaMallocManaged(&mat[i_b], n_size*sizeof(scalar_t));
-	    }
-	}
-	
-	// destructor for internal matrix	
-	~internal_matrix(){
-	    for (int i_b=0; i_b<batch_size; i_b++){
-		cudaFree(mat[i_b]);
-	    }
-	}
-	
-	// make all elements zero
-	void set_zero(){
-	    //cudaMemset(&mat, 0, batch_size*n_size*sizeof(scalar_t));
-	}
-	
-	scalar_t* mat[batch_size];
-	int n_size;
-    };
-    */    
     // kalman update
     void update(scalar_t** meas_array,
 		scalar_t** proj_array,
@@ -112,51 +84,6 @@ public:
 	scalar_t alpha, beta;	
 	alpha = 1;
 	beta = 0;
-	/*
-	m_status = cublasDgemm(m_handle,
-			       CUBLAS_OP_N, CUBLAS_OP_N,
-			       meas_dim, params_dim, params_dim,
-			       &alpha,
-			       proj_array[0], meas_dim,
-			       pred_cov_array[0], params_dim,
-			       &beta, 
-			       HC.get_bptr()[0], meas_dim
-			       );
-	HC.dev2host();
-	*/	
-
-
-	auto Adev = vecmem::data::vector_buffer<scalar_t>(36*batch_size, dev_mr);
-
-	scalar_t* Aptr[batch_size];
-	for (int i=0; i<batch_size; i++){
-	    Aptr[i] = Adev.ptr()+i*36;
-	}
-
-	auto Bdev = vecmem::data::vector_buffer<scalar_t>(36*batch_size, dev_mr);
-
-	scalar_t* Bptr[batch_size];
-	for (int i=0; i<batch_size; i++){
-	    Bptr[i] = Bdev.ptr()+i*36;
-	}
-		
-	auto Cdev = vecmem::data::vector_buffer<scalar_t>(36*batch_size, dev_mr);
-
-	scalar_t* Cptr[batch_size];
-	for (int i=0; i<batch_size; i++){
-	    Cptr[i] = Cdev.ptr()+i*36;
-	}
-
-	m_status = cublasGgemmBatched(m_handle,
-				      CUBLAS_OP_N, CUBLAS_OP_N,
-				      6,6,6,
-				      &alpha,
-				      Aptr, 6,
-				      Bptr, 6,
-				      &beta,
-				      Cptr, 6,
-				      batch_size
-				      );		
 	
 	/*
 	m_status = cublasGgemmBatched(m_handle,
@@ -170,25 +97,7 @@ public:
 				      batch_size
 				      );		
 	*/
-	//HC.dev2host();
-	/*
-	for (int i=0; i<12; i++){	    
-	    std::cout << HC.mat_host[i] << std::endl;
-	}	
-	
-	for (int i=0; i<12; i++){
-	    std::cout << *(proj_array[0]+i) << std::endl;
-	}
 
-	for (int i=0; i<36; i++){
-	    std::cout << *(pred_cov_array[0]+i) << std::endl;
-	}
-	
-	
-	for (int i=0; i<12; i++){
-	    std::cout << *(proj2_array[0]+i) << std::endl;
-	}
-	*/
 	// cuda error check
 	CUDA_ERROR_CHECK(cudaGetLastError());
 	CUDA_ERROR_CHECK(cudaDeviceSynchronize());
@@ -199,7 +108,6 @@ private:
     // The host/device memory resources
     vecmem::cuda::device_memory_resource dev_mr;
     vecmem::cuda::host_memory_resource host_mr;
-
     
     // internal matrices
     //internal_matrix<2,6> HC; // H(2x6) * C(6x6)
