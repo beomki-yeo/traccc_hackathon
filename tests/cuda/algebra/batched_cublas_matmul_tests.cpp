@@ -29,7 +29,7 @@
 #include <chrono>
 
 // This defines the local frame test suite
-TEST(algebra, batched_cublas_tests) {
+TEST(algebra, batched_cublas_matmul_tests) {
 
     // batch_size (number of matrices)
     const int batch_size = 10000;

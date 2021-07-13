@@ -24,7 +24,7 @@
 
 #include "matmul_kernel.cuh"
 
-TEST(algebra, matrix_multiplcation_tests) {
+TEST(algebra, matmult_tests) {
 
     // batch_size (number of matrices)
     const int batch_size = 10000;
@@ -144,7 +144,6 @@ TEST(algebra, matrix_multiplcation_tests) {
 	    EXPECT_TRUE( abs(C_cpu[i_b](i_m) - C_gpu[i_b](i_m)) < 1e-8 );
 	}
     }
-
     
     std::cout << "==> Elpased time ... " << std::endl;
     std::cout << "cpu managed time: " << cpu_managed << std::endl;

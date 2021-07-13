@@ -14,3 +14,4 @@ macro(add_traccc_test TESTNAME FILES PLUGIN_LIBRARY)
 endmacro()
 
 add_subdirectory(algebra)
+add_subdirectory(algorithms)
