@@ -32,14 +32,15 @@ TEST(algebra, cublas_tests) {
     // create cublas handler
     m_status = cublasCreate(&m_handle);
 
-    // generate test matrices
+    // alpha beta for cublas option
+    const double alpha = 1;
+    const double beta = 0;
+    
+    // generate test matrices    
     Acts::BoundSymMatrix A = Acts::BoundSymMatrix::Random();
     Acts::BoundSymMatrix B = Acts::BoundSymMatrix::Random();
     Acts::BoundSymMatrix C = A*B;
     
-    const double alpha = 1;
-    const double beta = 0;
-
     std::cout << "C truth matrix" << std::endl;
     std::cout << C << std::endl;
     
@@ -61,10 +62,12 @@ TEST(algebra, cublas_tests) {
     A_host[0] = A;
     B_host[0] = B;
 
+    // copy matrix from host to device
     auto A_dev = m_copy.to ( vecmem::get_data( A_host ), dev_mr, vecmem::copy::type::host_to_device );
     auto B_dev = m_copy.to ( vecmem::get_data( B_host ), dev_mr, vecmem::copy::type::host_to_device );
     auto C_dev = m_copy.to ( vecmem::get_data( C_host ), dev_mr, vecmem::copy::type::host_to_device );
-    
+
+    // Do the matrix multiplication
     m_status = cublasDgemm(m_handle,
 			   CUBLAS_OP_N, CUBLAS_OP_N,
 			   A.rows(), B.cols(), B.rows(),
@@ -74,7 +77,8 @@ TEST(algebra, cublas_tests) {
 			   &beta, 
 			   &C_dev.ptr()[0](0), C.rows()
 			   );
-    
+
+    // retrieve the result to the host
     m_copy( C_dev, C_host, vecmem::copy::type::device_to_host );
 
     std::cout << std::endl;
@@ -82,7 +86,7 @@ TEST(algebra, cublas_tests) {
     std::cout << C_host[0] << std::endl;              
 
     for( std::size_t i = 0; i < C.rows()*C.cols(); ++i ) {
-	EXPECT_TRUE( abs(C_host[0](i) -C(i))<1e-8 );
+	EXPECT_TRUE( abs(C_host[0](i) - C(i)) < 1e-8 );
     }
     
     /*--------------------------------------------

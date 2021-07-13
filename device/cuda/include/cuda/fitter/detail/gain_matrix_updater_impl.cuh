@@ -35,7 +35,7 @@ public:
     }
 
     // matrices for cublas calculation
-    
+    /*    
     template< int n_rows, int n_cols >
     struct internal_matrix{
 	// constructor for internal matrix
@@ -73,6 +73,7 @@ public:
 	
 	int n_size;
     };
+    */
     
     /*
     // matrices for cublas calculation
@@ -122,14 +123,42 @@ public:
 			       HC.get_bptr()[0], meas_dim
 			       );
 	HC.dev2host();
-	
-	for (int i=0; i<12; i++){	    
-	    std::cout << HC.mat_host[i] << std::endl;
-	}
-	*/
+	*/	
 
-	scalar_t* test = HC.mat_dev.ptr();
+
+	auto Adev = vecmem::data::vector_buffer<scalar_t>(36*batch_size, dev_mr);
+
+	const scalar_t* Aptr[batch_size];
+	for (int i=0; i<batch_size; i++){
+	    Aptr[i] = Adev.ptr()+i*36;
+	}
+
+	auto Bdev = vecmem::data::vector_buffer<scalar_t>(36*batch_size, dev_mr);
+
+	const scalar_t* Bptr[batch_size];
+	for (int i=0; i<batch_size; i++){
+	    Bptr[i] = Bdev.ptr()+i*36;
+	}
+		
+	auto Cdev = vecmem::data::vector_buffer<scalar_t>(36*batch_size, dev_mr);
+
+	scalar_t* Cptr[batch_size];
+	for (int i=0; i<batch_size; i++){
+	    Cptr[i] = Cdev.ptr()+i*36;
+	}
+
+	m_status = cublasGgemmBatched(m_handle,
+				      CUBLAS_OP_N, CUBLAS_OP_N,
+				      6,6,6,
+				      &alpha,
+				      Aptr, 6,
+				      Bptr, 6,
+				      &beta,
+				      Cptr, 6,
+				      batch_size
+				      );		
 	
+	/*
 	m_status = cublasGgemmBatched(m_handle,
 				      CUBLAS_OP_N, CUBLAS_OP_N,
 				      meas_dim, params_dim, params_dim,
@@ -137,11 +166,10 @@ public:
 				      proj_array, meas_dim,
 				      pred_cov_array, params_dim,
 				      &beta,
-				      &test, meas_dim,
-				      //HC.get_bptr(), meas_dim,
+				      Cptr, meas_dim,
 				      batch_size
 				      );		
-
+	*/
 	//HC.dev2host();
 	/*
 	for (int i=0; i<12; i++){	    
@@ -168,9 +196,13 @@ public:
     }
 
 private:
+    // The host/device memory resources
+    vecmem::cuda::device_memory_resource dev_mr;
+    vecmem::cuda::host_memory_resource host_mr;
+
     
     // internal matrices
-    internal_matrix<2,6> HC; // H(2x6) * C(6x6)
+    //internal_matrix<2,6> HC; // H(2x6) * C(6x6)
     //internal_matrix<2,2> C2; // H(2x6) * C(6x6) * H^T(6x2) + R(2x2)
     //internal_matrix<2,2> C2inv; // C2^inv    
     //internal_matrix<6,2> HC2inv; // H^T(6x2) * C2inv(2x2)
