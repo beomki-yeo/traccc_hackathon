@@ -35,7 +35,7 @@ public:
     }
 
     // matrices for cublas calculation
-    /*    
+    /*   
     template< int n_rows, int n_cols >
     struct internal_matrix{
 	// constructor for internal matrix
@@ -212,10 +212,7 @@ private:
     
     // cublas objects
     cublasHandle_t m_handle;
-    cublasStatus_t m_status;
-    //cublasOperation_t m_op_normal = CUBLAS_OP_N;
-    //cublasOperation_t m_op_transpose = CUBLAS_OP_T;
-    
+    cublasStatus_t m_status;    
 };
 
 }  // namespace cuda
