@@ -12,6 +12,7 @@
 #include <cuda_runtime.h>
 #include <cuda/fitter/detail/cublas_wrapper.hpp>
 #include <cuda/utils/definitions.hpp>
+#include "vecmem/utils/cuda/copy.hpp"
 
 namespace traccc {
 namespace cuda {
@@ -34,37 +35,46 @@ public:
     }
 
     // matrices for cublas calculation
-    /*
-    template< int n_row, int n_col >
+    
+    template< int n_rows, int n_cols >
     struct internal_matrix{
 	// constructor for internal matrix
-	internal_matrix(){
-	    n_size = n_row*n_col;
-	    CUDA_ERROR_CHECK (cudaMallocManaged((void**)&mat, n_size*sizeof(scalar_t)) );
-	    for (int i=0; i<20; i++){
-		mat[i] = 1.;
-	    }
+	internal_matrix():
+	    n_size(n_rows*n_cols),
+	    mat_host(vecmem::vector<scalar_t>(n_rows*n_cols*batch_size, 0, &host_mr)),
+	    mat_dev(vecmem::data::vector_buffer<scalar_t>(n_rows*n_cols*batch_size, dev_mr))
+	{
+
+	    //mat_dev = m_copy.to ( vecmem::get_data( mat_host ), dev_mr, vecmem::copy::type::host_to_device);
 	    
-	    //set_zero();
+	    for (unsigned int i_b=0; i_b<batch_size; i_b++){
+		bptr[i_b] = mat_dev.ptr() + (i_b*n_rows*n_cols);
+	    }	    
 	}
-	
-	// destructor for internal matrix	
-	~internal_matrix(){
-	    CUDA_ERROR_CHECK( cudaFree(mat) );
+
+	scalar_t** get_bptr(){
+	    return bptr;
 	}
-	
-	// make all elements zero
-	
-	void set_zero(){
-	    scalar_t a = 1.;
-	    cudaMemset(mat, a, n_size*sizeof(scalar_t));
+
+	void dev2host(){
+	    m_copy( mat_dev, mat_host, vecmem::copy::type::device_to_host );
 	}
+       	
+	// memory copy helper
+	vecmem::cuda::copy m_copy;
 	
-	scalar_t* mat;
+	// The host/device memory resources
+	vecmem::cuda::device_memory_resource dev_mr;
+	vecmem::cuda::host_memory_resource host_mr;
+	
+	scalar_t* bptr[batch_size];
+	vecmem::vector<scalar_t> mat_host;
+	vecmem::data::vector_buffer<scalar_t> mat_dev;
+	
 	int n_size;
     };
-    */
     
+    /*
     // matrices for cublas calculation
     template< int n_row, int n_col >
     struct internal_matrix{
@@ -91,18 +101,17 @@ public:
 	scalar_t* mat[batch_size];
 	int n_size;
     };
-    
+    */    
     // kalman update
     void update(const scalar_t** meas_array,
 		const scalar_t** proj_array,
-		scalar_t** proj2_array,	
 		const scalar_t** pred_vector_array,
 		const scalar_t** pred_cov_array) {
 	
 	scalar_t alpha, beta;	
 	alpha = 1;
 	beta = 0;
-	
+	/*
 	m_status = cublasDgemm(m_handle,
 			       CUBLAS_OP_N, CUBLAS_OP_N,
 			       meas_dim, params_dim, params_dim,
@@ -110,21 +119,35 @@ public:
 			       proj_array[0], meas_dim,
 			       pred_cov_array[0], params_dim,
 			       &beta, 
-			       proj2_array[0], meas_dim
+			       HC.get_bptr()[0], meas_dim
 			       );
-	       	
-	/*
+	HC.dev2host();
+	
+	for (int i=0; i<12; i++){	    
+	    std::cout << HC.mat_host[i] << std::endl;
+	}
+	*/
+
+	scalar_t* test = HC.mat_dev.ptr();
+	
 	m_status = cublasGgemmBatched(m_handle,
 				      CUBLAS_OP_N, CUBLAS_OP_N,
 				      meas_dim, params_dim, params_dim,
 				      &alpha,
 				      proj_array, meas_dim,
 				      pred_cov_array, params_dim,
-				      &beta, 
-				      proj2_array, meas_dim,
-				      1
+				      &beta,
+				      &test, meas_dim,
+				      //HC.get_bptr(), meas_dim,
+				      batch_size
 				      );		
-	*/
+
+	//HC.dev2host();
+	/*
+	for (int i=0; i<12; i++){	    
+	    std::cout << HC.mat_host[i] << std::endl;
+	}	
+	
 	for (int i=0; i<12; i++){
 	    std::cout << *(proj_array[0]+i) << std::endl;
 	}
@@ -137,7 +160,7 @@ public:
 	for (int i=0; i<12; i++){
 	    std::cout << *(proj2_array[0]+i) << std::endl;
 	}
-	
+	*/
 	// cuda error check
 	CUDA_ERROR_CHECK(cudaGetLastError());
 	CUDA_ERROR_CHECK(cudaDeviceSynchronize());

@@ -43,9 +43,9 @@ TEST(algebra, cublas_tests) {
     std::cout << "C truth matrix" << std::endl;
     std::cout << C << std::endl;
     
-    /*----------------------
-      Test device memory
-      ----------------------*/
+    /*-----------------------------------------
+      Test case 1) A:device B:device C:device
+      -----------------------------------------*/
 
     // memory copy helper
     vecmem::cuda::copy m_copy;
@@ -77,18 +77,18 @@ TEST(algebra, cublas_tests) {
     
     m_copy( C_dev, C_host, vecmem::copy::type::device_to_host );
 
-    std::cout << "C host matrix" << std::endl;
+    std::cout << std::endl;
+    std::cout << "Test case 1) A:device B:device C:device" << std::endl;
     std::cout << C_host[0] << std::endl;              
 
     for( std::size_t i = 0; i < C.rows()*C.cols(); ++i ) {
 	EXPECT_TRUE( abs(C_host[0](i) -C(i))<1e-8 );
     }
-
     
-    /*----------------------
-      Test unified memory -- doesn't work well (I dont know the reason :p)
-      ----------------------*/
-
+    /*--------------------------------------------
+      Test case 2) A:unified B:unified C:unified
+      --------------------------------------------*/
+    
     // The managed memory resource
     vecmem::cuda::managed_memory_resource mng_mr;
 
@@ -99,6 +99,7 @@ TEST(algebra, cublas_tests) {
 
     A_mng[0] = A;
     B_mng[0] = B;
+    C_mng[0] = Acts::BoundSymMatrix::Zero();
     
     m_status = cublasDgemm(m_handle,
 			   CUBLAS_OP_N, CUBLAS_OP_N,
@@ -110,11 +111,60 @@ TEST(algebra, cublas_tests) {
 			   &C_mng[0](0), C.rows()
 			   );
 
-    std::cout << "C manage matrix (which doesn't work well)" << std::endl;    
+    std::cout << std::endl;
+    std::cout << "Test case 2) A:unified B:unified C:unified (Does NOT work correctly)" << std::endl;    
     std::cout << C_mng[0] << std::endl;       
     
+
+    /*--------------------------------------------
+      Test case 3) A:unified B:unified C:device
+      --------------------------------------------*/
+
+    C_host[0] = Acts::BoundSymMatrix::Zero();
+    C_dev = m_copy.to ( vecmem::get_data( C_host ), dev_mr, vecmem::copy::type::host_to_device );
+    
+    m_status = cublasDgemm(m_handle,
+			   CUBLAS_OP_N, CUBLAS_OP_N,
+			   A.rows(), B.cols(), B.rows(),
+			   &alpha,
+			   &A_mng[0](0), A.rows(),
+			   &B_mng[0](0), B.rows(),
+			   &beta, 
+			   &C_dev.ptr()[0](0), C.rows()
+			   );
+
+    m_copy( C_dev, C_host, vecmem::copy::type::device_to_host );    
+    
+    std::cout << std::endl;
+    std::cout << "Test case 3) A:unified B:unified C:device" << std::endl;    
+    std::cout << C_host[0] << std::endl;       
+
+    for( std::size_t i = 0; i < C.rows()*C.cols(); ++i ) {
+	EXPECT_TRUE( abs(C_host[0](i) -C(i))<1e-8 );
+    }
+
+    /*--------------------------------------------
+      Test case 4) A:device B:device C:unified
+      --------------------------------------------*/
+
+    C_mng[0] = Acts::BoundSymMatrix::Zero();
+    
+    m_status = cublasDgemm(m_handle,
+			   CUBLAS_OP_N, CUBLAS_OP_N,
+			   A.rows(), B.cols(), B.rows(),
+			   &alpha,
+			   &A_dev.ptr()[0](0), A.rows(),
+			   &B_dev.ptr()[0](0), B.rows(),
+			   &beta, 
+			   &C_mng[0](0), C.rows()
+			   );
+
+    std::cout << std::endl;
+    std::cout << "Test case 4) A:device B:device C:unified (Does NOT work correctly)" << std::endl;    
+    std::cout << C_mng[0] << std::endl;       
+        
     // destroy cublas handler
-    m_status = cublasDestroy(m_handle);    
+    m_status = cublasDestroy(m_handle);
 }
 
 // Google Test can be run manually from the main() function

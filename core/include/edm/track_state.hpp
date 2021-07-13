@@ -44,11 +44,6 @@ struct track_state{
 
     __CUDA_HOST_DEVICE__
     auto& projector() { return m_projector; }
-
-    ////
-    projector_t m_projector2;
-    __CUDA_HOST_DEVICE__
-    auto& projector2() { return m_projector2; }    
 };
     
 

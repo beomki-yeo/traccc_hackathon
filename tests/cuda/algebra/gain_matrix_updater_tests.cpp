@@ -8,8 +8,11 @@
 #include <gtest/gtest.h>
 
 // vecmem
-#include <vecmem/memory/cuda/managed_memory_resource.hpp>
 #include <vecmem/memory/host_memory_resource.hpp>
+#include <vecmem/memory/cuda/managed_memory_resource.hpp>
+#include "vecmem/memory/cuda/device_memory_resource.hpp"
+#include "vecmem/memory/cuda/host_memory_resource.hpp"
+#include "vecmem/utils/cuda/copy.hpp"
 
 // traccc core
 #include <edm/measurement.hpp>
@@ -20,10 +23,18 @@
 
 // This defines the local frame test suite
 TEST(algebra, gain_matrix_updater) {    
-    const int batch_size = 1000;
+    const int batch_size = 1;
 
+    // The managed memory resource
     vecmem::cuda::managed_memory_resource mng_mr;
 
+    // The host/device memory resources
+    vecmem::cuda::device_memory_resource dev_mr;
+    vecmem::cuda::host_memory_resource host_mr;
+
+    // memory copy helper
+    vecmem::cuda::copy m_copy;
+    
     // define track_state type
     using scalar_t = double;
     using measurement_t = traccc::measurement;
@@ -34,7 +45,7 @@ TEST(algebra, gain_matrix_updater) {
 	traccc::host_track_state_collection<measurement_t, bound_track_parameters_t>;
     
     // declare a test track states object
-    host_track_state_collection track_states({host_track_state_collection::item_vector(&mng_mr)});
+    host_track_state_collection track_states({host_track_state_collection::item_vector(&host_mr)});
     
     // fillout random elements to track states
     for (int i_b=0; i_b < batch_size; i_b++){
@@ -42,7 +53,7 @@ TEST(algebra, gain_matrix_updater) {
 
 	tr_state.predicted().vector() = bound_track_parameters_t::vector_t::Random();
 	tr_state.predicted().covariance() = bound_track_parameters_t::covariance_t::Random();
-
+	
 	tr_state.filtered().vector() = bound_track_parameters_t::vector_t::Random();
 	tr_state.filtered().covariance() = bound_track_parameters_t::covariance_t::Random();
 	
@@ -50,38 +61,18 @@ TEST(algebra, gain_matrix_updater) {
 	tr_state.smoothed().covariance() = bound_track_parameters_t::covariance_t::Random();
 
 	tr_state.jacobian() = track_state::jacobian_t::Random();
-
-	tr_state.projector() = track_state::projector_t::Identity();
-
-	tr_state.projector2() = track_state::projector_t::Zero();
-	
-	// Todo: fill measurements
-	
-	track_states.items.push_back(tr_state);
+	tr_state.projector() = track_state::projector_t::Identity();	
+	track_states.items.push_back(std::move(tr_state));
     }
 
+    // move host data to device
+    auto track_states_device = m_copy.to ( vecmem::get_data( track_states.items ), dev_mr, vecmem::copy::type::host_to_device );
+    
     // Declare gain matrix updater
     traccc::cuda::gain_matrix_updater<scalar_t, 2, Acts::eBoundSize, batch_size> cuUpdater;
     // Update the predicted -> filtered
-    cuUpdater.update(track_states);
+    cuUpdater.update(track_states_device);
     
-    /*
-    traccc::host_bound_track_parameters_collection track_states(
-								{traccc::host_bound_track_parameters_collection::item_vector(&mng_mr)});
-
-    // fillout random elements to track states
-    for (int i_b=0; i_b < batch_size; i_b++){
-	traccc::bound_track_parameters tr_param;
-	tr_param.params() = Acts::BoundVector::Random();
-	tr_param.cov() = Acts::BoundSymMatrix::Random();
-
-	track_states.items.push_back(std::move(tr_param));
-    }
-           
-    traccc::cuda::gain_matrix_updater<double, matrix_dim, batch_size> cuUpdater;
-
-    cuUpdater.update(track_states);        
-    */
 }
 
 // Google Test can be run manually from the main() function

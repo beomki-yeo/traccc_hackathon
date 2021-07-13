@@ -27,6 +27,27 @@ public:
 
     ~gain_matrix_updater() = default;
 
+    template <typename track_state_device_t>
+    void update(track_state_device_t& track_states) {
+	const scalar_t* meas_array[batch_size];
+	const scalar_t* proj_array[batch_size];
+	const scalar_t* pred_vector_array[batch_size];
+	const scalar_t* pred_cov_array[batch_size];
+
+	scalar_t* proj2_array[batch_size];
+	
+	for (unsigned int i_b=0; i_b<batch_size; i_b++){
+	    auto& tr_state = track_states.ptr()[i_b];	    
+	    meas_array[i_b] = &(tr_state.measurement().get_local()[0]);
+	    proj_array[i_b] = &(tr_state.projector()(0));	   
+	    pred_vector_array[i_b] = &(tr_state.predicted().vector()(0));
+	    pred_cov_array[i_b] = &(tr_state.predicted().covariance()(0));	    
+	}
+	
+	m_impl.update(meas_array, proj_array, pred_vector_array, pred_cov_array);
+    }
+    
+    /*
     template <typename track_state_container_t>
     void update(track_state_container_t& track_states) {
 	const scalar_t* meas_array[batch_size];
@@ -36,27 +57,17 @@ public:
 
 	scalar_t* proj2_array[batch_size];
 	
-	//std::cout << track_states.items[0].predicted().covariance() << std::endl;
-	
 	for (unsigned int i_b=0; i_b<batch_size; i_b++){
 	    auto& tr_state = track_states.items[i_b];	    
 	    meas_array[i_b] = &(tr_state.measurement().get_local()[0]);
 	    proj_array[i_b] = &(tr_state.projector()(0));	   
 	    pred_vector_array[i_b] = &(tr_state.predicted().vector()(0));
 	    pred_cov_array[i_b] = &(tr_state.predicted().covariance()(0));
-
-	    proj2_array[i_b] = &(tr_state.projector2()(0));
 	}
-
-	//std::cout << track_states.items[0].predicted().covariance() << std::endl;
 	
-	//for (int i=0; i<36; i++){
-	//    std::cout << *(pred_cov_array[0]+i) << std::endl;
-	//}
-	
-	m_impl.update(meas_array, proj_array,proj2_array, pred_vector_array, pred_cov_array);
+	m_impl.update(meas_array, proj_array, pred_vector_array, pred_cov_array);
     }
-	
+    */	
 private:
     gain_matrix_updater_impl<scalar_t, meas_dim, params_dim, batch_size> m_impl;    
 };
