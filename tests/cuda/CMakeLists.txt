@@ -1,5 +1,7 @@
 enable_testing()
 
+enable_language(CUDA)
+
 macro(add_traccc_test TESTNAME FILES PLUGIN_LIBRARY)
     add_executable(${TESTNAME} ${FILES})
     target_link_libraries(${TESTNAME} gtest gmock gtest_main)

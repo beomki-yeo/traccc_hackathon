@@ -29,10 +29,10 @@ public:
 
     template <typename track_state_device_t>
     void update(track_state_device_t& track_states) {
-	const scalar_t* meas_array[batch_size];
-	const scalar_t* proj_array[batch_size];
-	const scalar_t* pred_vector_array[batch_size];
-	const scalar_t* pred_cov_array[batch_size];
+	scalar_t* meas_array[batch_size];
+	scalar_t* proj_array[batch_size];
+	scalar_t* pred_vector_array[batch_size];
+	scalar_t* pred_cov_array[batch_size];
 	
 	for (unsigned int i_b=0; i_b<batch_size; i_b++){
 	    auto& tr_state = track_states.ptr()[i_b];	    

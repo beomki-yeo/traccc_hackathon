@@ -104,10 +104,10 @@ public:
     };
     */    
     // kalman update
-    void update(const scalar_t** meas_array,
-		const scalar_t** proj_array,
-		const scalar_t** pred_vector_array,
-		const scalar_t** pred_cov_array) {
+    void update(scalar_t** meas_array,
+		scalar_t** proj_array,
+		scalar_t** pred_vector_array,
+		scalar_t** pred_cov_array) {
 	
 	scalar_t alpha, beta;	
 	alpha = 1;
@@ -128,14 +128,14 @@ public:
 
 	auto Adev = vecmem::data::vector_buffer<scalar_t>(36*batch_size, dev_mr);
 
-	const scalar_t* Aptr[batch_size];
+	scalar_t* Aptr[batch_size];
 	for (int i=0; i<batch_size; i++){
 	    Aptr[i] = Adev.ptr()+i*36;
 	}
 
 	auto Bdev = vecmem::data::vector_buffer<scalar_t>(36*batch_size, dev_mr);
 
-	const scalar_t* Bptr[batch_size];
+	scalar_t* Bptr[batch_size];
 	for (int i=0; i<batch_size; i++){
 	    Bptr[i] = Bdev.ptr()+i*36;
 	}

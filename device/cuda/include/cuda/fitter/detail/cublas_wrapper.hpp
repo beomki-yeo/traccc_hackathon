@@ -19,8 +19,8 @@ static inline cublasStatus_t cublasGgemmBatched(
         cublasOperation_t transa, cublasOperation_t transb,
         int m, int n, int k,
         const float *alpha,
-        const float **A, int lda,
-        const float **B, int ldb,
+        float **A, int lda,
+        float **B, int ldb,
 	const float *beta,
         float **C, int ldc,
 	int batch_size)
@@ -41,8 +41,8 @@ static inline cublasStatus_t cublasGgemmBatched(
         cublasOperation_t transa, cublasOperation_t transb,
         int m, int n, int k,
         const double *alpha,
-        const double **A, int lda,
-        const double **B, int ldb,
+        double **A, int lda,
+        double **B, int ldb,
 	const double *beta,
         double **C, int ldc,
 	int batch_size)
