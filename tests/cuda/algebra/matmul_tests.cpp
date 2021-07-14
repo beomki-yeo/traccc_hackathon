@@ -27,6 +27,7 @@
 TEST(algebra, matmult_tests) {
 
     // batch_size (number of matrices)
+    const int n_event = 1;    
     const int batch_size = 10000;
 
     // matrix type
@@ -64,11 +65,11 @@ TEST(algebra, matmult_tests) {
     vecmem::vector< matrix_t > C_cpu(batch_size, &mng_mr);
 
     /*time*/ auto start_cpu_managed = std::chrono::system_clock::now();
-    
+
     for (size_t i_b = 0; i_b < batch_size; i_b++){
 	C_cpu[i_b] = A[i_b]*B[i_b];
     }
-
+       
     /*time*/ auto end_cpu_managed = std::chrono::system_clock::now();
     /*time*/ std::chrono::duration<double> time_cpu_managed = end_cpu_managed - start_cpu_managed;
     /*time*/ cpu_managed += time_cpu_managed.count();
@@ -78,12 +79,16 @@ TEST(algebra, matmult_tests) {
       ---------------------------------------------*/
 
     vecmem::vector< matrix_t > C_gpu(batch_size, &mng_mr);
-    
-    matmul(batch_size,
-	   vecmem::get_data( A ),
-	   vecmem::get_data( B ),
-	   vecmem::get_data( C_gpu ),
-	   gpu_managed);
+
+    for (size_t i_n = 0; i_n < n_event; i_n++){    
+	matmul(batch_size,
+	       vecmem::get_data( A ),
+	       vecmem::get_data( B ),
+	       vecmem::get_data( C_gpu ),
+	       gpu_managed);
+    }
+    // take average across the events
+    gpu_managed = gpu_managed/n_event;
     
     // Compare the cpu and gpu result
     for (size_t i_b = 0; i_b < batch_size; i_b++){	
@@ -111,6 +116,10 @@ TEST(algebra, matmult_tests) {
 	B_host[i_b] = B[i_b];	
     }
 
+    /*-------------------------------------------
+      2.A simple cpu eigen matrix multiplication
+      -------------------------------------------*/
+    
     /*time*/ auto start_cpu_host = std::chrono::system_clock::now();
     
     for (size_t i_b = 0; i_b < batch_size; i_b++){
@@ -129,10 +138,15 @@ TEST(algebra, matmult_tests) {
     auto B_dev = m_copy.to ( vecmem::get_data( B_host ), dev_mr, vecmem::copy::type::host_to_device);
     auto C_dev = m_copy.to ( vecmem::get_data( C_host ), dev_mr, vecmem::copy::type::host_to_device);
 
+    for (size_t i_n = 0; i_n < n_event; i_n++){
+    
     matmul(batch_size,
 	   A_dev, B_dev, C_dev,
 	   gpu_device);
-
+    }
+    // take average across the events
+    gpu_device = gpu_device/n_event;
+    
     // retrieve the result to the host
     for (size_t i_b = 0; i_b < batch_size; i_b++){	   
 	m_copy( C_dev, C_gpu, vecmem::copy::type::device_to_host );

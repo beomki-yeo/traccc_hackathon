@@ -22,13 +22,13 @@ void matmul(int n_matrix,
 	    vecmem::data::vector_view< Acts::BoundSymMatrix > A_view,
 	    vecmem::data::vector_view< Acts::BoundSymMatrix > B_view,
 	    vecmem::data::vector_view< Acts::BoundSymMatrix > C_view,
-	    float& elapsed){
+	    float& time){
 
     unsigned int num_threads = WARP_SIZE*4;
     unsigned int num_blocks = n_matrix/num_threads + 1;
 
     //--TIME--------------------------------------
-    elapsed=0;
+    float elapsed=0;
     cudaEvent_t start, stop;    
     CUDA_ERROR_CHECK(cudaEventCreate(&start));
     CUDA_ERROR_CHECK(cudaEventCreate(&stop));
@@ -44,6 +44,7 @@ void matmul(int n_matrix,
     CUDA_ERROR_CHECK(cudaEventDestroy(start));
     CUDA_ERROR_CHECK(cudaEventDestroy(stop));
     elapsed*=0.001; // ms->sec
+    time += elapsed;
     //--------------------------------------------
     
     // cuda error check    
@@ -55,13 +56,13 @@ void matmul(int n_matrix,
 	    vecmem::data::vector_view< Acts::FreeSymMatrix > A_view,
 	    vecmem::data::vector_view< Acts::FreeSymMatrix > B_view,
 	    vecmem::data::vector_view< Acts::FreeSymMatrix > C_view,
-	    float& elapsed){
+	    float& time){
 
     unsigned int num_threads = WARP_SIZE*4;
     unsigned int num_blocks = n_matrix/num_threads + 1;
 
     //--TIME--------------------------------------
-    elapsed=0;
+    float elapsed=0;
     cudaEvent_t start, stop;    
     CUDA_ERROR_CHECK(cudaEventCreate(&start));
     CUDA_ERROR_CHECK(cudaEventCreate(&stop));
@@ -77,6 +78,7 @@ void matmul(int n_matrix,
     CUDA_ERROR_CHECK(cudaEventDestroy(start));
     CUDA_ERROR_CHECK(cudaEventDestroy(stop));
     elapsed*=0.001; // ms->sec
+    time += elapsed;
     //--------------------------------------------
     
     // cuda error check    
