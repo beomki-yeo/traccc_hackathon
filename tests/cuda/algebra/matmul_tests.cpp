@@ -24,12 +24,22 @@
 
 #include "matmul_kernel.cuh"
 
+// sorry for ugly global variables
+int my_argc;
+char** my_argv;
+
 TEST(algebra, matmult_tests) {
 
+    int n_event = 1;
     // batch_size (number of matrices)
-    const int n_event = 1;    
-    const int batch_size = 10000;
+    int batch_size = 1000;
 
+    if (my_argc == 2){
+	batch_size = std::stoi(my_argv[1]);
+    }
+
+    std::cout << "batch size: " << batch_size << std::endl;
+    
     // matrix type
     using matrix_t = Acts::FreeSymMatrix; // 8x8 matrix
     //using matrix_t = Acts::BoundSymMatrix; // 6x6 matrix
@@ -176,6 +186,9 @@ TEST(algebra, matmult_tests) {
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
+    my_argc = argc;
+    my_argv = argv;
+    
     return RUN_ALL_TESTS();
 }
 

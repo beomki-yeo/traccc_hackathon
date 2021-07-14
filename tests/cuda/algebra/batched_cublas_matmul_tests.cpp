@@ -28,13 +28,24 @@
 // std
 #include <chrono>
 
+// sorry for ugly global variables
+int my_argc;
+char** my_argv;
+
 // This defines the local frame test suite
 TEST(algebra, batched_cublas_matmul_tests) {
 
+    int n_event = 1;    
     // batch_size (number of matrices)
-    const int batch_size = 10000;
+    int batch_size = 10000;
 
-    // matrix size of BoundSymMatrix
+    if (my_argc == 2){
+	batch_size = std::stoi(my_argv[1]);
+    }
+
+    std::cout << "batch size: " << batch_size << std::endl;
+    
+    // matrix size of FreeSymMatrix
     const int n_rows = 8;
     const int n_cols = 8;
     const int n_size = n_rows*n_cols;
@@ -119,6 +130,9 @@ TEST(algebra, batched_cublas_matmul_tests) {
     /*time*/ auto start_gpu_mm = std::chrono::system_clock::now();
     
     // Do the batched matrix multiplication
+
+    for (size_t i_n = 0; i_n < n_event; i_n++){    
+    
     traccc::cuda::cublasGgemmBatched(m_handle,
 		       CUBLAS_OP_N, CUBLAS_OP_N,
 		       n_rows, n_rows, n_rows,
@@ -129,14 +143,17 @@ TEST(algebra, batched_cublas_matmul_tests) {
 		       &C_devPtr[0], n_rows,
 		       batch_size);
     
+    }
+
+    CUDA_ERROR_CHECK(cudaGetLastError());
+    CUDA_ERROR_CHECK(cudaDeviceSynchronize());
     
     /*time*/ auto end_gpu_mm = std::chrono::system_clock::now();
     /*time*/ std::chrono::duration<double> time_gpu_mm = end_gpu_mm - start_gpu_mm;
 
-    /*time*/ gpu_mm += time_gpu_mm.count();
-    
-    CUDA_ERROR_CHECK(cudaGetLastError());
-    CUDA_ERROR_CHECK(cudaDeviceSynchronize());
+    /*time*/ gpu_mm += time_gpu_mm.count()/n_event;
+
+
     
     // retrieve the result to the host
     for (size_t i_b = 0; i_b < batch_size; i_b++){	   
@@ -167,5 +184,8 @@ TEST(algebra, batched_cublas_matmul_tests) {
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
+    my_argc = argc;
+    my_argv = argv;
+    
     return RUN_ALL_TESTS();
 }

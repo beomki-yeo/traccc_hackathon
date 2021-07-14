@@ -37,6 +37,10 @@ void matmul(int n_matrix,
     
     matmul_kernel<<< num_blocks, num_threads >>>(A_view, B_view, C_view);
 
+    // cuda error check    
+    CUDA_ERROR_CHECK(cudaGetLastError());
+    CUDA_ERROR_CHECK(cudaDeviceSynchronize());
+    
     //--TIME--------------------------------------
     CUDA_ERROR_CHECK(cudaEventRecord(stop, 0));
     CUDA_ERROR_CHECK(cudaEventSynchronize (stop) );    
@@ -47,9 +51,6 @@ void matmul(int n_matrix,
     time += elapsed;
     //--------------------------------------------
     
-    // cuda error check    
-    CUDA_ERROR_CHECK(cudaGetLastError());
-    CUDA_ERROR_CHECK(cudaDeviceSynchronize());
 }
 
 void matmul(int n_matrix,
