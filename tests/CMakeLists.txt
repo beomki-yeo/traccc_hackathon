@@ -1,2 +1,4 @@
 add_subdirectory(cpu)
-add_subdirectory(cuda)
+if (TRACCC_BUILD_CUDA)
+  add_subdirectory(cuda)
+endif()
