@@ -6,9 +6,6 @@
  */
 
 #include <cuda/fitter/gain_matrix_updater.cuh>
-#include <edm/collection.hpp>
-#include "edm/measurement.hpp"
-#include "edm/track_parameters.hpp"
 #include <cuda/utils/definitions.hpp>
 
 namespace traccc{
@@ -19,7 +16,6 @@ namespace cuda{
 template <typename track_state_t >    
 __global__ void update_kernel(track_state_collection_view<track_state_t> track_states_view);
 
-    //template<> __global__ void update_kernel< track_state<measurement, bound_track_parameters> >(track_state_collection_view< track_state<measurement, bound_track_parameters> >& track_states_view);
 template class gain_matrix_updater< track_state<measurement, bound_track_parameters>>;
        
 // implementation of kalman gain matrix update function    
