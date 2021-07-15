@@ -10,16 +10,38 @@
 #include <vector>
 
 #include "container.hpp"
+#include "cell.hpp"
 #include "definitions/algebra.hpp"
 #include "definitions/primitives.hpp"
+#include "utils/arch_qualifiers.hpp"
+
+// Acts
+#include "Acts/Definitions/TrackParametrization.hpp"
 
 namespace traccc {
 
 /// A measurement definition:
 /// fix to two-dimensional here
+
+// parameter dimension definition
+    
 struct measurement {
+    
     point2 local = {0., 0.};
     variance2 variance = {0., 0.};
+
+    using projector_t = Acts::ActsMatrix<2,Acts::eBoundSize>;
+
+    projector_t projector(){
+	return projector_t::Identity();
+    }
+
+    __CUDA_HOST_DEVICE__
+    auto& get_local() { return local; }
+
+    __CUDA_HOST_DEVICE__
+    auto& get_variance() { return variance; }    
+        
 };
 
 /// Container of measurements belonging to one detector module

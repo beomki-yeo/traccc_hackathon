@@ -22,9 +22,12 @@ using channel_id = unsigned int;
 template <typename T, std::size_t N>
 using array = vecmem::static_array<T, N>;
 
-using vector2 = array<scalar, 2>;
-using point2 = array<scalar, 2>;
-using variance2 = array<scalar, 2>;
+//using vector2 = array<scalar, 2>;
+//using point2 = array<scalar, 2>;
+//using variance2 = array<scalar, 2>;
+using vector2 = array<double, 2>;
+using point2 = array<double, 2>;    
+using variance2 = array<double, 2>;
 using point3 = array<scalar, 3>;
 using vector3 = array<scalar, 3>;
 using variance3 = array<scalar, 3>;
