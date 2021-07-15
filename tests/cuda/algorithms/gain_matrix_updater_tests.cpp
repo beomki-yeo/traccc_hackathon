@@ -18,7 +18,8 @@
 #include <edm/measurement.hpp>
 #include <edm/track_parameters.hpp>
 #include <edm/track_state.hpp>
-#include <cuda/fitter/gain_matrix_updater.hpp>
+#include <fitter/gain_matrix_updater.hpp>
+#include <cuda/fitter/gain_matrix_updater.cuh>
 
 
 // This defines the local frame test suite
@@ -40,16 +41,16 @@ TEST(algebra, gain_matrix_updater) {
     using measurement_t = traccc::measurement;
     using bound_track_parameters_t = traccc::bound_track_parameters;
     
-    using track_state = traccc::track_state<measurement_t, bound_track_parameters_t>;
+    using track_state_t = traccc::track_state<measurement_t, bound_track_parameters_t>;
     using host_track_state_collection =
-	traccc::host_track_state_collection<measurement_t, bound_track_parameters_t>;
-    
+	traccc::host_track_state_collection<track_state_t>;
+
     // declare a test track states object
-    host_track_state_collection track_states({host_track_state_collection::item_vector(&host_mr)});
+    host_track_state_collection track_states({host_track_state_collection::item_vector(&mng_mr)});
     
     // fillout random elements to track states
     for (int i_b=0; i_b < batch_size; i_b++){
-	track_state tr_state;
+	track_state_t tr_state;
 
 	tr_state.predicted().vector() = bound_track_parameters_t::vector_t::Random();
 	tr_state.predicted().covariance() = bound_track_parameters_t::covariance_t::Random();
@@ -60,18 +61,21 @@ TEST(algebra, gain_matrix_updater) {
 	tr_state.smoothed().vector() = bound_track_parameters_t::vector_t::Random();
 	tr_state.smoothed().covariance() = bound_track_parameters_t::covariance_t::Random();
 
-	tr_state.jacobian() = track_state::jacobian_t::Random();
-	tr_state.projector() = track_state::projector_t::Identity();	
+	tr_state.jacobian() = track_state_t::jacobian_t::Random();
+	tr_state.projector() = track_state_t::projector_t::Identity();	
 	track_states.items.push_back(std::move(tr_state));
     }
 
-    // move host data to device
-    auto track_states_device = m_copy.to ( vecmem::get_data( track_states.items ), dev_mr, vecmem::copy::type::host_to_device );
+    // cpu gain matrix updater
+    traccc::gain_matrix_updater<track_state_t> cpu_updater;
+    for (auto tr_state: track_states.items){
+	cpu_updater.update(tr_state);
+    }
     
-    // Declare gain matrix updater
-    traccc::cuda::gain_matrix_updater<scalar_t, 2, Acts::eBoundSize, batch_size> cuUpdater;
-    // Update the predicted -> filtered
-    cuUpdater.update(track_states_device);
+    // cuda gain matrix updater
+    traccc::cuda::gain_matrix_updater<track_state_t> cu_updater;
+    cu_updater.update(track_states, &mng_mr);
+
     
 }
 

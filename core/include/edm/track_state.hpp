@@ -9,6 +9,8 @@
 #pragma once
 
 #include "edm/collection.hpp"
+#include "edm/measurement.hpp"
+#include "edm/track_parameters.hpp"
 
 namespace traccc{
 
@@ -49,28 +51,22 @@ struct track_state{
 
 /// Convenience declaration for the surface collection type to use in host
 /// code
-template < typename measurement_t, typename parameters_t >
-using host_track_state_collection = host_collection< track_state< measurement_t,
-parameters_t> >;
+template < typename track_state_t >
+using host_track_state_collection = host_collection< track_state_t >;
 
 /// Convenience declaration for the surface collection type to use in device
 /// code
-template < typename measurement_t, typename parameters_t >
-using device_track_state_collection = device_collection< track_state<
-measurement_t, parameters_t> >;
+template < typename track_state_t >
+using device_track_state_collection = device_collection< track_state_t >;
 
-template < typename measurement_t, typename parameters_t >
-using track_state_collection_data = collection_data< track_state< measurement_t,
-parameters_t> >;
+template < typename track_state_t >
+using track_state_collection_data = collection_data< track_state_t >;
+    
+template < typename track_state_t >
+using track_state_collection_buffer = collection_buffer< track_state_t >;
 
-template < typename measurement_t, typename parameters_t >
-using track_state_collection_buffer = collection_buffer< track_state< measurement_t,
-parameters_t> >;
-
-
-template < typename measurement_t, typename parameters_t >
-using track_state_collection_view = collection_view< track_state< measurement_t,
-parameters_t> >;
+template < typename track_state_t >
+using track_state_collection_view = collection_view< track_state_t >;
     
 } // namespace traccc
 

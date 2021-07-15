@@ -32,12 +32,17 @@ TEST(algebra, matmult_tests) {
 
     int n_event = 1;
     // batch_size (number of matrices)
-    int batch_size = 1000;
+    int batch_size = 5000;
 
     if (my_argc == 2){
 	batch_size = std::stoi(my_argv[1]);
     }
 
+    if (my_argc == 3){
+	batch_size = std::stoi(my_argv[1]);
+	n_event = std::stoi(my_argv[2]);
+    }
+    
     std::cout << "batch size: " << batch_size << std::endl;
     
     // matrix type

@@ -24,7 +24,7 @@ void matmul(int n_matrix,
 	    vecmem::data::vector_view< Acts::BoundSymMatrix > C_view,
 	    float& time){
 
-    unsigned int num_threads = WARP_SIZE*4;
+    unsigned int num_threads = WARP_SIZE*2;
     unsigned int num_blocks = n_matrix/num_threads + 1;
 
     //--TIME--------------------------------------
@@ -59,7 +59,7 @@ void matmul(int n_matrix,
 	    vecmem::data::vector_view< Acts::FreeSymMatrix > C_view,
 	    float& time){
 
-    unsigned int num_threads = WARP_SIZE*4;
+    unsigned int num_threads = WARP_SIZE*2;
     unsigned int num_blocks = n_matrix/num_threads + 1;
 
     //--TIME--------------------------------------

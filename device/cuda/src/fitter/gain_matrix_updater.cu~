@@ -1,0 +1,52 @@
+/** TRACCC library, part of the ACTS project (R&D line)
+ *
+ * (c) 2021 CERN for the benefit of the ACTS project
+ *
+ * Mozilla Public License Version 2.0
+ */
+
+#include <cuda/fitter/gain_matrix_updater.cuh>
+#include <edm/collection.hpp>
+#include <cuda/utils/definitions.hpp>
+
+namespace traccc{
+namespace cuda{
+
+// kernel declareation
+template <typename track_state_view_t >
+__global__ void update_kernel(track_state_view_t& track_state_view);
+    
+    
+// explicitly instantiate the templated class    
+template class gain_matrix_updater<host_track_state_collection<measurement, bound_track_parameters>>;
+
+// implementation of kalman gain matrix update function    
+template <typename track_state_collection_t >
+void gain_matrix_updater<track_state_collection_t>::update(track_state_collection_t& track_states, vecmem::memory_resource* resource){
+
+    auto track_state_view = get_data(track_states, resource);
+
+    unsigned int num_threads = WARP_SIZE * 2;
+    unsigned int num_blocks = track_states.items.size()/num_threads+1;
+
+    // run the kernel
+    update_kernel<<<num_blocks, num_threads>>>(track_state_view);
+    
+    // cuda error check
+    CUDA_ERROR_CHECK(cudaGetLastError());
+    CUDA_ERROR_CHECK(cudaDeviceSynchronize());
+    
+}
+
+// kernel implmentation    
+template <typename track_state_view_t >
+__global__ void update_kernel(track_state_view_t& track_state_view){
+
+    device_internal_spacepoint_container internal_sp_device(
+        {track_state_view.items});
+
+}
+    
+
+} // namespace cuda
+} // namespace traccc

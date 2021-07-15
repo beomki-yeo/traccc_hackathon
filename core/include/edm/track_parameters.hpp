@@ -49,43 +49,5 @@ using host_free_track_parameters_collection =
 
 using device_free_track_parameters_collection =
     device_collection<free_track_parameters>;
-
-
     
-    /*    
-/// Convenience declaration for the track_parameters collection type to use
-/// in host code
-using host_track_parameters_collection =
-    track_parameters_collection<vecmem::vector>;
-
-/// Convenience declaration for the track_parameters collection type to use
-/// in device code
-using device_track_parameters_collection =
-    track_parameters_collection<vecmem::device_vector>;
-
-/// Convenience declaration for the track_parameters container type to use in
-/// host code
-using host_track_parameters_container =
-    host_container<unsigned int, bound_parameters>;
-
-/// Convenience declaration for the track_parameters container type to use in
-/// device code
-using device_track_parameters_container =
-    device_container<unsigned int, bound_parameters>;
-
-/// Convenience declaration for the track_parameters container data type to
-/// use in host code
-using track_parameters_container_data =
-    container_data<unsigned int, bound_parameters>;
-
-/// Convenience declaration for the track_parameters container buffer type to
-/// use in host code
-using track_parameters_container_buffer =
-    container_buffer<unsigned int, bound_parameters>;
-
-/// Convenience declaration for the track_parameters container view type to
-/// use in host code
-using track_parameters_container_view =
-    container_view<unsigned int, bound_parameters>;
-    */
 };  // namespace traccc

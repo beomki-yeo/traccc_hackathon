@@ -103,7 +103,7 @@ template <typename item_t>
 inline collection_data<item_t> get_data(
     host_collection<item_t>& cc,
     vecmem::memory_resource* resource = nullptr) {
-    return {vecmem::get_data(cc.items, resource)};
+    return {vecmem::get_data(cc.items)};
 }
 
 }  // namespace traccc
