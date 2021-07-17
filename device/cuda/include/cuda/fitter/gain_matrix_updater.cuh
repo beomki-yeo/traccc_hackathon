@@ -10,9 +10,7 @@
 #include <edm/track_parameters.hpp>
 #include <edm/track_state.hpp>
 #include <edm/measurement.hpp>
-
-// Acts
-//#include <Acts/Definitions/TrackParametrization.hpp>
+#include <fitter/gain_matrix_updater_impl.hpp>
 
 namespace traccc {
 namespace cuda {
@@ -26,7 +24,7 @@ public:
     ~gain_matrix_updater() = default;
 
     // declaration of kalman gain matrix update function
-    void update(host_track_state_collection< track_state_t >& track_states, vecmem::memory_resource* resource);
+    void operator()(host_track_state_collection< track_state_t >& track_states, vecmem::memory_resource* resource);
     
 private:   
 };

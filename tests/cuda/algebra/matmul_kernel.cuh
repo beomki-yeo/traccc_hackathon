@@ -18,17 +18,9 @@
 #include <cuda/utils/definitions.hpp>
 
 
+template < typename matrix_t >
 void matmul(int n_matrix,
-	    vecmem::data::vector_view< Acts::BoundSymMatrix > A_view,
-	    vecmem::data::vector_view< Acts::BoundSymMatrix > B_view,
-	    vecmem::data::vector_view< Acts::BoundSymMatrix > C_view,
+	    vecmem::data::vector_view< matrix_t > A_view,
+	    vecmem::data::vector_view< matrix_t > B_view,
+	    vecmem::data::vector_view< matrix_t > C_view,
 	    float& elapsed);
-
-
-void matmul(int n_matrix,
-	    vecmem::data::vector_view< Acts::FreeSymMatrix > A_view,
-	    vecmem::data::vector_view< Acts::FreeSymMatrix > B_view,
-	    vecmem::data::vector_view< Acts::FreeSymMatrix > C_view,
-	    float& elapsed);
-
-

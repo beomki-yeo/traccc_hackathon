@@ -20,7 +20,7 @@ template class gain_matrix_updater< track_state<measurement, bound_track_paramet
        
 // implementation of kalman gain matrix update function    
 template <typename track_state_t >    
-void gain_matrix_updater< track_state_t >::update(host_track_state_collection< track_state_t >& track_states, vecmem::memory_resource* resource){
+void gain_matrix_updater< track_state_t >::operator()(host_track_state_collection< track_state_t >& track_states, vecmem::memory_resource* resource){
 
     auto track_state_view = get_data(track_states, resource);
     
@@ -47,8 +47,7 @@ __global__ void update_kernel(track_state_collection_view<track_state_t> track_s
 	return;
     }
 
-    // write the gain matrix updater code
-
+    gain_matrix_updater_impl<track_state_t>::update(track_states_device.items.at(gid));
 }
     
 } // namespace cuda

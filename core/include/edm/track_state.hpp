@@ -17,16 +17,20 @@ namespace traccc{
 template < typename measurement_t, typename parameters_t >
 struct track_state{
 
+    using param_vec_t = typename parameters_t::vector_t;
+    using param_cov_t = typename parameters_t::covariance_t;
+    using jacobian_t = typename parameters_t::covariance_t;
+    using projector_t = typename measurement_t::projector_t;
+    using meas_vec_t = typename measurement_t::meas_vec_t;
+    using meas_cov_t = typename measurement_t::meas_cov_t;
+    
+    
     parameters_t m_predicted;        
     parameters_t m_filtered;
     parameters_t m_smoothed;
 
-    using jacobian_t = typename parameters_t::covariance_t;
     jacobian_t m_jacobian;
-
     measurement_t m_measurement;
-
-    using projector_t = typename measurement_t::projector_t;    
     projector_t m_projector;
     
     __CUDA_HOST_DEVICE__
