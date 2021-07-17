@@ -35,9 +35,10 @@ include( traccc-vecmem )
  
 # Add acts core
 find_package(Acts) 
- 
+
 # Set GPU-related options
 if( TRACCC_BUILD_CUDA )
+  set(CMAKE_CUDA_STANDARD 17)
   add_subdirectory( device/cuda )
 endif()
 
