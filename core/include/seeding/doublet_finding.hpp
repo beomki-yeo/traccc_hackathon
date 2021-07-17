@@ -119,7 +119,7 @@ struct doublet_finding {
         }
     }
 
-   private:
+    private:
     vecmem::memory_resource* m_resource;
     seedfinder_config m_config;
 };

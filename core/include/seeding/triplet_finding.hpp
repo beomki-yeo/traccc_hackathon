@@ -159,7 +159,7 @@ struct triplet_finding {
         }
     }
 
-   private:
+    private:
     seedfinder_config m_config;
     seedfilter_config m_filter_config;
 };
