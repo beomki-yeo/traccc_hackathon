@@ -119,7 +119,7 @@ struct seed_filtering {
         }
     }
 
-   private:
+    private:
     seedfilter_config m_filter_config;
 };
 

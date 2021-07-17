@@ -115,7 +115,7 @@ struct seed_finding {
 
     seed_statistics get_seed_stats() { return m_seed_stats; }
 
-   private:
+    private:
     doublet_finding m_doublet_finding;
     triplet_finding m_triplet_finding;
     seed_filtering m_seed_filtering;
