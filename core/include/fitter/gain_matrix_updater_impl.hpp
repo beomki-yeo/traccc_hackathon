@@ -32,25 +32,28 @@ struct gain_matrix_updater_impl{
 	meas_vec << meas_local[0], meas_local[1];
 	meas_cov << meas_variance[0], 0, 0, meas_variance[1];
 	    	
-	// predicted states 
+	// predicted states
+	// (6x1)
 	const auto& pred_vec = tr_state.predicted().vector();
+	// (6x6)
 	const auto& pred_cov = tr_state.predicted().covariance();
 
+	// filtered states
+	// (6x1)
 	auto& filtered_vec = tr_state.filtered().vector();
+	// (6x6)
 	auto& filtered_cov = tr_state.filtered().covariance();
-      	
+
+	// projector matrix
 	// (2x6)
-	projector_t H = tr_state.projector(); 
+	const auto& H = tr_state.projector(); 
 	
 	// (2x6) * (6x6) * (6x2) + (2x2)
 	meas_cov_t cov = H * pred_cov * H.transpose() + meas_cov;		
-	
-	// (2x2)
-	meas_cov_t covInv = cov.inverse();
-	
+		
 	// (6x6) * (6x2) * (2x2)
-	auto K = pred_cov * H.transpose() * covInv;
-
+	auto K = pred_cov * H.transpose() * cov.inverse();
+	
 	// (2x1)
 	meas_vec_t residual = meas.get_residual(pred_vec);
 	
@@ -60,16 +63,12 @@ struct gain_matrix_updater_impl{
 	// (6x1) + (6x1)
 	filtered_vec = pred_vec + gain;
 		
-	// (6x2) * (2x6)
-	param_cov_t KH = K * H;
-
-	// (6x6) - (6x6)
-	param_cov_t C = param_cov_t::Identity() - KH;
+	// (6x6) - (6x2) * (2x6)
+	param_cov_t C = param_cov_t::Identity() - param_cov_t(K * H);
 	
 	// (6x6) * (6x6)
-	tr_state.filtered().covariance() = C * pred_cov;		
+	tr_state.filtered().covariance() = C * pred_cov;			
     }    
 };
     
 } // namespace traccc
-

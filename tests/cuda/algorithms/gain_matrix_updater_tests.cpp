@@ -142,6 +142,7 @@ TEST(algebra, gain_matrix_updater) {
     std::cout << "==> Elpased time ... " << std::endl;
     std::cout << "cpu time: " << time_cpu << std::endl;
     std::cout << "gpu time: " << time_gpu << std::endl;
+    std::cout << "speedup:  " << time_cpu/time_gpu << std::endl;
     
 }
 

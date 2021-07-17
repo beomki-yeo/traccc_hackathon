@@ -9,6 +9,7 @@ target_include_directories(traccc_cuda_utils
 
 target_compile_options(traccc_cuda_utils
   INTERFACE $<$<COMPILE_LANGUAGE:CUDA>:  
-  --fmad=false>)
+  #--fmad=false>)
+  >)
 
 add_library(traccc::cuda::utils ALIAS traccc_cuda_utils)

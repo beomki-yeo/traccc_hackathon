@@ -23,8 +23,7 @@ struct track_state{
     using projector_t = typename measurement_t::projector_t;
     using meas_vec_t = typename measurement_t::meas_vec_t;
     using meas_cov_t = typename measurement_t::meas_cov_t;
-    
-    
+        
     parameters_t m_predicted;        
     parameters_t m_filtered;
     parameters_t m_smoothed;

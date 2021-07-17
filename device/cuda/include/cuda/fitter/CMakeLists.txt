@@ -10,7 +10,8 @@ target_include_directories(traccc_cuda_fitter
 
 target_compile_options(traccc_cuda_fitter
   PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:  
-  --fmad=false>)
+  #--fmad=false
+  >)
 
 target_link_libraries(traccc_cuda_fitter PUBLIC traccc::core CUDA::cudart CUDA::cublas)
 
