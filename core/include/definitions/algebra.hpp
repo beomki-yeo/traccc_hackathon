@@ -73,12 +73,12 @@ namespace setter {
  * @param m the input matrix
  * @param v the input vector
  * @param row the target row
- **/    
+ **/
 template <typename matrix_type, typename vector_type>
-void set_row(matrix_type& m, const vector_type& v, unsigned int row){
+void set_row(matrix_type &m, const vector_type &v, unsigned int row) {
     for (unsigned int icol = 0; icol < m.cols(); ++icol) {
-	m[icol][row] = v[icol];
-    }        
+        m[icol][row] = v[icol];
+    }
 }
 
 /** This method sets the column of matrix
@@ -86,16 +86,16 @@ void set_row(matrix_type& m, const vector_type& v, unsigned int row){
  * @param m the input matrix
  * @param v the input vector
  * @param col the target column
- **/        
+ **/
 template <typename matrix_type, typename vector_type>
-void set_col(matrix_type& m, const vector_type& v, unsigned int col){
+void set_col(matrix_type &m, const vector_type &v, unsigned int col) {
     for (unsigned int irow = 0; irow < m.rows(); ++irow) {
-	m[col][irow] = v[irow];
-    }        
+        m[col][irow] = v[irow];
+    }
 }
-    
-} // namespace setter
-    
+
+}  // namespace setter
+
 // array getter methdos
 namespace getter {
 /** This method retrieves phi from a vector, vector base with rows > 2

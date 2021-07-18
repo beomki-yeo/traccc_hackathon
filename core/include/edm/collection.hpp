@@ -27,11 +27,10 @@ namespace traccc {
 ///
 /// It also can be instantiated with different edm types represented by
 /// header and item type.
-template <typename item_t,
-          template <typename> class vector_t>
+template <typename item_t, template <typename> class vector_t>
 class collection {
 
-   public:
+    public:
     /// @name Type definitions
     /// @{
 
@@ -46,7 +45,6 @@ class collection {
 
     /// All objects in the event
     item_vector items;
-
 };
 
 /// Convenience declaration for the container type to use in host code
@@ -56,7 +54,7 @@ using host_collection = collection<item_t, vecmem::vector>;
 /// Convenience declaration for the container type to use in device code
 template <typename item_t>
 using device_collection = collection<item_t, vecmem::device_vector>;
-    
+
 /// @name Types used to send data back and forth between host and device code
 /// @{
 
@@ -87,8 +85,7 @@ struct collection_buffer {
 template <typename item_t>
 struct collection_view {
     /// Constructor from a @c collection_data object
-    collection_view(const collection_data<item_t>& data)
-        : items(data.items) {}
+    collection_view(const collection_data<item_t>& data) : items(data.items) {}
 
     /// Constructor from a @c collection_buffer object
     collection_view(const collection_buffer<item_t>& buffer)
@@ -101,11 +98,8 @@ struct collection_view {
 /// Helper function for making a "simple" object out of the container
 template <typename item_t>
 inline collection_data<item_t> get_data(
-    host_collection<item_t>& cc,
-    vecmem::memory_resource* resource = nullptr) {
+    host_collection<item_t>& cc, vecmem::memory_resource* resource = nullptr) {
     return {vecmem::get_data(cc.items)};
 }
 
 }  // namespace traccc
-
-    

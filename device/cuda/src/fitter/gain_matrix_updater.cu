@@ -19,13 +19,13 @@ __global__ void update_kernel(track_state_collection_view<track_state_t> track_s
 template class gain_matrix_updater< track_state<measurement, bound_track_parameters>>;
        
 // implementation of kalman gain matrix update function    
-template <typename track_state_t >    
+template <typename track_state_t >
 void gain_matrix_updater< track_state_t >::operator()(host_track_state_collection< track_state_t >& track_states, vecmem::memory_resource* resource){
 
     auto track_state_view = get_data(track_states, resource);
     
     unsigned int num_threads = WARP_SIZE * 2;
-    unsigned int num_blocks = track_states.items.size()/num_threads+1;
+    unsigned int num_blocks = track_state_view.items.size()/num_threads+1;
 
     // run the kernel
     update_kernel< track_state_t ><<<num_blocks, num_threads>>>(track_state_view);

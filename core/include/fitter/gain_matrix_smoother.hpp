@@ -8,7 +8,7 @@
 #pragma once
 
 #include <edm/track_parameters.hpp>
-#include <fitter/gain_matrix_updater_impl.hpp>
+#include <fitter/gain_matrix_smoother_impl.hpp>
 
 // Acts
 #include <Acts/Definitions/TrackParametrization.hpp>
@@ -16,14 +16,14 @@
 namespace traccc {
 
 template <typename track_state_t>
-class gain_matrix_updater {
+class gain_matrix_smoother {
     public:
-    gain_matrix_updater() = default;
+    gain_matrix_smoother() = default;
 
-    ~gain_matrix_updater() = default;
+    ~gain_matrix_smoother() = default;
 
     void operator()(track_state_t& tr_state) {
-        gain_matrix_updater_impl<track_state_t>::update(tr_state);
+        gain_matrix_smoother_impl<track_state_t>::smoother(tr_state);
     }
 };
 

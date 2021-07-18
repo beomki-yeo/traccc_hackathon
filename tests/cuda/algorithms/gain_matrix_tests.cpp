@@ -19,13 +19,15 @@
 #include <edm/track_parameters.hpp>
 #include <edm/track_state.hpp>
 #include <fitter/gain_matrix_updater.hpp>
+#include <fitter/gain_matrix_smoother.hpp>
 #include <cuda/fitter/gain_matrix_updater.cuh>
+#include <cuda/fitter/gain_matrix_smoother.cuh>
 
 // std
 #include <chrono>
 
 // This defines the local frame test suite
-TEST(algebra, gain_matrix_updater) {    
+TEST(algebra, gain_matrix) {    
     const int batch_size = 5000;
     const int event_size = 1000;
 
@@ -98,11 +100,11 @@ TEST(algebra, gain_matrix_updater) {
     // cuda gain matrix updater
 
     traccc::cuda::gain_matrix_updater<track_state_t> cuda_updater;
-
+    
     /*time*/ auto start_gpu = std::chrono::system_clock::now();
-
+    
     for (int i_n = 0; i_n < event_size; i_n++){
-	
+		
 	cuda_updater(track_states_gpu, &mng_mr);
     
     }
@@ -131,12 +133,6 @@ TEST(algebra, gain_matrix_updater) {
 	for( std::size_t i = 0; i < cpu_cov.rows()*cpu_cov.cols(); ++i ) {
 	    EXPECT_TRUE( abs(cpu_cov(i) -gpu_cov(i)) < 1e-8 );
 	}
-		
-	//std::cout << tr_state_cpu.filtered().vector() << std::endl;
-	//std::cout << tr_state_gpu.filtered().vector() << std::endl;
-	
-	//std::cout << tr_state_cpu.filtered().covariance() << std::endl;
-	//std::cout << tr_state_gpu.filtered().covariance() << std::endl;	
     }
 
     std::cout << "==> Elpased time ... " << std::endl;

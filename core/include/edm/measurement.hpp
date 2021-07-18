@@ -9,8 +9,8 @@
 
 #include <vector>
 
-#include "container.hpp"
 #include "cell.hpp"
+#include "container.hpp"
 #include "definitions/algebra.hpp"
 #include "definitions/primitives.hpp"
 #include "utils/arch_qualifiers.hpp"
@@ -24,44 +24,38 @@ namespace traccc {
 /// fix to two-dimensional here
 
 // parameter dimension definition
-    
+
 struct measurement {
-    
+
     point2 local = {0., 0.};
     variance2 variance = {0., 0.};
 
-    using projector_t = Acts::ActsMatrix<2,Acts::eBoundSize>;
+    using projector_t = Acts::ActsMatrix<2, Acts::eBoundSize>;
     using meas_vec_t = Acts::ActsMatrix<2, 1>;
     using meas_cov_t = Acts::ActsMatrix<2, 2>;
-    
-    projector_t projector(){
-	return projector_t::Identity();
+
+    projector_t projector() { return projector_t::Identity(); }
+
+    __CUDA_HOST_DEVICE__
+    auto& get_local() { return local; }
+
+    __CUDA_HOST_DEVICE__
+    auto& get_variance() { return variance; }
+
+    __CUDA_HOST_DEVICE__
+    auto get_covariance() {
+        meas_cov_t cov;
+        cov << variance[0], 0, 0, variance[1];
+        return cov;
     }
 
-    __CUDA_HOST_DEVICE__
-    auto& get_local() {
-	return local;
+    template <typename parameters_t>
+    __CUDA_HOST_DEVICE__ auto get_residual(const parameters_t& par) {
+        meas_vec_t residual = meas_vec_t::Zero();
+        residual[0] = local[0] - par[0];
+        residual[1] = local[1] - par[1];
+        return residual;
     }
-
-    __CUDA_HOST_DEVICE__
-    auto& get_variance() { return variance; }    
-
-    __CUDA_HOST_DEVICE__
-    auto get_covariance() {	
-	meas_cov_t cov;
-	cov << variance[0], 0, 0, variance[1];
-	return cov;
-    }    
-
-    template<typename parameters_t>
-    __CUDA_HOST_DEVICE__
-    auto get_residual(const parameters_t &par) {
-	meas_vec_t residual = meas_vec_t::Zero();
-	residual[0] = local[0] - par[0];
-	residual[1] = local[1] - par[1];
-	return residual;	
-    }
-    
 };
 
 /// Container of measurements belonging to one detector module

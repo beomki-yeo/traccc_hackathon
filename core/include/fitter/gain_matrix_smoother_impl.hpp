@@ -5,8 +5,17 @@
  * Mozilla Public License Version 2.0
  */
 
+#pragma once
+
 namespace traccc {
 
-struct eigen_stepper {};
+template <typename track_state_t>
+struct gain_matrix_smoother_impl {
+
+    static __CUDA_HOST_DEVICE__ void smoother(track_state_t& tr_state) {
+
+        // Fill out the algorithm
+    }
+};
 
 }  // namespace traccc
