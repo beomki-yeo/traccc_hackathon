@@ -32,4 +32,4 @@ cmake --build <build_directory> <options>
 Options | Default | Explanation |
 --- | --- | --- |
 TRACCC_BUILD_CUDA | OFF | Compile cuda directory |
-ACTS_DIR |  | Assign the ACTS cmake directory Ex) `THE_ACTS_INST_DIR/lib64/cmake/Acts` |
+Acts_DIR |  | Assign the ACTS cmake directory Ex) `THE_ACTS_INST_DIR/lib64/cmake/Acts` |
