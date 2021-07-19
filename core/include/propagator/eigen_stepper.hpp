@@ -30,31 +30,28 @@ class eigen_stepper {
 	state() = delete;
 	
 	explicit state(const bound_track_parameters& par,
-		       // navigation_direction ndir = forward,
+		       host_surface_collection& surfaces,
+		       Acts::NavigationDirection ndir = Acts::forward,
 		       double ssize = std::numeric_limits<double>::max(),
 		       double stolerance = Acts::s_onSurfaceTolerance)
 	    : q(par.charge()),
-	      // navDir(ndir),
-	      // stepSize(ndir * std::abs(ssize)),
+	      nav_dir(ndir),
+	      step_size(ndir * std::abs(ssize)),
 	      tolerance(stolerance) {
-	    /*
-	      pars.template segment<3>(eFreePos0) = par.position(gctx);
-	      pars.template segment<3>(eFreeDir0) = par.unitDirection();
-	      pars[eFreeTime] = par.time();
-	      pars[eFreeQOverP] = par.parameters()[eBoundQOverP];
-	      
-	      // Init the jacobian matrix if needed
-	      
-	      if (par.covariance()) {
-	      // Get the reference surface for navigation
-	      const auto& surface = par.referenceSurface();
-	      // set the covariance transport flag to true and copy
-	      covTransport = true;
-	      cov = BoundSymMatrix(*par.covariance());
-                jacToGlobal = surface.boundToFreeJacobian(gctx,
-		par.parameters());
-		}
-            */
+	    	    
+	    pars.template segment<3>(Acts::eFreePos0) = par.position(surfaces);
+	    pars.template segment<3>(Acts::eFreeDir0) = par.unit_direction();
+	    pars[Acts::eFreeTime] = par.time();
+	    pars[Acts::eFreeQOverP] = par.qop();
+	    
+	    // Get the reference surface for navigation
+	    const auto& surface = par.reference_surface(surfaces);
+	    // set the covariance transport flag to true and copy
+	    covTransport = true;
+	    cov = par.m_covariance;
+
+	    ///// ToDo
+	    //jacToGlobal = surface.boundToFreeJacobian(gctx,par.parameters());
 	}
 	
 	/// Internal free vector parameters
@@ -69,7 +66,7 @@ class eigen_stepper {
 	covariance_t cov = covariance_t::Zero();
 	
 	/// Navigation direction, this is needed for searching
-	// NavigationDirection navDir;
+	Acts::NavigationDirection nav_dir;
 	
 	/// The full jacobian of the transport entire transport
 	jacobian_t jacobian = jacobian_t::Identity();
@@ -108,10 +105,11 @@ class eigen_stepper {
     };
 	
     state make_state(const bound_track_parameters& par,
-		     // navigation_direction ndir = forward,
+		     host_surface_collection& surfaces,
+		     Acts::NavigationDirection ndir = Acts::forward,
 		     double ssize = std::numeric_limits<double>::max(),
 		     double stolerance = Acts::s_onSurfaceTolerance) const {
-	return state(par, ssize, stolerance);
+	return state(par, surfaces, ndir, ssize, stolerance);
     }
 
     template <typename propagator_state_t>
