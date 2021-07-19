@@ -5,6 +5,8 @@
  * Mozilla Public License Version 2.0
  */
 
+#pragma once
+
 // Acts
 #include "Acts/EventData/TrackParameters.hpp"
 #include "Acts/Definitions/Common.hpp"

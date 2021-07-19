@@ -5,6 +5,8 @@
  * Mozilla Public License Version 2.0
  */
 
+#pragma once
+
 #include <edm/track_parameters.hpp>
 
 // Acts

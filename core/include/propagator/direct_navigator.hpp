@@ -7,7 +7,11 @@
 
 #pragma once
 
-// Acts
-#include "Acts/EventData/TrackParameters.hpp"
+namespace traccc {
 
-namespace traccc {}  // namespace traccc
+class direct_navigator{
+public:
+	
+}
+
+} // namespace traccc
