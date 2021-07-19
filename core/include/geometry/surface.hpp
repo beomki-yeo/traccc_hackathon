@@ -9,6 +9,7 @@
 
 #include "utils/arch_qualifiers.hpp"
 #include <definitions/algebra.hpp>
+#include "edm/collection.hpp"
 
 // Acts
 #include "Acts/EventData/TrackParameters.hpp"
@@ -19,6 +20,9 @@ namespace traccc {
 class surface {
 
 public:
+
+    surface() = default;
+    
     surface(const transform3& transform) {
 	//m_transform = transform;
     }
