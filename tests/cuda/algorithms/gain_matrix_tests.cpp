@@ -67,7 +67,6 @@ TEST(algebra, gain_matrix) {
 	tr_state.smoothed().vector() = bound_track_parameters_t::vector_t::Random();
 	tr_state.smoothed().covariance() = bound_track_parameters_t::covariance_t::Random();
 
-	tr_state.jacobian() = track_state_t::jacobian_t::Random();
 	tr_state.projector() = track_state_t::projector_t::Identity();
 
 	track_states_cpu.items.push_back(tr_state);

@@ -18,7 +18,6 @@ struct track_state {
 
     using param_vec_t = typename parameters_t::vector_t;
     using param_cov_t = typename parameters_t::covariance_t;
-    using jacobian_t = typename parameters_t::covariance_t;
     using projector_t = typename measurement_t::projector_t;
     using meas_vec_t = typename measurement_t::meas_vec_t;
     using meas_cov_t = typename measurement_t::meas_cov_t;
@@ -27,7 +26,6 @@ struct track_state {
     parameters_t m_filtered;
     parameters_t m_smoothed;
 
-    jacobian_t m_jacobian;
     measurement_t m_measurement;
     projector_t m_projector;
 
@@ -39,9 +37,6 @@ struct track_state {
 
     __CUDA_HOST_DEVICE__
     auto& smoothed() { return m_smoothed; }
-
-    __CUDA_HOST_DEVICE__
-    auto& jacobian() { return m_jacobian; }
 
     __CUDA_HOST_DEVICE__
     auto& measurement() { return m_measurement; }
