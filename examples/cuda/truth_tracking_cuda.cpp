@@ -15,20 +15,7 @@
 #include "edm/measurement.hpp"
 #include "edm/spacepoint.hpp"
 #include "geometry/pixel_segmentation.hpp"
-
-// clusterization (cpu)
-#include "clusterization/component_connection.hpp"
-#include "clusterization/measurement_creation.hpp"
 #include "clusterization/spacepoint_formation.hpp"
-
-// seeding (cpu)
-#include "seeding/seed_finding.hpp"
-#include "seeding/spacepoint_grouping.hpp"
-// seeding (cuda)
-#include "cuda/seeding/seed_finding.hpp"
-
-// track parmeter estimiation (cpu)
-#include "seeding/track_params_estimating.hpp"
 
 // fitter
 #include "fitter/kalman_fitter.hpp"
@@ -38,13 +25,6 @@
 
 // io
 #include "csv/csv_io.hpp"
-
-// gpuKalmanFilter
-#include "Geometry/GeometryContext.hpp"
-#include "MagneticField/MagneticFieldContext.hpp"
-#include "Material/HomogeneousSurfaceMaterial.hpp"
-#include "Test/Helper.hpp"
-#include "Test/Logger.hpp"
 
 // vecmem
 #include <vecmem/memory/cuda/managed_memory_resource.hpp>
@@ -79,15 +59,13 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
       surface collection
      ---------------------*/
 
-    using surface_type = Acts::PlaneSurface<Acts::InfiniteBounds>;
+    // where all surfaces are saved
+    traccc::host_surface_collection surfaces(
+        {traccc::host_surface_collection::item_vector(0,&mng_mr)});
     
-    traccc::host_surface_collection<surface_type> surface_vector(
-        {traccc::host_surface_collection<surface_type>::item_vector(0,&mng_mr)});
-
-    
-    Acts::MaterialSlab matProp(Test::makeSilicon(), 0.5 * Acts::units::_mm);
-    Acts::HomogeneousSurfaceMaterial surfaceMaterial(matProp);
-
+    //Acts::MaterialSlab matProp(Test::makeSilicon(), 0.5 * Acts::units::_mm);
+    //Acts::HomogeneousSurfaceMaterial surfaceMaterial(matProp);
+    /*
     std::function<surface_type(traccc::transform3)>trans2surface = [&](traccc::transform3 trans)
     {
 	auto normal = traccc::getter::block<3,1>(trans._data,0,2);
@@ -114,15 +92,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
 	traccc::surface_link<surface_type> s_link({geometry, surface});
 	surface_vector.items.push_back(std::move(s_link));	
     }
-    
-    // Context
-    Acts::GeometryContext gctx(0);
-    Acts::MagneticFieldContext mctx(0);
-    
-    // Algorithms
-    traccc::component_connection cc;
-    traccc::measurement_creation mt;
-    traccc::spacepoint_formation sp;
+    */        
 
     // Output stats
     uint64_t n_cells = 0;
@@ -151,7 +121,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
     float spacepoint_formation_cuda(0);
     float binning_cuda(0);
     float seeding_cuda(0);   
-        
+    
     /*time*/ auto start_wall_time = std::chrono::system_clock::now();
     
     // Loop over events
@@ -159,7 +129,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
          ++event) {
 
 	/*time*/ auto start_file_reading_cpu = std::chrono::system_clock::now();
-	
+	/*
         // Read the hits from the relevant event file       
         std::string event_string = "000000000";
         std::string event_number = std::to_string(event);
@@ -182,7 +152,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
             n_spacepoints += spacepoints_per_module.size();
             n_modules++;
         }	
-	
+	*/
         /*time*/ auto end_file_reading_cpu = std::chrono::system_clock::now();
         /*time*/ std::chrono::duration<double> time_file_reading_cpu =
             end_file_reading_cpu - start_file_reading_cpu;
@@ -192,7 +162,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
         /*---------------------------------------------------
              Local Transformation (spacepoint->measurement)
           ---------------------------------------------------*/
-
+	/*
         traccc::host_measurement_container measurements_per_event({
             traccc::host_measurement_container::header_vector(0, &mng_mr),
 	    traccc::host_measurement_container::item_vector(0,&mng_mr)});	
@@ -235,7 +205,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
 	}
 	
 	
-	
+	*/
 	
         /*------------
              Writer
