@@ -242,7 +242,7 @@ TEST(algebra, covariance_transport) {
 	bp_collection.push_back(bound_track_parameters_per_particle[0]);	
     } 
     
-    cuda_propagator_state_t cuda_prop_states(bp_collection, void_po, &mng_mr);
+    cuda_propagator_state_t cuda_prop_states(bp_collection, void_po, &mng_mr);   
     cuda_stepper_t::cov_transport(cuda_prop_states);        
 }
 

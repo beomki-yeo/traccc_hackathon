@@ -13,10 +13,9 @@ struct void_propagator_options {
 
     /// The mass for the particle for (eventual) material integration
     double mass = 105.6583755 * Acts::UnitConstants::MeV;
-    
+
     /// Default constructor
     void_propagator_options() = default;
-
 };
 
-}
+}  // namespace traccc
