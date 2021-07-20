@@ -11,6 +11,7 @@ namespace traccc {
 
 class direct_navigator {
     public:
-}
+    struct state {};
+};
 
 }  // namespace traccc

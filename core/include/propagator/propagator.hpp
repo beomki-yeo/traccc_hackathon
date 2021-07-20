@@ -56,7 +56,6 @@ class propagator final {
                                            options.tolerance)};
 
         // Start propagation
-
         m_navigator.target(state, m_stepper);
         for (size_t i_s = 0; i_s < state.options.maxSteps; ++i_s) {
 

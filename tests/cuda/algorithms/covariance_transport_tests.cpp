@@ -18,7 +18,11 @@
 #include <edm/measurement.hpp>
 #include <edm/track_parameters.hpp>
 #include <edm/track_state.hpp>
+#include <propagator/propagator.hpp>
+#include <propagator/propagator_options.hpp>
+#include <propagator/detail/void_propagator_options.hpp>
 #include <propagator/eigen_stepper.hpp>
+#include <propagator/direct_navigator.hpp>
 #include "geometry/surface.hpp"
 #include "edm/truth/truth_measurement.hpp"
 #include "edm/truth/truth_spacepoint.hpp"
@@ -26,6 +30,8 @@
 
 // traccc cuda
 #include <cuda/propagator/eigen_stepper.cuh>
+#include <cuda/propagator/direct_navigator.hpp>
+#include <cuda/propagator/propagator.hpp>
 
 // std
 #include <chrono>
@@ -36,7 +42,7 @@
 
 
 // This defines the local frame test suite
-TEST(algebra, stepper) {
+TEST(algebra, covariance_transport) {
     
     /*-------------------
       Surface Reading
@@ -166,6 +172,19 @@ TEST(algebra, stepper) {
     /*---------
       For CPU
       ---------*/
+
+    // define tracking components
+    using stepper_t = typename traccc::eigen_stepper;
+    using stepper_state_t = typename traccc::eigen_stepper::state;
+    using navigator_t = typename traccc::direct_navigator;
+    using propagator_t = typename traccc::propagator<stepper_t, navigator_t>;
+    using propagator_options_t = typename traccc::void_propagator_options;
+    using propagator_state_t = typename propagator_t::state<propagator_options_t>;
+
+    stepper_t stepper;	
+    navigator_t navigator;	
+    propagator_t prop(stepper, navigator);       
+    propagator_options_t void_po;
     
     // iterate over truth particles
     for (int i_h = 0; i_h < measurements_per_event.headers.size(); i_h++){
@@ -178,23 +197,53 @@ TEST(algebra, stepper) {
 
 	// vector of bound_track_parameters associated with a truth particle
 	auto& bound_track_parameters_per_particle = bound_track_parameters_per_event.items[i_h];
-	
-	// Do the tracking here
-	traccc::eigen_stepper::state state(bound_track_parameters_per_particle[0], surfaces);
+
+	// steper state
+	stepper_state_t stepper_state(bound_track_parameters_per_particle[0],
+				      surfaces);
+
+	// propagator state that takes stepper state as input
+	propagator_state_t prop_state(bound_track_parameters_per_particle[0],
+				      void_po,
+				      stepper_state);
+
+	// manipulate eigen stepper state
+	auto& sd = prop_state.stepping.step_data;
+	sd.B_first = Acts::Vector3(0,0,2);
+	sd.B_middle = Acts::Vector3(0,0,2);
+	sd.B_last = Acts::Vector3(0,0,2);
+	sd.k1 = Acts::Vector3::Random();
+	sd.k2 = Acts::Vector3::Random();
+	sd.k3 = Acts::Vector3::Random();
+	sd.k4 = Acts::Vector3::Random();     	
+	prop_state.stepping.step_size = 0.1;
+
+	// do the covaraince transport
+	stepper_t::cov_transport(prop_state);       	
     }    
 
     /*---------
       For GPU
       ---------*/
-    traccc::cuda::eigen_stepper::host_state_collection cuda_states({traccc::cuda::eigen_stepper::host_state_collection::item_vector(0,&mng_mr)});
     
+    using cuda_stepper_t = traccc::cuda::eigen_stepper;
+    using cuda_navigator_t = traccc::cuda::direct_navigator;
+    using cuda_propagator_t = traccc::cuda::propagator<cuda_stepper_t, cuda_navigator_t>;    
+    using cuda_propagator_state_t = cuda_propagator_t::state<propagator_options_t>;
+
     // iterate over truth particles
+    std::vector<traccc::bound_track_parameters> bp_collection;
+    
     for (int i_h = 0; i_h < measurements_per_event.headers.size(); i_h++){
 
-	auto& bound_track_parameters_per_particle = bound_track_parameters_per_event.items[i_h];
-	traccc::eigen_stepper::state state(bound_track_parameters_per_particle[0], surfaces);	
-	cuda_states.items.push_back(state);
-    }    
+	auto& bound_track_parameters_per_particle
+	    = bound_track_parameters_per_event.items[i_h];
+
+	bp_collection.push_back(bound_track_parameters_per_particle[0]);	
+    } 
+    
+    cuda_propagator_state_t cuda_prop_states(bp_collection, void_po, &mng_mr);   
+    cuda_stepper_t::cov_transport(cuda_prop_states);        
 }
 
 // Google Test can be run manually from the main() function
@@ -205,4 +254,3 @@ int main(int argc, char **argv) {
 
     return RUN_ALL_TESTS();
 }
-
