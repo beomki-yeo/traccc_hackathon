@@ -169,8 +169,14 @@ TEST(algebra, stepper) {
     
     // iterate over truth particles
     for (int i_h = 0; i_h < measurements_per_event.headers.size(); i_h++){
+
+	// truth particle information
 	auto& t_particle = measurements_per_event.headers[i_h];
+
+	// vector of measurements associated with a truth particle
 	auto& measurements_per_particle = measurements_per_event.items[i_h];
+
+	// vector of bound_track_parameters associated with a truth particle
 	auto& bound_track_parameters_per_particle = bound_track_parameters_per_event.items[i_h];
 	
 	// Do the tracking here
