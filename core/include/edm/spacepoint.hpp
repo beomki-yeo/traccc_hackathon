@@ -28,7 +28,7 @@ struct spacepoint {
     geometry_id geom_id;
     Acts::Vector3 truth_mom;
     Acts::ActsScalar time;
-    
+
     __CUDA_HOST_DEVICE__
     const scalar& x() const { return global[0]; }
     __CUDA_HOST_DEVICE__
@@ -48,65 +48,64 @@ struct spacepoint {
 
     // make measurement from spacepoint and surface collection
     // only used for truth tracking
-    measurement make_measurement(host_surface_collection& surfaces){
-	const auto& pos = this->position();
-	traccc::geometry_id geom_id = this->geom_id;
+    measurement make_measurement(host_surface_collection& surfaces) {
+        const auto& pos = this->position();
+        traccc::geometry_id geom_id = this->geom_id;
 
-	// find the surface with the same geometry id
-	auto surf_it = std::find_if(surfaces.items.begin(),
-				    surfaces.items.end(),
-				    [&geom_id](auto& surf){
-					return surf.geom_id() == geom_id;
-				    });
+        // find the surface with the same geometry id
+        auto surf_it = std::find_if(
+            surfaces.items.begin(), surfaces.items.end(),
+            [&geom_id](auto& surf) { return surf.geom_id() == geom_id; });
 
-	// vector indicies of surface
-	auto surface_id = std::distance(surfaces.items.begin(), surf_it);
+        // vector indicies of surface
+        auto surface_id = std::distance(surfaces.items.begin(), surf_it);
 
-	// Note: loc3[2] should be equal or very close to 0
-	Acts::Vector3 loc3 = (*surf_it).global_to_local(pos);
-	traccc::point2 loc({loc3[0],loc3[1]});
-	traccc::variance2 var({0,0});
+        // Note: loc3[2] should be equal or very close to 0
+        Acts::Vector3 loc3 = (*surf_it).global_to_local(pos);
+        traccc::point2 loc({loc3[0], loc3[1]});
+        traccc::variance2 var({0, 0});
 
-	return measurement({loc, var, surface_id});		
+        return measurement({loc, var, surface_id});
     }
 
     // make measurement from spacepoint and surface collection
     // only used for truth tracking
-    bound_track_parameters make_bound_track_parameters(host_surface_collection& surfaces, truth_particle& t_particle){
-	const auto& pos = this->position();
-	traccc::geometry_id geom_id = this->geom_id;
+    bound_track_parameters make_bound_track_parameters(
+        host_surface_collection& surfaces, truth_particle& t_particle) {
+        const auto& pos = this->position();
+        traccc::geometry_id geom_id = this->geom_id;
 
-	// find the surface with the same geometry id
-	auto surf_it = std::find_if(surfaces.items.begin(),
-				    surfaces.items.end(),
-				    [&geom_id](auto& surf){
-					return surf.geom_id() == geom_id;
-				    });
+        // find the surface with the same geometry id
+        auto surf_it = std::find_if(
+            surfaces.items.begin(), surfaces.items.end(),
+            [&geom_id](auto& surf) { return surf.geom_id() == geom_id; });
 
-	// vector indicies of surface
-	auto surface_id = std::distance(surfaces.items.begin(), surf_it);
+        // vector indicies of surface
+        auto surface_id = std::distance(surfaces.items.begin(), surf_it);
 
-	// Note: loc3[2] should be equal or very close to 0
-	Acts::Vector3 loc3 = (*surf_it).global_to_local(pos);
-	traccc::point2 loc({loc3[0],loc3[1]});
-	traccc::variance2 var({0,0});
+        // Note: loc3[2] should be equal or very close to 0
+        Acts::Vector3 loc3 = (*surf_it).global_to_local(pos);
+        traccc::point2 loc({loc3[0], loc3[1]});
+        traccc::variance2 var({0, 0});
 
-	Acts::Vector3 truth_mom = this->truth_mom;
-	Acts::Vector3 truth_mom_dir = truth_mom.normalized();
-	Acts::ActsScalar truth_p = truth_mom.norm();
+        Acts::Vector3 truth_mom = this->truth_mom;
+        Acts::Vector3 truth_mom_dir = truth_mom.normalized();
+        Acts::ActsScalar truth_p = truth_mom.norm();
 
-	traccc::bound_track_parameters params;
-	params.vector()[Acts::eBoundLoc0] = loc[0];
-	params.vector()[Acts::eBoundLoc1] = loc[1];
-	params.vector()[Acts::eBoundTime] = this->time;
-	params.vector()[Acts::eBoundTheta] = Acts::VectorHelpers::theta(truth_mom_dir);
-	params.vector()[Acts::eBoundPhi] = Acts::VectorHelpers::phi(truth_mom_dir);
-	int charge = t_particle.vertex.qop() > 0 ? 1 : -1;
-	params.vector()[Acts::eBoundQOverP] = charge/truth_p;
-	params.surface_id = surface_id;
+        traccc::bound_track_parameters params;
+        params.vector()[Acts::eBoundLoc0] = loc[0];
+        params.vector()[Acts::eBoundLoc1] = loc[1];
+        params.vector()[Acts::eBoundTime] = this->time;
+        params.vector()[Acts::eBoundTheta] =
+            Acts::VectorHelpers::theta(truth_mom_dir);
+        params.vector()[Acts::eBoundPhi] =
+            Acts::VectorHelpers::phi(truth_mom_dir);
+        int charge = t_particle.vertex.qop() > 0 ? 1 : -1;
+        params.vector()[Acts::eBoundQOverP] = charge / truth_p;
+        params.surface_id = surface_id;
 
-	return params;
-    }    
+        return params;
+    }
 };
 
 inline bool operator==(const spacepoint& lhs, const spacepoint& rhs) {
