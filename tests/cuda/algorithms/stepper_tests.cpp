@@ -162,7 +162,7 @@ TEST(algebra, stepper) {
       you can do global <-> local transformation with surface object
       
       ---------------------------------------------------*/
-    
+								     
     /*---------
       For CPU
       ---------*/
@@ -180,13 +180,21 @@ TEST(algebra, stepper) {
 	auto& bound_track_parameters_per_particle = bound_track_parameters_per_event.items[i_h];
 	
 	// Do the tracking here
-	    
+	traccc::eigen_stepper::state state(bound_track_parameters_per_particle[0], surfaces);
     }    
 
     /*---------
       For GPU
       ---------*/
+    traccc::cuda::eigen_stepper::host_state_collection cuda_states({traccc::cuda::eigen_stepper::host_state_collection::item_vector(0,&mng_mr)});
+    
+    // iterate over truth particles
+    for (int i_h = 0; i_h < measurements_per_event.headers.size(); i_h++){
 
+	auto& bound_track_parameters_per_particle = bound_track_parameters_per_event.items[i_h];
+	traccc::eigen_stepper::state state(bound_track_parameters_per_particle[0], surfaces);	
+	cuda_states.items.push_back(state);
+    }    
 }
 
 // Google Test can be run manually from the main() function

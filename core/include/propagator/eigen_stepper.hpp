@@ -26,7 +26,7 @@ class eigen_stepper {
         using curvilinear_state_t =
             std::tuple<curvilinear_track_parameters, jacobian_t, double>;
 
-        state() = delete;
+        state() = default;
 
         explicit state(const bound_track_parameters& par,
                        host_surface_collection& surfaces,
@@ -112,7 +112,11 @@ class eigen_stepper {
     }
 
     template <typename propagator_state_t>
-    void step(propagator_state_t& state) {}
+    void step(propagator_state_t& state) {
+
+	// state.stepping -> eigen_stepper::state
+
+    }
 };
 
 }  // namespace traccc
