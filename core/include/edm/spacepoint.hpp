@@ -10,6 +10,7 @@
 #include <definitions/primitives.hpp>
 #include <utils/arch_qualifiers.hpp>
 #include <vector>
+
 #include "container.hpp"
 
 // Acts
@@ -24,7 +25,7 @@ struct spacepoint {
     geometry_id geom_id;
     Acts::Vector3 truth_mom;
     Acts::ActsScalar time;
-    
+
     __CUDA_HOST_DEVICE__
     const scalar& x() const { return global[0]; }
     __CUDA_HOST_DEVICE__
@@ -33,8 +34,10 @@ struct spacepoint {
     const scalar& z() const { return global[2]; }
 
     __CUDA_HOST_DEVICE__
-    Acts::Vector3 position() const { return Acts::Vector3(global[0], global[1], global[2]); }
-    
+    Acts::Vector3 position() const {
+        return Acts::Vector3(global[0], global[1], global[2]);
+    }
+
     __CUDA_HOST_DEVICE__
     scalar radius() const {
         return std::sqrt(global[0] * global[0] + global[1] * global[1]);

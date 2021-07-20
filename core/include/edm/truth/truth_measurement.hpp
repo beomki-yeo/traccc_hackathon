@@ -18,24 +18,29 @@ namespace traccc {
 using host_truth_measurement_collection = host_collection<measurement>;
 
 using device_truth_measurement_collection = device_collection<measurement>;
-    
+
 /// Convenience declaration for the measurement container type to use in host
 /// code
-using host_truth_measurement_container = host_container<truth_particle, measurement>;
+using host_truth_measurement_container =
+    host_container<truth_particle, measurement>;
 
 /// Convenience declaration for the measurement container type to use in device
 /// code
-using device_truth_measurement_container = device_container<truth_particle, measurement>;
+using device_truth_measurement_container =
+    device_container<truth_particle, measurement>;
 /// Convenience declaration for the measurement container data type to use in
 /// host code
-using truth_measurement_container_data = container_data<truth_particle, measurement>;
+using truth_measurement_container_data =
+    container_data<truth_particle, measurement>;
 
 /// Convenience declaration for the measurement container buffer type to use in
 /// host code
-using truth_measurement_container_buffer = container_buffer<truth_particle, measurement>;
+using truth_measurement_container_buffer =
+    container_buffer<truth_particle, measurement>;
 
 /// Convenience declaration for the measurement container view type to use in
 /// host code
-using truth_measurement_container_view = container_view<truth_particle, measurement>;
-    
-} // namespace traccc
+using truth_measurement_container_view =
+    container_view<truth_particle, measurement>;
+
+}  // namespace traccc
