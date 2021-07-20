@@ -101,6 +101,22 @@ struct free_track_parameters {
     vector_t m_vector;
     covariance_t m_covariance;
 
+    free_track_parameters() = default;
+    
+    free_track_parameters(scalar tx, scalar ty, scalar tz, scalar tt, scalar tpx, scalar tpy, scalar tpz, scalar q){
+	m_vector[Acts::eFreePos0] = tx;
+	m_vector[Acts::eFreePos1] = ty;
+	m_vector[Acts::eFreePos2] = tz;
+	m_vector[Acts::eFreeTime] = tt;
+	Acts::Vector3 mom(tpx, tpy, tpz);
+	Acts::ActsScalar p = mom.norm();
+	auto mom_norm = mom.normalized();
+	m_vector[Acts::eFreeDir0] = mom_norm(0);
+	m_vector[Acts::eFreeDir1] = mom_norm(1);
+	m_vector[Acts::eFreeDir2] = mom_norm(2);
+	m_vector[Acts::eFreeQOverP] = q/p;		
+    }
+    
     __CUDA_HOST_DEVICE__
     auto& vector() { return m_vector; }
 

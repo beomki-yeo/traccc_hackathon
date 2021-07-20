@@ -14,6 +14,8 @@
 #include "edm/internal_spacepoint.hpp"
 #include "edm/measurement.hpp"
 #include "edm/spacepoint.hpp"
+#include "edm/truth/truth_measurement.hpp"
+#include "edm/truth/truth_spacepoint.hpp"
 #include "geometry/pixel_segmentation.hpp"
 #include "clusterization/spacepoint_formation.hpp"
 
@@ -59,46 +61,48 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
       surface collection
      ---------------------*/
 
-    // where all surfaces are saved
+    // surface collection where all surfaces are saved
     traccc::host_surface_collection surfaces(
         {traccc::host_surface_collection::item_vector(0,&mng_mr)});
-    
+
+    // Let me ignore material property for the moment...    
     //Acts::MaterialSlab matProp(Test::makeSilicon(), 0.5 * Acts::units::_mm);
     //Acts::HomogeneousSurfaceMaterial surfaceMaterial(matProp);
-    /*
-    std::function<surface_type(traccc::transform3)>trans2surface = [&](traccc::transform3 trans)
-    {
-	auto normal = traccc::getter::block<3,1>(trans._data,0,2);
-	auto center = traccc::getter::block<3,1>(trans._data,0,3);
-       	
-	Acts::Vector3D e_normal;
-	e_normal[0] = normal[0][0];
-	e_normal[1] = normal[1][0];
-	e_normal[2] = normal[2][0];
-	
-	Acts::Vector3D e_center;
-	e_center[0] = center[0][0];
-	e_center[1] = center[1][0];
-	e_center[2] = center[2][0];
-	
-	auto surface = surface_type(e_center, e_normal, surfaceMaterial);
-	return surface;
-    };
 
+    // convert transform3 to traccc::surface
+    std::function<traccc::surface(traccc::transform3, traccc::geometry_id)>tf_to_surface = [&](traccc::transform3 tf, traccc::geometry_id geom_id)
+    {
+	auto normal = traccc::getter::block<3,1>(tf._data,0,2);
+	auto center = traccc::getter::block<3,1>(tf._data,0,3);
+
+	Acts::Vector3 e_normal;
+	e_normal(0,0) = tf._data[2][0];
+	e_normal(1,0) = tf._data[2][1];
+	e_normal(2,0) = tf._data[2][2];
+
+	Acts::Vector3 e_center;
+	e_center(0,0) = tf._data[3][0];
+	e_center(1,0) = tf._data[3][1];
+	e_center(2,0) = tf._data[3][2];
+	
+	auto surf = traccc::surface(e_center, e_normal, geom_id);
+	auto eigen_tf = surf.transform();
+
+	return surf;
+    };
+        
     // Fill surface_collection
-    for (auto trans: surface_transforms){
-	auto geometry = trans.first;
-	surface_type surface = trans2surface(trans.second);
-	traccc::surface_link<surface_type> s_link({geometry, surface});
-	surface_vector.items.push_back(std::move(s_link));	
+    for (auto tf: surface_transforms){
+	traccc::surface surface = tf_to_surface(tf.second, tf.first);
+	surfaces.items.push_back(std::move(surface));	
     }
-    */        
 
     // Output stats
     uint64_t n_cells = 0;
     uint64_t n_modules = 0;
     uint64_t n_clusters = 0;
     uint64_t n_measurements = 0;
+    uint64_t n_particles = 0;
     uint64_t n_spacepoints = 0;
     uint64_t n_internal_spacepoints = 0;
     uint64_t n_doublets = 0;
@@ -129,7 +133,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
          ++event) {
 
 	/*time*/ auto start_file_reading_cpu = std::chrono::system_clock::now();
-	/*
+	
         // Read the hits from the relevant event file       
         std::string event_string = "000000000";
         std::string event_number = std::to_string(event);
@@ -139,20 +143,25 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
         std::string io_hits_file = hits_dir + std::string("/event") +
                                    event_string + std::string("-hits.csv");
 
+        std::string io_particle_file = hits_dir + std::string("/event") +
+	    event_string + std::string("-particles_initial.csv");
+
+	// truth hit reader
         traccc::fatras_hit_reader hreader(
             io_hits_file,
             {"particle_id", "geometry_id", "tx", "ty", "tz", "tt", "tpx", "tpy",
              "tpz", "te", "deltapx", "deltapy", "deltapz", "deltae", "index"});
-        traccc::host_spacepoint_container spacepoints_per_event =
-            traccc::read_hits(hreader, resource);
 
-        for (size_t i = 0; i < spacepoints_per_event.headers.size(); i++) {
-            auto& spacepoints_per_module = spacepoints_per_event.items[i];
+	// truth particle reader
+        traccc::fatras_particle_reader preader(
+            io_particle_file,
+            {"particle_id", "particle_type", "vx", "vy", "vz", "vt", "px", "py",
+             "pz", "m", "q"});
 
-            n_spacepoints += spacepoints_per_module.size();
-            n_modules++;
-        }	
-	*/
+	// read truth hits
+	traccc::host_truth_spacepoint_container spacepoints_per_event =
+	    traccc::read_truth_hits(hreader, preader, resource);
+	
         /*time*/ auto end_file_reading_cpu = std::chrono::system_clock::now();
         /*time*/ std::chrono::duration<double> time_file_reading_cpu =
             end_file_reading_cpu - start_file_reading_cpu;
@@ -160,53 +169,53 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
 	
 
         /*---------------------------------------------------
-             Local Transformation (spacepoint->measurement)
+	  Global to Local Transformation (spacepoint->measurement)
           ---------------------------------------------------*/
-	/*
-        traccc::host_measurement_container measurements_per_event({
-            traccc::host_measurement_container::header_vector(0, &mng_mr),
-	    traccc::host_measurement_container::item_vector(0,&mng_mr)});	
+
+	// declare measurement container
+	n_particles = spacepoints_per_event.headers.size();
 	
+	traccc::host_truth_measurement_container measurements_per_event({
+            traccc::host_truth_measurement_container::header_vector(n_particles, &mng_mr),
+	    traccc::host_truth_measurement_container::item_vector(n_particles,&mng_mr)});
+
+	// fill measurement container
 	for (unsigned int i_h=0; i_h<spacepoints_per_event.headers.size(); i_h++){
-	    // fill measurement headers
-	    const auto& geometry = spacepoints_per_event.headers[i_h];
-	    auto placement = surface_transforms[geometry];
+	    measurements_per_event.headers[i_h] = spacepoints_per_event.headers[i_h];
+            auto& spacepoints_per_particle = spacepoints_per_event.items[i_h];
+	    auto& measurements_per_particle = measurements_per_event.items[i_h];
 
-	    surface_type surface = trans2surface(placement);
-	    traccc::surface_link<surface_type> s_link({geometry, surface});
-	    
-	    auto it = std::find_if(surface_vector.items.begin(),
-				   surface_vector.items.end(),
-				   [&s_link](auto& tmp_link){
-				       return s_link.geometry == tmp_link.geometry;
-				   });
-	    auto surface_id = std::distance(surface_vector.items.begin(), it);
+	    for (auto sp: spacepoints_per_particle){
+		
+		const auto& pos = sp.position();
+		traccc::geometry_id geom_id = sp.geom_id;
 
-	    traccc::cell_module module({event, geometry, surface_id, placement});
-	    measurements_per_event.headers.push_back(module);
-	    
-	    // fill measurement items	    
-	    const auto& spacepoints_per_module = spacepoints_per_event.items[i_h];
-	    traccc::host_measurement_collection measurements_per_module;
+		// find the surface with the same geometry id
 
-	    for (auto sp: spacepoints_per_module){
-		const auto& pos = sp.global_position();
-		auto loc3 = placement.point_to_local(pos);
+		auto surf_it = std::find_if(surfaces.items.begin(),
+					    surfaces.items.end(),
+					    [&geom_id](auto& surf){
+						return surf.geom_id() == geom_id;
+					    });
+
+		// vector indicies of surface
+		auto surface_id = std::distance(surfaces.items.begin(), surf_it);
+
 		// Note: loc3[2] should be equal or very close to 0
+		Acts::Vector3 loc3 = (*surf_it).global_to_local(pos);
 		traccc::point2 loc({loc3[0],loc3[1]});
-		// Todo: smear the loc (What is a good value for variance?)
-		traccc::variance2 var({0,0}); 
-		traccc::measurement ms({loc, var, i_h, surface_id, sp.pid});
+		traccc::variance2 var({0,0});
 
-		measurements_per_module.push_back(ms);
+		// fill measaurement
+		traccc::measurement ms({loc, var, surface_id});		
+		measurements_per_particle.push_back(ms);
 	    }
 
-	    measurements_per_event.items.push_back(measurements_per_module);
+	    // count spacepoints/measurements
+            n_spacepoints += spacepoints_per_particle.size();
+	    n_measurements += measurements_per_particle.size();
 	}
-	
-	
-	*/
-	
+		       	
         /*------------
              Writer
           ------------*/
@@ -223,18 +232,12 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
     /*time*/ wall_time += time_wall_time.count();
 
     std::cout << "==> Statistics ... " << std::endl;
-    std::cout << "- read    " << n_spacepoints << " spacepoints from "
-              << n_modules << " modules" << std::endl;
-    std::cout << "- created        " << n_cells
-              << " cells           " << std::endl;
-    std::cout << "- created        " << n_clusters
-              << " clusters        " << std::endl;        
+    std::cout << "- created        " << n_particles
+              << " particles       " << std::endl;
     std::cout << "- created        " << n_measurements
               << " meaurements     " << std::endl;
     std::cout << "- created        " << n_spacepoints
               << " spacepoints     " << std::endl;
-    std::cout << "- created        " << n_internal_spacepoints
-              << " internal spacepoints" << std::endl;
 
     std::cout << "- created (cpu)  " << n_seeds << " seeds" << std::endl;
     std::cout << "- created (cuda) " << n_seeds_cuda << " seeds" << std::endl;

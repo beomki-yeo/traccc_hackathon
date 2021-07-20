@@ -23,6 +23,9 @@
 #include "edm/cluster.hpp"
 #include "edm/spacepoint.hpp"
 
+#include "edm/truth/truth_measurement.hpp"
+#include "edm/truth/truth_spacepoint.hpp"
+
 /// reader
 namespace traccc {
 
@@ -67,6 +70,24 @@ struct csv_fatras_hit {
 
 using fatras_hit_reader = dfe::NamedTupleCsvReader<csv_fatras_hit>;
 
+struct csv_particle {
+    uint64_t particle_id = 0;
+    int particle_type = 0;
+    scalar vx;
+    scalar vy;
+    scalar vz;
+    scalar vt;
+    scalar px;
+    scalar py;
+    scalar pz;
+    scalar m;
+    scalar q;
+
+    DFE_NAMEDTUPLE(csv_particle, particle_id, particle_type, vx, vy, vz, vt, px, py, pz, m, q);    
+};
+
+using fatras_particle_reader = dfe::NamedTupleCsvReader<csv_particle>;
+    
 /// writer
 
 struct csv_measurement {
@@ -419,4 +440,65 @@ host_spacepoint_container read_hits(
     return result;
 }
 
+/// Read the collection of hits per module and fill into a collection
+///
+/// @param hreader The hit reader type
+/// @param resource The memory resource to use for the return value
+host_truth_spacepoint_container read_truth_hits(
+    fatras_hit_reader& hreader,
+    fatras_particle_reader& preader,
+    vecmem::memory_resource& resource,
+    unsigned int max_hits = std::numeric_limits<unsigned int>::max()) {
+    uint64_t reference_id = 0;
+    host_truth_spacepoint_container result = {
+        host_truth_spacepoint_container::header_vector(&resource),
+        host_truth_spacepoint_container::item_vector(&resource)};
+
+    bool first_line_read = false;
+    unsigned int read_hits = 0;
+
+    csv_particle ioparticle;
+    csv_fatras_hit iohit;
+
+    while (preader.read(ioparticle)) {
+	particle_id pid = ioparticle.particle_id;
+	int p_type = ioparticle.particle_type;
+	Acts::ActsScalar mass = ioparticle.m;
+	free_track_parameters params(ioparticle.vx, ioparticle.vy,
+				     ioparticle.vz, ioparticle.vt,
+				     ioparticle.px, ioparticle.py, ioparticle.pz,
+				     ioparticle.q);
+
+	result.headers.push_back({pid,p_type, mass, params});
+    }
+
+    result.items.resize(result.headers.size());
+    
+    while (hreader.read(iohit)) {
+	particle_id pid = iohit.particle_id;
+
+        geometry_id geom_id = iohit.geometry_id;
+        point3 position({iohit.tx, iohit.ty, iohit.tz});
+        variance3 variance({0, 0, 0});
+        spacepoint sp({position, variance, geom_id});
+
+	auto it =
+            std::find_if(result.headers.begin(),
+			 result.headers.end(),
+			 [&pid](auto& aParticle){
+			     return aParticle.pid == pid;
+			 });
+
+	auto header_id = std::distance(result.headers.begin(), it);
+
+	result.items[header_id].push_back(sp);
+    }
+
+    assert(result.items.size() == result.headers.size());
+
+    return result;
+}
+
+    
+    
 }  // namespace traccc

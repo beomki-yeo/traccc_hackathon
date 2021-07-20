@@ -10,8 +10,10 @@
 #include <definitions/primitives.hpp>
 #include <utils/arch_qualifiers.hpp>
 #include <vector>
-
 #include "container.hpp"
+
+// Acts
+#include "Acts/EventData/TrackParameters.hpp"
 
 namespace traccc {
 
@@ -19,13 +21,19 @@ namespace traccc {
 struct spacepoint {
     point3 global = {0., 0., 0.};
     variance3 variance = {0., 0., 0.};
-
+    geometry_id geom_id;
+    
     __CUDA_HOST_DEVICE__
     const scalar& x() const { return global[0]; }
     __CUDA_HOST_DEVICE__
     const scalar& y() const { return global[1]; }
     __CUDA_HOST_DEVICE__
     const scalar& z() const { return global[2]; }
+
+    __CUDA_HOST_DEVICE__
+    Acts::Vector3 position() const { return Acts::Vector3(global[0], global[1], global[2]); }
+
+    
     __CUDA_HOST_DEVICE__
     scalar radius() const {
         return std::sqrt(global[0] * global[0] + global[1] * global[1]);
