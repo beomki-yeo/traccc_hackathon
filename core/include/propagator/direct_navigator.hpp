@@ -9,9 +9,8 @@
 
 namespace traccc {
 
-class direct_navigator{
-public:
-	
+class direct_navigator {
+    public:
 }
 
-} // namespace traccc
+}  // namespace traccc

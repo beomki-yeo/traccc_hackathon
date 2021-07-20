@@ -14,21 +14,11 @@
 #include "edm/internal_spacepoint.hpp"
 #include "edm/measurement.hpp"
 #include "edm/spacepoint.hpp"
+#include "edm/truth/truth_measurement.hpp"
+#include "edm/truth/truth_spacepoint.hpp"
+#include "edm/truth/truth_bound_track_parameters.hpp"
 #include "geometry/pixel_segmentation.hpp"
-
-// clusterization (cpu)
-#include "clusterization/component_connection.hpp"
-#include "clusterization/measurement_creation.hpp"
 #include "clusterization/spacepoint_formation.hpp"
-
-// seeding (cpu)
-#include "seeding/seed_finding.hpp"
-#include "seeding/spacepoint_grouping.hpp"
-// seeding (cuda)
-#include "cuda/seeding/seed_finding.hpp"
-
-// track parmeter estimiation (cpu)
-#include "seeding/track_params_estimating.hpp"
 
 // fitter
 #include "fitter/kalman_fitter.hpp"
@@ -38,13 +28,6 @@
 
 // io
 #include "csv/csv_io.hpp"
-
-// gpuKalmanFilter
-#include "Geometry/GeometryContext.hpp"
-#include "MagneticField/MagneticFieldContext.hpp"
-#include "Material/HomogeneousSurfaceMaterial.hpp"
-#include "Test/Helper.hpp"
-#include "Test/Logger.hpp"
 
 // vecmem
 #include <vecmem/memory/cuda/managed_memory_resource.hpp>
@@ -56,6 +39,8 @@
 
 // custom
 #include "tml_stats_config.hpp"
+
+#include "Acts/Utilities/Helpers.hpp"
 
 int seq_run(const std::string& detector_file, const std::string& hits_dir,
 	    unsigned int skip_events, unsigned int events, bool skip_cpu,
@@ -79,56 +64,26 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
       surface collection
      ---------------------*/
 
-    using surface_type = Acts::PlaneSurface<Acts::InfiniteBounds>;
-    
-    traccc::host_surface_collection<surface_type> surface_vector(
-        {traccc::host_surface_collection<surface_type>::item_vector(0,&mng_mr)});
+    // surface collection where all surfaces are saved
+    traccc::host_surface_collection surfaces(
+        {traccc::host_surface_collection::item_vector(0,&mng_mr)});
 
-    
-    Acts::MaterialSlab matProp(Test::makeSilicon(), 0.5 * Acts::units::_mm);
-    Acts::HomogeneousSurfaceMaterial surfaceMaterial(matProp);
-
-    std::function<surface_type(traccc::transform3)>trans2surface = [&](traccc::transform3 trans)
-    {
-	auto normal = traccc::getter::block<3,1>(trans._data,0,2);
-	auto center = traccc::getter::block<3,1>(trans._data,0,3);
-       	
-	Acts::Vector3D e_normal;
-	e_normal[0] = normal[0][0];
-	e_normal[1] = normal[1][0];
-	e_normal[2] = normal[2][0];
-	
-	Acts::Vector3D e_center;
-	e_center[0] = center[0][0];
-	e_center[1] = center[1][0];
-	e_center[2] = center[2][0];
-	
-	auto surface = surface_type(e_center, e_normal, surfaceMaterial);
-	return surface;
-    };
+    // Let me ignore material property for the moment...    
+    //Acts::MaterialSlab matProp(Test::makeSilicon(), 0.5 * Acts::units::_mm);
+    //Acts::HomogeneousSurfaceMaterial surfaceMaterial(matProp);
 
     // Fill surface_collection
-    for (auto trans: surface_transforms){
-	auto geometry = trans.first;
-	surface_type surface = trans2surface(trans.second);
-	traccc::surface_link<surface_type> s_link({geometry, surface});
-	surface_vector.items.push_back(std::move(s_link));	
+    for (auto tf: surface_transforms){
+	traccc::surface surface(tf.second, tf.first);
+	surfaces.items.push_back(std::move(surface));	
     }
-    
-    // Context
-    Acts::GeometryContext gctx(0);
-    Acts::MagneticFieldContext mctx(0);
-    
-    // Algorithms
-    traccc::component_connection cc;
-    traccc::measurement_creation mt;
-    traccc::spacepoint_formation sp;
 
     // Output stats
     uint64_t n_cells = 0;
     uint64_t n_modules = 0;
     uint64_t n_clusters = 0;
     uint64_t n_measurements = 0;
+    uint64_t n_particles = 0;
     uint64_t n_spacepoints = 0;
     uint64_t n_internal_spacepoints = 0;
     uint64_t n_doublets = 0;
@@ -151,7 +106,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
     float spacepoint_formation_cuda(0);
     float binning_cuda(0);
     float seeding_cuda(0);   
-        
+    
     /*time*/ auto start_wall_time = std::chrono::system_clock::now();
     
     // Loop over events
@@ -169,19 +124,24 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
         std::string io_hits_file = hits_dir + std::string("/event") +
                                    event_string + std::string("-hits.csv");
 
+        std::string io_particle_file = hits_dir + std::string("/event") +
+	    event_string + std::string("-particles_initial.csv");
+
+	// truth hit reader
         traccc::fatras_hit_reader hreader(
             io_hits_file,
             {"particle_id", "geometry_id", "tx", "ty", "tz", "tt", "tpx", "tpy",
              "tpz", "te", "deltapx", "deltapy", "deltapz", "deltae", "index"});
-        traccc::host_spacepoint_container spacepoints_per_event =
-            traccc::read_hits(hreader, resource);
 
-        for (size_t i = 0; i < spacepoints_per_event.headers.size(); i++) {
-            auto& spacepoints_per_module = spacepoints_per_event.items[i];
+	// truth particle reader
+        traccc::fatras_particle_reader preader(
+            io_particle_file,
+            {"particle_id", "particle_type", "vx", "vy", "vz", "vt", "px", "py",
+             "pz", "m", "q"});
 
-            n_spacepoints += spacepoints_per_module.size();
-            n_modules++;
-        }	
+	// read truth hits
+	traccc::host_truth_spacepoint_container spacepoints_per_event =
+	    traccc::read_truth_hits(hreader, preader, resource);
 	
         /*time*/ auto end_file_reading_cpu = std::chrono::system_clock::now();
         /*time*/ std::chrono::duration<double> time_file_reading_cpu =
@@ -190,52 +150,93 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
 	
 
         /*---------------------------------------------------
-             Local Transformation (spacepoint->measurement)
+	  Global to Local Transformation (spacepoint->measurement)
           ---------------------------------------------------*/
 
-        traccc::host_measurement_container measurements_per_event({
-            traccc::host_measurement_container::header_vector(0, &mng_mr),
-	    traccc::host_measurement_container::item_vector(0,&mng_mr)});	
+	n_particles = spacepoints_per_event.headers.size();
+
+	// declare truth measurement container
+	traccc::host_truth_measurement_container measurements_per_event({
+            traccc::host_truth_measurement_container::header_vector(n_particles, &mng_mr),
+	    traccc::host_truth_measurement_container::item_vector(n_particles,&mng_mr)});
+
+	// declare truth bound parameters container
+	traccc::host_truth_bound_track_parameters_container bound_track_parameters_per_event({
+            traccc::host_truth_bound_track_parameters_container::header_vector(n_particles, &mng_mr),
+	    traccc::host_truth_bound_track_parameters_container::item_vector(n_particles,&mng_mr)});
 	
+	// fill measurement container
 	for (unsigned int i_h=0; i_h<spacepoints_per_event.headers.size(); i_h++){
-	    // fill measurement headers
-	    const auto& geometry = spacepoints_per_event.headers[i_h];
-	    auto placement = surface_transforms[geometry];
-
-	    surface_type surface = trans2surface(placement);
-	    traccc::surface_link<surface_type> s_link({geometry, surface});
+	    auto& t_particle = spacepoints_per_event.headers[i_h];
 	    
-	    auto it = std::find_if(surface_vector.items.begin(),
-				   surface_vector.items.end(),
-				   [&s_link](auto& tmp_link){
-				       return s_link.geometry == tmp_link.geometry;
-				   });
-	    auto surface_id = std::distance(surface_vector.items.begin(), it);
-
-	    traccc::cell_module module({event, geometry, surface_id, placement});
-	    measurements_per_event.headers.push_back(module);
+	    measurements_per_event.headers[i_h] = t_particle;
+	    bound_track_parameters_per_event.headers[i_h] = t_particle;
 	    
-	    // fill measurement items	    
-	    const auto& spacepoints_per_module = spacepoints_per_event.items[i_h];
-	    traccc::host_measurement_collection measurements_per_module;
+	    auto& measurements_per_particle = measurements_per_event.items[i_h];
+	    auto& bound_track_parameters_per_particle = bound_track_parameters_per_event.items[i_h];
+	    
+            auto& spacepoints_per_particle = spacepoints_per_event.items[i_h];
 
-	    for (auto sp: spacepoints_per_module){
-		const auto& pos = sp.global_position();
-		auto loc3 = placement.point_to_local(pos);
-		// Note: loc3[2] should be equal or very close to 0
-		traccc::point2 loc({loc3[0],loc3[1]});
-		// Todo: smear the loc (What is a good value for variance?)
-		traccc::variance2 var({0,0}); 
-		traccc::measurement ms({loc, var, i_h, surface_id, sp.pid});
+	    for (auto sp: spacepoints_per_particle){
+		auto ms = sp.make_measurement(surfaces);
+		auto params = sp.make_bound_track_parameters(surfaces, t_particle);
 
-		measurements_per_module.push_back(ms);
+		measurements_per_particle.push_back(ms);
+		bound_track_parameters_per_particle.push_back(params);		
 	    }
 
-	    measurements_per_event.items.push_back(measurements_per_module);
+	    // count spacepoints/measurements
+            n_spacepoints += spacepoints_per_particle.size();
+	    n_measurements += measurements_per_particle.size();
 	}
-	
-	
-	
+
+	/*----------------------------------------------------
+	  Start Truth Tracking Here
+	  ---------------------------------------------------*/
+
+	/*----------------------------------------------------
+	  Note - important!
+	  	  
+	  You will use two vecmem "containers" as event data model
+	  : (1) measurements_per_event and (2) bound_track_parameters_per_event
+	  You will also use surface "collection" as geometry
+	  : (3) surfaces
+	  
+	  vecmem "container" consists of header and item,
+	  where header is vector and item is vector<vector>
+
+	  vecmem "collection" consists of item, where item is vector
+
+	  (1) measurement container 
+	  (1.A) header is the vector of truth particle which contains particle id, particle type, mass and vertex information
+	  (1.B) item is the vector of vector of measurement where each subvector is associated with each element of header. you can access surface by using surface_id member varaible
+                ex) measurement ms; 
+		    surface reference_surf = surfaces.items[ms.surface_id];
+
+	  (2) bound_track_parameter container
+	  (2.A) header is the vector of truth particle which contains particle id, particle type, mass and vertex information -> same with measurement container
+	  (2.B) item is the vector of vector of bound_track_parameter consisting of vector (2-dim position, mom, time) and its covariance (+ surface_id) 
+	  
+	       ex) bound_track_parameters bp;
+	           Acts::BoundVector vec = bp.vector();
+	           Acts::BoundSymMatrix cov = bp.covariance();
+		   surface reference_surf = bp.reference_surface(surfaces);
+
+
+	  (3) surface collection: just vector of surfaces
+	  you can do global <-> local transformation with surface object
+
+	  ---------------------------------------------------*/
+	         	
+	// iterate over truth particles
+	for (int i_h = 0; i_h < measurements_per_event.headers.size(); i_h++){
+	    auto& t_particle = measurements_per_event.headers[i_h];
+	    auto& measurements_per_particle = measurements_per_event.items[i_h];
+	    auto& bound_track_parameters_per_particle = bound_track_parameters_per_event.items[i_h];
+	    
+	    // Do the tracking here
+	    
+	}
 	
         /*------------
              Writer
@@ -253,18 +254,12 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
     /*time*/ wall_time += time_wall_time.count();
 
     std::cout << "==> Statistics ... " << std::endl;
-    std::cout << "- read    " << n_spacepoints << " spacepoints from "
-              << n_modules << " modules" << std::endl;
-    std::cout << "- created        " << n_cells
-              << " cells           " << std::endl;
-    std::cout << "- created        " << n_clusters
-              << " clusters        " << std::endl;        
+    std::cout << "- created        " << n_particles
+              << " particles       " << std::endl;
     std::cout << "- created        " << n_measurements
               << " meaurements     " << std::endl;
     std::cout << "- created        " << n_spacepoints
               << " spacepoints     " << std::endl;
-    std::cout << "- created        " << n_internal_spacepoints
-              << " internal spacepoints" << std::endl;
 
     std::cout << "- created (cpu)  " << n_seeds << " seeds" << std::endl;
     std::cout << "- created (cuda) " << n_seeds_cuda << " seeds" << std::endl;
