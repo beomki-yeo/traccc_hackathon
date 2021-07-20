@@ -464,12 +464,11 @@ host_truth_spacepoint_container read_truth_hits(
 	particle_id pid = ioparticle.particle_id;
 	int p_type = ioparticle.particle_type;
 	Acts::ActsScalar mass = ioparticle.m;
-	free_track_parameters params(ioparticle.vx, ioparticle.vy,
+	free_track_parameters vertex(ioparticle.vx, ioparticle.vy,
 				     ioparticle.vz, ioparticle.vt,
 				     ioparticle.px, ioparticle.py, ioparticle.pz,
 				     ioparticle.q);
-
-	result.headers.push_back({pid,p_type, mass, params});
+	result.headers.push_back({pid,p_type, mass, vertex});
     }
 
     result.items.resize(result.headers.size());
@@ -480,7 +479,9 @@ host_truth_spacepoint_container read_truth_hits(
         geometry_id geom_id = iohit.geometry_id;
         point3 position({iohit.tx, iohit.ty, iohit.tz});
         variance3 variance({0, 0, 0});
-        spacepoint sp({position, variance, geom_id});
+	Acts::Vector3 truth_mom(iohit.tpx, iohit.tpy, iohit.tpz);
+	Acts::ActsScalar time(iohit.tt);
+        spacepoint sp({position, variance, geom_id, truth_mom, time});
 
 	auto it =
             std::find_if(result.headers.begin(),
@@ -491,6 +492,7 @@ host_truth_spacepoint_container read_truth_hits(
 
 	auto header_id = std::distance(result.headers.begin(), it);
 
+	// add spacepoint
 	result.items[header_id].push_back(sp);
     }
 
