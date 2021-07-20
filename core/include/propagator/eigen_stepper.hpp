@@ -14,6 +14,8 @@
 // std
 #include <limits>
 
+#include "propagator/eigen_stepper_impl.hpp"
+
 namespace traccc {
 
 class eigen_stepper {
@@ -117,6 +119,14 @@ class eigen_stepper {
 	// state.stepping -> eigen_stepper::state
 
     }
+
+    template <typename propagator_state_t>
+    void cov_transport(propagator_state_t& state) {
+
+	eigen_stepper_impl::cov_transport(state.state);
+
+    }
+    
 };
 
 }  // namespace traccc
