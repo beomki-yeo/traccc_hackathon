@@ -20,20 +20,26 @@ class propagator final {
 public:
     using jacobian_t = Acts::BoundMatrix;
     using stepper_t = stepper_type;
-    using stepper_state_container_t = typename stepper_type::state_container;
     using navigator_t = navigator_type;
-    using navigator_state_container_t = typename navigator_type::state_container;
+    using stepper_state_t = typename stepper_type::host_state_collection;
+    using stepper_state_item_t = typename stepper_type::host_state_collection::item_vector;
+    
+    using navigator_state_t = typename navigator_type::host_state_collection;
 
     explicit propagator(stepper_t stepper, navigator_t navigator):
 	m_stepper(std::move(stepper)), m_navigator(std::move(navigator)){}
     
     template < typename propagator_options_t >
     struct state {
+
 	
-	template < typename parameters_container_t >
-	state(const parameters_container_t& start, // supposed to be on device
-	      const propagator_options_t& tops):
-	    options(tops){
+	template < typename params_container_t >
+	state(const params_container_t& start,
+	      const propagator_options_t& tops,
+	      vecmem::memory_resource* mr):
+	    options(tops),
+	    stepping({stepper_state_item_t(start.size(), mr)})
+	{
 
 	}
 
@@ -41,10 +47,10 @@ public:
 	propagator_options_t options;
 
 	/// Stepper state container - internal states of the Stepper
-	stepper_state_container_t stepping;
+	stepper_state_t stepping;
 
 	/// Navigator state container - internal states of the Navigator
-	navigator_state_container_t navigator;	
+	navigator_state_t navigator;	
     };
 
     template < typename parameters_container_t, typename propagator_options_t  >
@@ -57,8 +63,7 @@ public:
 	state_t state{start, options,
 		      m_stepper.make_state(start, options.maxStepSize, options.tolerance)};		
 
-	// Start propagation
-	
+	// Start propagation	
 	m_navigator.target(state, m_stepper);	
 	for (size_t i_s=0; i_s < state.options.maxSteps; ++i_s) {
 	    

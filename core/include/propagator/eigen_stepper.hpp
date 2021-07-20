@@ -13,8 +13,8 @@
 
 // std
 #include <limits>
-
-#include "propagator/eigen_stepper_impl.hpp"
+#include <edm/track_parameters.hpp>
+//#include "propagator/eigen_stepper_impl.hpp"
 
 namespace traccc {
 
@@ -114,19 +114,100 @@ class eigen_stepper {
     }
 
     template <typename propagator_state_t>
-    void step(propagator_state_t& state) {
+    static void step(propagator_state_t& state) {
 
 	// state.stepping -> eigen_stepper::state
 
     }
 
     template <typename propagator_state_t>
-    void cov_transport(propagator_state_t& state) {
-
-	eigen_stepper_impl::cov_transport(state.state);
-
+    static void cov_transport(propagator_state_t& state) {
+	cov_transport(state.stepping, state.options.mass);
     }
-    
+
+    template <typename stepper_state_t>
+    static __CUDA_HOST_DEVICE__ void cov_transport(stepper_state_t& state,
+						   Acts::ActsScalar mass){
+	Acts::FreeMatrix D = Acts::FreeMatrix::Identity();
+	const auto& dir = state.pars.template segment<3>(Acts::eFreeDir0);
+	const auto& qop = state.pars[Acts::eFreeQOverP];
+	Acts::ActsScalar p = abs(1/qop);
+	
+	auto& h = state.step_size;
+	const Acts::ActsScalar half_h = h * 0.5;
+
+	auto& sd = state.step_data;
+
+	// For the case without energy loss
+	Acts::Vector3 dk1dL = dir.cross(sd.B_first);
+	Acts::Vector3 dk2dL = (dir + half_h * sd.k1).cross(sd.B_middle) +
+	    qop * half_h * dk1dL.cross(sd.B_middle);
+	Acts::Vector3 dk3dL = (dir + half_h * sd.k2).cross(sd.B_middle) +
+	    qop * half_h * dk2dL.cross(sd.B_middle);
+	Acts::Vector3 dk4dL =
+	    (dir + h * sd.k3).cross(sd.B_last) + qop * h * dk3dL.cross(sd.B_last);
+
+	
+	// Calculate the dK/dT
+	Acts::ActsMatrix<3, 3> dk1dT = Acts::ActsMatrix<3, 3>::Zero();
+	{
+	    dk1dT(0, 1) = sd.B_first.z();
+	    dk1dT(0, 2) = -sd.B_first.y();
+	    dk1dT(1, 0) = -sd.B_first.z();
+	    dk1dT(1, 2) = sd.B_first.x();
+	    dk1dT(2, 0) = sd.B_first.y();
+	    dk1dT(2, 1) = -sd.B_first.x();
+	    dk1dT *= qop;
+	}
+	
+	Acts::ActsMatrix<3, 3> dk2dT = Acts::ActsMatrix<3, 3>::Identity();
+	{
+	    dk2dT += half_h * dk1dT;
+	    dk2dT = qop * Acts::VectorHelpers::cross(dk2dT, sd.B_middle);
+	}
+
+	//std::cout << dk2dT << std::endl;
+	
+	Acts::ActsMatrix<3, 3> dk3dT = Acts::ActsMatrix<3, 3>::Identity();
+	{
+	    dk3dT += half_h * dk2dT;
+	    dk3dT = qop * Acts::VectorHelpers::cross(dk3dT, sd.B_middle);
+	}
+	Acts::ActsMatrix<3, 3> dk4dT = Acts::ActsMatrix<3, 3>::Identity();
+	{
+	    dk4dT += h * dk3dT;
+	    dk4dT = qop * Acts::VectorHelpers::cross(dk4dT, sd.B_last);
+	}
+	// The dF/dT in D
+	{
+	    auto dFdT = D.block<3, 3>(0, 4);
+	    dFdT.setIdentity();
+	    dFdT += h / 6. * (dk1dT + dk2dT + dk3dT);
+	    dFdT *= h;
+	}
+	// The dF/dL in D
+	{
+	    auto dFdL = D.block<3, 1>(0, 7);
+	    dFdL = (h * h) / 6. * (dk1dL + dk2dL + dk3dL);
+	}
+	// The dG/dT in D
+	{
+	    // dGdx is already initialised as (3x3) zero
+	    auto dGdT = D.block<3, 3>(4, 4);
+	    dGdT += h / 6. * (dk1dT + 2. * (dk2dT + dk3dT) + dk4dT);
+	}
+	// The dG/dL in D
+	{
+	    auto dGdL = D.block<3, 1>(4, 7);
+	    dGdL = h / 6. * (dk1dL + 2. * (dk2dL + dk3dL) + dk4dL);
+	}
+	
+	// The dt/d(q/p)
+	D(3, 7) = h * mass * mass * state.q /
+            (p * std::hypot(1., mass / p));
+	
+	state.jac_transport = D * state.jac_transport;
+    }        
 };
 
 }  // namespace traccc

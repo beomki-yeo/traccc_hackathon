@@ -25,7 +25,7 @@
 #include "edm/truth/truth_bound_track_parameters.hpp"
 
 // traccc cuda
-#include <cuda/propagator/eigen_stepper.hpp>
+#include <cuda/propagator/eigen_stepper.cuh>
 
 // std
 #include <chrono>
