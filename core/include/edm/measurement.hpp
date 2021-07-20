@@ -14,6 +14,7 @@
 #include "definitions/algebra.hpp"
 #include "definitions/primitives.hpp"
 #include "utils/arch_qualifiers.hpp"
+#include "geometry/surface.hpp"
 
 // Acts
 #include "Acts/Definitions/TrackParametrization.hpp"
@@ -30,13 +31,13 @@ struct measurement {
     point2 local = {0., 0.};
     variance2 variance = {0., 0.};
     int surface_id;
-
+    
     using projector_t = Acts::ActsMatrix<2, Acts::eBoundSize>;
     using meas_vec_t = Acts::ActsMatrix<2, 1>;
     using meas_cov_t = Acts::ActsMatrix<2, 2>;
 
     projector_t projector() { return projector_t::Identity(); }
-
+    
     __CUDA_HOST_DEVICE__
     auto& get_local() { return local; }
 

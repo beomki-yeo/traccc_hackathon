@@ -72,31 +72,9 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
     //Acts::MaterialSlab matProp(Test::makeSilicon(), 0.5 * Acts::units::_mm);
     //Acts::HomogeneousSurfaceMaterial surfaceMaterial(matProp);
 
-    // convert transform3 to traccc::surface
-    std::function<traccc::surface(traccc::transform3, traccc::geometry_id)>tf_to_surface = [&](traccc::transform3 tf, traccc::geometry_id geom_id)
-    {
-	auto normal = traccc::getter::block<3,1>(tf._data,0,2);
-	auto center = traccc::getter::block<3,1>(tf._data,0,3);
-
-	Acts::Vector3 e_normal;
-	e_normal(0,0) = tf._data[2][0];
-	e_normal(1,0) = tf._data[2][1];
-	e_normal(2,0) = tf._data[2][2];
-
-	Acts::Vector3 e_center;
-	e_center(0,0) = tf._data[3][0];
-	e_center(1,0) = tf._data[3][1];
-	e_center(2,0) = tf._data[3][2];
-	
-	auto surf = traccc::surface(e_center, e_normal, geom_id);
-	auto eigen_tf = surf.transform();
-
-	return surf;
-    };
-        
     // Fill surface_collection
     for (auto tf: surface_transforms){
-	traccc::surface surface = tf_to_surface(tf.second, tf.first);
+	traccc::surface surface(tf.second, tf.first);
 	surfaces.items.push_back(std::move(surface));	
     }
 
@@ -200,45 +178,11 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
             auto& spacepoints_per_particle = spacepoints_per_event.items[i_h];
 
 	    for (auto sp: spacepoints_per_particle){
-		
-		const auto& pos = sp.position();
-		traccc::geometry_id geom_id = sp.geom_id;
+		auto ms = sp.make_measurement(surfaces);
+		auto params = sp.make_bound_track_parameters(surfaces, t_particle);
 
-		// find the surface with the same geometry id
-		auto surf_it = std::find_if(surfaces.items.begin(),
-					    surfaces.items.end(),
-					    [&geom_id](auto& surf){
-						return surf.geom_id() == geom_id;
-					    });
-
-		// vector indicies of surface
-		auto surface_id = std::distance(surfaces.items.begin(), surf_it);
-
-		// Note: loc3[2] should be equal or very close to 0
-		Acts::Vector3 loc3 = (*surf_it).global_to_local(pos);
-		traccc::point2 loc({loc3[0],loc3[1]});
-		traccc::variance2 var({0,0});
-
-		// fill measaurement
-		traccc::measurement ms({loc, var, surface_id});		
 		measurements_per_particle.push_back(ms);
-
-		Acts::Vector3 truth_mom = sp.truth_mom;
-		Acts::Vector3 truth_mom_dir = truth_mom.normalized();
-		Acts::ActsScalar truth_p = truth_mom.norm();
-		
-		traccc::bound_track_parameters params;
-		params.vector()[Acts::eBoundLoc0] = loc[0];
-		params.vector()[Acts::eBoundLoc1] = loc[1];
-		params.vector()[Acts::eBoundTime] = sp.time;
-		params.vector()[Acts::eBoundTheta] = Acts::VectorHelpers::theta(truth_mom_dir);
-		params.vector()[Acts::eBoundPhi] = Acts::VectorHelpers::phi(truth_mom_dir);
-		int charge = t_particle.vertex.qop() > 0 ? 1 : -1;
-		params.vector()[Acts::eBoundQOverP] = charge/truth_p;
-		params.surface_id = surface_id;
-		
-		bound_track_parameters_per_particle.push_back(params);
-		
+		bound_track_parameters_per_particle.push_back(params);		
 	    }
 
 	    // count spacepoints/measurements
@@ -289,7 +233,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
 	    auto& t_particle = measurements_per_event.headers[i_h];
 	    auto& measurements_per_particle = measurements_per_event.items[i_h];
 	    auto& bound_track_parameters_per_particle = bound_track_parameters_per_event.items[i_h];
-
+	    
 	    // Do the tracking here
 	    
 	}
