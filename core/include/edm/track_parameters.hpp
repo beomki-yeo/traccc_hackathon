@@ -31,6 +31,9 @@ struct bound_track_parameters {
     // surface id
     int surface_id;
 
+    bound_track_parameters() = default;
+
+    
     __CUDA_HOST_DEVICE__
     auto charge() const {
         if (m_vector[Acts::eBoundQOverP] < 0) {
@@ -122,6 +125,10 @@ struct free_track_parameters {
 
     __CUDA_HOST_DEVICE__
     auto& covariance() { return m_covariance; }
+
+    __CUDA_HOST_DEVICE__
+    auto& qop() { return m_vector[Acts::eFreeQOverP]; }
+    
 };
 
 };  // namespace traccc

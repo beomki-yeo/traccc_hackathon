@@ -19,7 +19,7 @@ struct truth_particle{
     particle_id pid;
     int p_type;
     Acts::ActsScalar mass;
-    free_track_parameters t_params;	
+    free_track_parameters vertex;
 };
 
 /// Convenience declaration for the truth_particle collection type to use in host

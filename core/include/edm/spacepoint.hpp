@@ -22,6 +22,8 @@ struct spacepoint {
     point3 global = {0., 0., 0.};
     variance3 variance = {0., 0., 0.};
     geometry_id geom_id;
+    Acts::Vector3 truth_mom;
+    Acts::ActsScalar time;
     
     __CUDA_HOST_DEVICE__
     const scalar& x() const { return global[0]; }
@@ -32,7 +34,6 @@ struct spacepoint {
 
     __CUDA_HOST_DEVICE__
     Acts::Vector3 position() const { return Acts::Vector3(global[0], global[1], global[2]); }
-
     
     __CUDA_HOST_DEVICE__
     scalar radius() const {

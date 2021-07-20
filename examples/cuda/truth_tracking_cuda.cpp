@@ -16,6 +16,7 @@
 #include "edm/spacepoint.hpp"
 #include "edm/truth/truth_measurement.hpp"
 #include "edm/truth/truth_spacepoint.hpp"
+#include "edm/truth/truth_bound_track_parameters.hpp"
 #include "geometry/pixel_segmentation.hpp"
 #include "clusterization/spacepoint_formation.hpp"
 
@@ -38,6 +39,8 @@
 
 // custom
 #include "tml_stats_config.hpp"
+
+#include "Acts/Utilities/Helpers.hpp"
 
 int seq_run(const std::string& detector_file, const std::string& hits_dir,
 	    unsigned int skip_events, unsigned int events, bool skip_cpu,
@@ -172,18 +175,29 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
 	  Global to Local Transformation (spacepoint->measurement)
           ---------------------------------------------------*/
 
-	// declare measurement container
 	n_particles = spacepoints_per_event.headers.size();
-	
+
+	// declare truth measurement container
 	traccc::host_truth_measurement_container measurements_per_event({
             traccc::host_truth_measurement_container::header_vector(n_particles, &mng_mr),
 	    traccc::host_truth_measurement_container::item_vector(n_particles,&mng_mr)});
 
+	// declare truth bound parameters container
+	traccc::host_truth_bound_track_parameters_container bound_track_parameters_per_event({
+            traccc::host_truth_bound_track_parameters_container::header_vector(n_particles, &mng_mr),
+	    traccc::host_truth_bound_track_parameters_container::item_vector(n_particles,&mng_mr)});
+	
 	// fill measurement container
 	for (unsigned int i_h=0; i_h<spacepoints_per_event.headers.size(); i_h++){
-	    measurements_per_event.headers[i_h] = spacepoints_per_event.headers[i_h];
-            auto& spacepoints_per_particle = spacepoints_per_event.items[i_h];
+	    auto& t_particle = spacepoints_per_event.headers[i_h];
+	    
+	    measurements_per_event.headers[i_h] = t_particle;
+	    bound_track_parameters_per_event.headers[i_h] = t_particle;
+	    
 	    auto& measurements_per_particle = measurements_per_event.items[i_h];
+	    auto& bound_track_parameters_per_particle = bound_track_parameters_per_event.items[i_h];
+	    
+            auto& spacepoints_per_particle = spacepoints_per_event.items[i_h];
 
 	    for (auto sp: spacepoints_per_particle){
 		
@@ -191,7 +205,6 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
 		traccc::geometry_id geom_id = sp.geom_id;
 
 		// find the surface with the same geometry id
-
 		auto surf_it = std::find_if(surfaces.items.begin(),
 					    surfaces.items.end(),
 					    [&geom_id](auto& surf){
@@ -209,13 +222,78 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
 		// fill measaurement
 		traccc::measurement ms({loc, var, surface_id});		
 		measurements_per_particle.push_back(ms);
+
+		Acts::Vector3 truth_mom = sp.truth_mom;
+		Acts::Vector3 truth_mom_dir = truth_mom.normalized();
+		Acts::ActsScalar truth_p = truth_mom.norm();
+		
+		traccc::bound_track_parameters params;
+		params.vector()[Acts::eBoundLoc0] = loc[0];
+		params.vector()[Acts::eBoundLoc1] = loc[1];
+		params.vector()[Acts::eBoundTime] = sp.time;
+		params.vector()[Acts::eBoundTheta] = Acts::VectorHelpers::theta(truth_mom_dir);
+		params.vector()[Acts::eBoundPhi] = Acts::VectorHelpers::phi(truth_mom_dir);
+		int charge = t_particle.vertex.qop() > 0 ? 1 : -1;
+		params.vector()[Acts::eBoundQOverP] = charge/truth_p;
+		params.surface_id = surface_id;
+		
+		bound_track_parameters_per_particle.push_back(params);
+		
 	    }
 
 	    // count spacepoints/measurements
             n_spacepoints += spacepoints_per_particle.size();
 	    n_measurements += measurements_per_particle.size();
 	}
-		       	
+
+	/*----------------------------------------------------
+	  Start Truth Tracking Here
+	  ---------------------------------------------------*/
+
+	/*----------------------------------------------------
+	  Note - important!
+	  	  
+	  You will use two vecmem "containers" as event data model
+	  : (1) measurements_per_event and (2) bound_track_parameters_per_event
+	  You will also use surface "collection" as geometry
+	  : (3) surfaces
+	  
+	  vecmem "container" consists of header and item,
+	  where header is vector and item is vector<vector>
+
+	  vecmem "collection" consists of item, where item is vector
+
+	  (1) measurement container 
+	  (1.A) header is the vector of truth particle which contains particle id, particle type, mass and vertex information
+	  (1.B) item is the vector of vector of measurement where each subvector is associated with each element of header. you can access surface by using surface_id member varaible
+                ex) measurement ms; 
+		    surface reference_surf = surfaces.items[ms.surface_id];
+
+	  (2) bound_track_parameter container
+	  (2.A) header is the vector of truth particle which contains particle id, particle type, mass and vertex information -> same with measurement container
+	  (2.B) item is the vector of vector of bound_track_parameter consisting of vector (2-dim position, mom, time) and its covariance (+ surface_id) 
+	  
+	       ex) bound_track_parameters bp;
+	           Acts::BoundVector vec = bp.vector();
+	           Acts::BoundSymMatrix cov = bp.covariance();
+		   surface reference_surf = bp.reference_surface(surfaces);
+
+
+	  (3) surface collection: just vector of surfaces
+	  you can do global <-> local transformation with surface object
+
+	  ---------------------------------------------------*/
+	         	
+	// iterate over truth particles
+	for (int i_h = 0; i_h < measurements_per_event.headers.size(); i_h++){
+	    auto& t_particle = measurements_per_event.headers[i_h];
+	    auto& measurements_per_particle = measurements_per_event.items[i_h];
+	    auto& bound_track_parameters_per_particle = bound_track_parameters_per_event.items[i_h];
+
+	    // Do the tracking here
+	    
+	}
+	
         /*------------
              Writer
           ------------*/
