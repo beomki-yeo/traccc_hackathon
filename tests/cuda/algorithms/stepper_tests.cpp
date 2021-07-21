@@ -187,16 +187,14 @@ TEST(algebra, stepper) {
     using propagator_options_t = typename traccc::void_propagator_options;
     using propagator_state_t = typename propagator_t::state<propagator_options_t>;
 
-    stepper_t stepper;	
-    navigator_t navigator;	
-    propagator_t prop(stepper, navigator);       
     propagator_options_t void_po;
     
     // iterate over truth particles
     for (int i_h = 0; i_h < measurements_per_event.headers.size(); i_h++){
 
-	// test only single particle for the moment
-	if (i_h > 0) continue;
+	stepper_t stepper;	
+	navigator_t navigator;	
+	propagator_t prop(stepper, navigator);       
 	
 	// truth particle information
 	auto& t_particle = measurements_per_event.headers[i_h];
@@ -244,9 +242,15 @@ TEST(algebra, stepper) {
 	sd.B_last = Acts::Vector3(0,0,2*Acts::UnitConstants::T);
 
 	// do the eigen stepper
-	for (int i_s = 0; i_s < prop_state.options.maxRungeKuttaStepTrials ; i_s++){
-	    navigator_t::status(prop_state, surfaces);
+	for (int i_s = 0; i_s < prop_state.options.maxSteps ; i_s++){
+	    auto navi_res = navigator_t::status(prop_state, surfaces);
 
+	    if (!navi_res){
+		std::cout << "Total RK steps: " << i_s << std::endl;
+		std::cout << "all targets reached" << std::endl;
+		break;
+	    }
+	    
 	    auto& stepper_state = prop_state.stepping;
 	    	    
 	    auto res = stepper_t::rk4(prop_state);
@@ -260,12 +264,6 @@ TEST(algebra, stepper) {
 
 	    // do the covaraince transport
 	    stepper_t::cov_transport(prop_state);
-
-	    if (prop_state.navigation.surface_iterator_id >= prop_state.navigation.surface_sequence_size){
-		std::cout << "Total RK steps: " << i_s << std::endl;
-		std::cout << "All surfaces are reached" << std::endl;
-		break;
-	    }
 	}	
     }    
 
@@ -277,7 +275,7 @@ TEST(algebra, stepper) {
     using cuda_navigator_t = traccc::cuda::direct_navigator<traccc::surface>;;
     using cuda_propagator_t = traccc::cuda::propagator<cuda_stepper_t, cuda_navigator_t>;    
     using cuda_propagator_state_t = cuda_propagator_t::state<propagator_options_t>;
-
+    
     // iterate over truth particles
     std::vector<traccc::bound_track_parameters> bp_collection;
     

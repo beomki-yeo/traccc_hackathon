@@ -10,11 +10,12 @@
 namespace traccc {    
 namespace cuda {
 
+// Reserved to Xiangyang
 bool traccc::cuda::eigen_stepper::rk4(host_state_collection& state){
-
-
+    return true;
 }
-    
+
+// Reserved to Johannes    
 void traccc::cuda::eigen_stepper::cov_transport(host_state_collection& state, const Acts::ActsScalar mass){
 
     
