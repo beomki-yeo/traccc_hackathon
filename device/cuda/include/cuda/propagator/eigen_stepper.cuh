@@ -36,10 +36,19 @@ public:
     }
 
     template <typename propagator_state_t>
+    static bool rk4(propagator_state_t& state){
+	return rk4(state.stepping);
+    }
+
+    // implementation in eigen_stepper.cu
+    static bool rk4(host_state_collection& state);
+    
+    template <typename propagator_state_t>
     static void cov_transport(propagator_state_t& state){
 	cov_transport(state.stepping, state.options.mass);
     }
 
+    // implementation in eigen_stepper.cu
     static void cov_transport(host_state_collection& state, const Acts::ActsScalar mass);
     
 private:

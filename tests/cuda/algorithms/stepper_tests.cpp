@@ -18,7 +18,11 @@
 #include <edm/measurement.hpp>
 #include <edm/track_parameters.hpp>
 #include <edm/track_state.hpp>
+#include <propagator/propagator.hpp>
+#include <propagator/propagator_options.hpp>
+#include <propagator/detail/void_propagator_options.hpp>
 #include <propagator/eigen_stepper.hpp>
+#include <propagator/direct_navigator.hpp>
 #include "geometry/surface.hpp"
 #include "edm/truth/truth_measurement.hpp"
 #include "edm/truth/truth_spacepoint.hpp"
@@ -26,6 +30,8 @@
 
 // traccc cuda
 #include <cuda/propagator/eigen_stepper.cuh>
+#include <cuda/propagator/direct_navigator.hpp>
+#include <cuda/propagator/propagator.hpp>
 
 // std
 #include <chrono>
@@ -63,7 +69,12 @@ TEST(algebra, stepper) {
 
     // fill surface collection
     for (auto tf: surface_transforms){
+	//std::cout << tf.first << std::endl;
+	
 	traccc::surface surface(tf.second, tf.first);
+
+	//std::cout << surface.geom_id() << std::endl;
+	
 	surfaces.items.push_back(std::move(surface));	
     }
 
@@ -166,35 +177,121 @@ TEST(algebra, stepper) {
     /*---------
       For CPU
       ---------*/
+
+    // define tracking components
+    using stepper_t = typename traccc::eigen_stepper;
+    using stepper_state_t = typename traccc::eigen_stepper::state;
+    using navigator_t = typename traccc::direct_navigator<traccc::surface>;
+    using navigator_state_t = typename traccc::direct_navigator<traccc::surface>::state;
+    using propagator_t = typename traccc::propagator<stepper_t, navigator_t>;
+    using propagator_options_t = typename traccc::void_propagator_options;
+    using propagator_state_t = typename propagator_t::state<propagator_options_t>;
+
+    stepper_t stepper;	
+    navigator_t navigator;	
+    propagator_t prop(stepper, navigator);       
+    propagator_options_t void_po;
     
     // iterate over truth particles
     for (int i_h = 0; i_h < measurements_per_event.headers.size(); i_h++){
 
+	// test only single particle for the moment
+	if (i_h > 0) continue;
+	
 	// truth particle information
 	auto& t_particle = measurements_per_event.headers[i_h];
 
+	// vector of spacepoints associated with a truth particle
+	auto& spacepoints_per_particle = spacepoints_per_event.items[i_h];
+	
 	// vector of measurements associated with a truth particle
 	auto& measurements_per_particle = measurements_per_event.items[i_h];
 
 	// vector of bound_track_parameters associated with a truth particle
 	auto& bound_track_parameters_per_particle = bound_track_parameters_per_event.items[i_h];
 	
-	// Do the tracking here
-	traccc::eigen_stepper::state state(bound_track_parameters_per_particle[0], surfaces);
+	// steper state
+	stepper_state_t stepper_state(bound_track_parameters_per_particle[0],
+				      surfaces);
+
+	// propagator state that takes stepper state as input
+	propagator_state_t prop_state(void_po, stepper_state);
+
+	/*
+	for (auto sp: spacepoints_per_particle){
+	    std::cout << sp.x() << "  " << sp.y() << "  " << sp.z() << std::endl;
+	}
+	*/
+	
+	// fill the surface seqeunce
+	auto& surf_seq = prop_state.navigation.surface_sequence;
+	auto& surf_seq_size = prop_state.navigation.surface_sequence_size;       
+	for (auto ms: measurements_per_particle){
+	    surf_seq[surf_seq_size] = ms.surface_id;
+	    surf_seq_size++;
+
+	    if (surf_seq_size >= 30){
+		std::cout << "too many surfaces!" << std::endl;
+	    }
+	}
+
+	// manipulate eigen stepper state
+	auto& sd = prop_state.stepping.step_data;
+
+	// set B Field to 2T
+	sd.B_first = Acts::Vector3(0,0,2*Acts::UnitConstants::T);
+	sd.B_middle = Acts::Vector3(0,0,2*Acts::UnitConstants::T);
+	sd.B_last = Acts::Vector3(0,0,2*Acts::UnitConstants::T);
+
+	// do the eigen stepper
+	for (int i_s = 0; i_s < prop_state.options.maxRungeKuttaStepTrials ; i_s++){
+	    navigator_t::status(prop_state, surfaces);
+
+	    auto& stepper_state = prop_state.stepping;
+	    	    
+	    auto res = stepper_t::rk4(prop_state);
+
+	    //std::cout << stepper_state.step_size << " " << stepper_state.pars[Acts::eFreePos0] << "  " << stepper_state.pars[Acts::eFreePos1] << "  " << stepper_state.pars[Acts::eFreePos2] << std::endl;
+	    
+	    if (!res){
+		std::cout << "stepping failed" << std::endl;
+		break;
+	    }
+
+	    // do the covaraince transport
+	    stepper_t::cov_transport(prop_state);
+
+	    if (prop_state.navigation.surface_iterator_id >= prop_state.navigation.surface_sequence_size){
+		std::cout << "Total RK steps: " << i_s << std::endl;
+		std::cout << "All surfaces are reached" << std::endl;
+		break;
+	    }
+	}	
     }    
 
     /*---------
       For GPU
       ---------*/
-    traccc::cuda::eigen_stepper::host_state_collection cuda_states({traccc::cuda::eigen_stepper::host_state_collection::item_vector(0,&mng_mr)});
     
+    using cuda_stepper_t = traccc::cuda::eigen_stepper;
+    using cuda_navigator_t = traccc::cuda::direct_navigator<traccc::surface>;;
+    using cuda_propagator_t = traccc::cuda::propagator<cuda_stepper_t, cuda_navigator_t>;    
+    using cuda_propagator_state_t = cuda_propagator_t::state<propagator_options_t>;
+
     // iterate over truth particles
+    std::vector<traccc::bound_track_parameters> bp_collection;
+    
     for (int i_h = 0; i_h < measurements_per_event.headers.size(); i_h++){
 
-	auto& bound_track_parameters_per_particle = bound_track_parameters_per_event.items[i_h];
-	traccc::eigen_stepper::state state(bound_track_parameters_per_particle[0], surfaces);	
-	cuda_states.items.push_back(state);
-    }    
+	auto& bound_track_parameters_per_particle
+	    = bound_track_parameters_per_event.items[i_h];
+
+	bp_collection.push_back(bound_track_parameters_per_particle[0]);	
+    } 
+    
+    cuda_propagator_state_t cuda_prop_states(bp_collection, void_po, &mng_mr);
+    // do the RK4
+    auto res = cuda_stepper_t::rk4(cuda_prop_states);        
 }
 
 // Google Test can be run manually from the main() function

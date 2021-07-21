@@ -29,10 +29,8 @@ class propagator final {
     template <typename propagator_options_t>
     struct state {
 
-        template <typename parameters_t>
-        state(const parameters_t& start, const propagator_options_t& tops,
-              stepper_state_t stepping_in)
-            : options(tops), stepping(std::move(stepping_in)) {}
+        state(const propagator_options_t& tops, stepper_state_t stepping_in)
+            : options(tops), stepping(stepping_in) {}
 
         /// These are the options - provided for each propagation step
         propagator_options_t options;

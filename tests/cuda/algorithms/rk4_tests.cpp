@@ -42,7 +42,7 @@
 
 
 // This defines the local frame test suite
-TEST(algebra, covariance_transport) {
+TEST(algebra, rk4) {
     
     /*-------------------
       Surface Reading
@@ -216,8 +216,8 @@ TEST(algebra, covariance_transport) {
 	// initial step size
 	prop_state.stepping.step_size = 1.;
 	
-	// do the covaraince transport
-	stepper_t::cov_transport(prop_state);       	
+	// do the RK4
+	auto res = stepper_t::rk4(prop_state);       	
     }    
 
     /*---------
@@ -240,8 +240,9 @@ TEST(algebra, covariance_transport) {
 	bp_collection.push_back(bound_track_parameters_per_particle[0]);	
     } 
     
-    cuda_propagator_state_t cuda_prop_states(bp_collection, void_po, &mng_mr);   
-    cuda_stepper_t::cov_transport(cuda_prop_states);        
+    cuda_propagator_state_t cuda_prop_states(bp_collection, void_po, &mng_mr);
+    // do the RK4
+    auto res = cuda_stepper_t::rk4(cuda_prop_states);        
 }
 
 // Google Test can be run manually from the main() function
