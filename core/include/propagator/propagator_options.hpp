@@ -10,15 +10,14 @@
 // Acts
 #include "Acts/Definitions/Common.hpp"
 #include "Acts/EventData/TrackParameters.hpp"
-
-#include "propagator/detail/void_actor.hpp"
 #include "propagator/detail/void_aborter.hpp"
+#include "propagator/detail/void_actor.hpp"
 
 namespace traccc {
 
 /// @brief Options for propagate() call
 ///
-template <typename action_t, typename aborter_t >
+template <typename action_t, typename aborter_t>
 struct propagator_options {
     using action_type = action_t;
 

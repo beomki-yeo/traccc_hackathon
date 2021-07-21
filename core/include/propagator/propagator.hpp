@@ -24,7 +24,6 @@ class propagator final {
     using navigator_state_t = typename navigator_type::state;
     using surface_t = typename navigator_type::surface_t;
 
-    
     explicit propagator(stepper_t stepper, navigator_t navigator)
         : m_stepper(std::move(stepper)), m_navigator(std::move(navigator)) {}
 
@@ -45,43 +44,43 @@ class propagator final {
     };
 
     template <typename propagator_options_t>
-    void propagate(state<propagator_options_t>& state, host_collection<surface_t>& surfaces){
+    void propagate(state<propagator_options_t>& state,
+                   host_collection<surface_t>& surfaces) {
 
-	// do the eigen stepper
-	for (int i_s = 0; i_s < state.options.maxSteps ; i_s++){
+        // do the eigen stepper
+        for (int i_s = 0; i_s < state.options.maxSteps; i_s++) {
 
-	    // do navigator
-	    auto navi_res = navigator_t::status(state, surfaces);
+            // do navigator
+            auto navi_res = navigator_t::status(state, surfaces);
 
-	    if (!navi_res){
-		//std::cout << "Total RK steps: " << i_s << std::endl;
-		//std::cout << "all targets reached" << std::endl;
-		break;
-	    }
-	    
-	    auto& stepper_state = state.stepping;
+            if (!navi_res) {
+                // std::cout << "Total RK steps: " << i_s << std::endl;
+                // std::cout << "all targets reached" << std::endl;
+                break;
+            }
 
-	    // do RK 4th order
-	    auto stepper_res = stepper_t::rk4(state);
-	    
-	    if (!stepper_res){
-		std::cout << "stepping failed" << std::endl;
-		break;
-	    }
+            auto& stepper_state = state.stepping;
 
-	    // do the covaraince transport
-	    stepper_t::cov_transport(state);
+            // do RK 4th order
+            auto stepper_res = stepper_t::rk4(state);
 
-	    // do action for kalman filtering -- currently empty
-	    state.options.action(state, m_stepper);
-	}	       	
+            if (!stepper_res) {
+                std::cout << "stepping failed" << std::endl;
+                break;
+            }
+
+            // do the covaraince transport
+            stepper_t::cov_transport(state);
+
+            // do action for kalman filtering -- currently empty
+            state.options.action(state, m_stepper);
+        }
     }
-    
+
     // not used
     template <typename parameters_t, typename propagator_options_t>
     void propagate(const parameters_t& start,
-                   const propagator_options_t& options) const {
-    }
+                   const propagator_options_t& options) const {}
 
     private:
     stepper_t m_stepper;

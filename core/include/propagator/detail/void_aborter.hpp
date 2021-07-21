@@ -9,9 +9,6 @@
 
 namespace traccc {
 
-class void_aborter{
+class void_aborter {};
 
-
-};
-
-}// namespace traccc
+}  // namespace traccc

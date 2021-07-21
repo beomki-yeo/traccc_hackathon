@@ -55,10 +55,10 @@ class direct_navigator {
         state& state, stepper_t& stepper_state,
         host_collection<surface_t>& surfaces) {
 
-	if (state.surface_iterator_id >= state.surface_sequence_size){
-	    return false;
-	}
-	
+        if (state.surface_iterator_id >= state.surface_sequence_size) {
+            return false;
+        }
+
         // check if we are on surface
         if (state.surface_iterator_id < state.surface_sequence_size) {
 
@@ -85,7 +85,7 @@ class direct_navigator {
             }
         }
 
-	return true;
+        return true;
     }
 
     template <typename propagator_state_t, typename stepper_t>

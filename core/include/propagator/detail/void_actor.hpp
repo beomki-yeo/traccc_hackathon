@@ -9,12 +9,10 @@
 
 namespace traccc {
 
-class void_actor{
-public:
-    template<typename propagator_state_t, typename stepper_t>
-    void operator()(propagator_state_t state, stepper_t stepper){
-
-    }    
+class void_actor {
+    public:
+    template <typename propagator_state_t, typename stepper_t>
+    void operator()(propagator_state_t state, stepper_t stepper) {}
 };
 
-}// namespace traccc
+}  // namespace traccc
