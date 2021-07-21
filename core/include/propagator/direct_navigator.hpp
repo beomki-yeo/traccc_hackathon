@@ -45,16 +45,20 @@ class direct_navigator {
     };
 
     template <typename propagator_state_t>
-    static void status(propagator_state_t& state,
+    static bool status(propagator_state_t& state,
                        host_collection<surface_t>& surfaces) {
-        status(state.navigation, state.stepping, surfaces);
+        return status(state.navigation, state.stepping, surfaces);
     }
 
     template <typename stepper_t>
-    static __CUDA_HOST_DEVICE__ void status(
+    static __CUDA_HOST_DEVICE__ bool status(
         state& state, stepper_t& stepper_state,
         host_collection<surface_t>& surfaces) {
 
+	if (state.surface_iterator_id >= state.surface_sequence_size){
+	    return false;
+	}
+	
         // check if we are on surface
         if (state.surface_iterator_id < state.surface_sequence_size) {
 
@@ -80,6 +84,8 @@ class direct_navigator {
                     state.surface_sequence[state.surface_iterator_id];
             }
         }
+
+	return true;
     }
 
     template <typename propagator_state_t, typename stepper_t>

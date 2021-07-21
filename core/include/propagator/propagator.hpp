@@ -22,7 +22,9 @@ class propagator final {
     using stepper_state_t = typename stepper_type::state;
     using navigator_t = navigator_type;
     using navigator_state_t = typename navigator_type::state;
+    using surface_t = typename navigator_type::surface_t;
 
+    
     explicit propagator(stepper_t stepper, navigator_t navigator)
         : m_stepper(std::move(stepper)), m_navigator(std::move(navigator)) {}
 
@@ -42,33 +44,43 @@ class propagator final {
         navigator_state_t navigation;
     };
 
+    template <typename propagator_options_t>
+    void propagate(state<propagator_options_t>& state, host_collection<surface_t>& surfaces){
+
+	// do the eigen stepper
+	for (int i_s = 0; i_s < state.options.maxSteps ; i_s++){
+
+	    // do navigator
+	    auto navi_res = navigator_t::status(state, surfaces);
+
+	    if (!navi_res){
+		//std::cout << "Total RK steps: " << i_s << std::endl;
+		//std::cout << "all targets reached" << std::endl;
+		break;
+	    }
+	    
+	    auto& stepper_state = state.stepping;
+
+	    // do RK 4th order
+	    auto stepper_res = stepper_t::rk4(state);
+	    
+	    if (!stepper_res){
+		std::cout << "stepping failed" << std::endl;
+		break;
+	    }
+
+	    // do the covaraince transport
+	    stepper_t::cov_transport(state);
+
+	    // do action for kalman filtering -- currently empty
+	    state.options.action(state, m_stepper);
+	}	       	
+    }
+    
+    // not used
     template <typename parameters_t, typename propagator_options_t>
     void propagate(const parameters_t& start,
                    const propagator_options_t& options) const {
-
-        // define state container type
-        using state_t = state<propagator_options_t>;
-
-        state_t state{start, options,
-                      m_stepper.make_state(start, options.maxStepSize,
-                                           options.tolerance)};
-
-        // Start propagation
-        m_navigator.target(state, m_stepper);
-        for (size_t i_s = 0; i_s < state.options.maxSteps; ++i_s) {
-
-            m_stepper.step(state);
-
-            m_navigator.status(state, m_stepper);
-
-            state.options.action(state, m_stepper);
-
-            if (state.options.abort(state, m_stepper)) {
-                break;
-            }
-
-            m_navigator.target(state, m_stepper);
-        }
     }
 
     private:

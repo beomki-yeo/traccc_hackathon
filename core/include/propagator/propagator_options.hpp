@@ -11,11 +11,14 @@
 #include "Acts/Definitions/Common.hpp"
 #include "Acts/EventData/TrackParameters.hpp"
 
+#include "propagator/detail/void_actor.hpp"
+#include "propagator/detail/void_aborter.hpp"
+
 namespace traccc {
 
 /// @brief Options for propagate() call
 ///
-template <typename action_t, typename aborter_t>
+template <typename action_t, typename aborter_t >
 struct propagator_options {
     using action_type = action_t;
 
@@ -36,7 +39,7 @@ struct propagator_options {
     double mass = 105.6583755 * Acts::UnitConstants::MeV;
 
     /// Maximum number of steps for one propagate call
-    unsigned int maxSteps = 1000;
+    unsigned int maxSteps = 10000;
 
     /// Maximum number of Runge-Kutta steps for the stepper step call
     unsigned int maxRungeKuttaStepTrials = 10000;
