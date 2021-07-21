@@ -119,15 +119,11 @@ struct free_track_parameters {
     auto& vector() { return m_vector; }
 
     __CUDA_HOST_DEVICE__
-    auto pos(){
-	return m_vector.template segment<3>(Acts::eFreePos0);
-    }
+    auto pos() { return m_vector.template segment<3>(Acts::eFreePos0); }
 
     __CUDA_HOST_DEVICE__
-    auto dir(){
-	return m_vector.template segment<3>(Acts::eFreeDir0);
-    }
-    
+    auto dir() { return m_vector.template segment<3>(Acts::eFreeDir0); }
+
     __CUDA_HOST_DEVICE__
     auto& covariance() { return m_covariance; }
 

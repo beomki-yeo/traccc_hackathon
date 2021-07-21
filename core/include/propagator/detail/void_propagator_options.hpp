@@ -12,7 +12,7 @@ namespace traccc {
 struct void_propagator_options {
     /// Maximum number of Runge-Kutta steps for the stepper step call
     unsigned int maxRungeKuttaStepTrials = 10000;
-    
+
     /// The mass for the particle for (eventual) material integration
     double mass = 105.6583755 * Acts::UnitConstants::MeV;
 

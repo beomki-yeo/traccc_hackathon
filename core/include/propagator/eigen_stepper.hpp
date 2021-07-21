@@ -13,8 +13,8 @@
 
 // std
 #include <edm/track_parameters.hpp>
-#include <utils/vector_helpers.hpp>
 #include <limits>
+#include <utils/vector_helpers.hpp>
 
 namespace traccc {
 
@@ -34,14 +34,14 @@ class eigen_stepper {
                        host_surface_collection& surfaces,
                        Acts::NavigationDirection ndir = Acts::forward,
                        double ssize = std::numeric_limits<double>::max(),
-		       double ssize_cutoff = std::numeric_limits<double>::max(),
+                       double ssize_cutoff = std::numeric_limits<double>::max(),
                        double stolerance = Acts::s_onSurfaceTolerance)
             : q(par.charge()),
               nav_dir(ndir),
               step_size(ndir * std::abs(ssize)),
-	      step_size_cutoff(ssize_cutoff),
+              step_size_cutoff(ssize_cutoff),
               tolerance(stolerance) {
-	    
+
             pars.template segment<3>(Acts::eFreePos0) = par.position(surfaces);
             pars.template segment<3>(Acts::eFreeDir0) = par.unit_direction();
             pars[Acts::eFreeTime] = par.time();
@@ -89,17 +89,17 @@ class eigen_stepper {
         /// Adaptive step size of the runge-kutta integration
         double step_size = 1.;
 
-	// cutoff stepsize
-	double step_size_cutoff = 0;
-	
+        // cutoff stepsize
+        double step_size_cutoff = 0;
+
         /// Last performed step (for overstep limit calculation)
         double previous_step_size = 0.;
 
         /// The tolerance for the stepping
         double tolerance = Acts::s_onSurfaceTolerance;
 
-	size_t max_rk_step_trials = 10000;
-	
+        size_t max_rk_step_trials = 10000;
+
         /// @brief Storage of magnetic field and the sub steps during a RKN4
         /// step
         struct {
@@ -127,124 +127,125 @@ class eigen_stepper {
     }
 
     template <typename propagator_state_t>
-    static bool rk4(propagator_state_t &state){
-	return rk4(state.stepping);		
+    static bool rk4(propagator_state_t& state) {
+        return rk4(state.stepping);
     }
 
-    static __CUDA_HOST_DEVICE__ bool rk4(state& state){
+    static __CUDA_HOST_DEVICE__ bool rk4(state& state) {
 
         auto& sd = state.step_data;
-	
-	Acts::ActsScalar error_estimate = 0.;
-	
-	sd.k1 = evaluatek(state, sd.B_first, 0);
-	
-	// The following functor starts to perform a Runge-Kutta step of a certain
-	// size, going up to the point where it can return an estimate of the local
-	// integration error. The results are stated in the local variables above,
-	// allowing integration to continue once the error is deemed satisfactory
-	const auto try_rk4
-	    = [&](const double &h) -> bool
-	      {
-		  // State the square and half of the step size
-		  const double h2 = h * h;
-		  const double half_h = h * 0.5;
-		  const auto& pos = state.pars.template segment<3>(Acts::eFreePos0);
-		  
-		  const auto& dir = state.pars.template segment<3>(Acts::eFreeDir0);
-		  
-		  // Second Runge-Kutta point
-		  const Acts::Vector3 pos1 =
-		      pos + half_h * dir + h2 * 0.125 * sd.k1;
-		  //sd.B_middle = getField(state.stepping, pos1);
-		  sd.k2 = evaluatek(state, sd.B_middle, 1, half_h, sd.k1);
-		  
-		  // Third Runge-Kutta point
-		  sd.k3 = evaluatek(state, sd.B_middle, 2, half_h, sd.k2);
-		  
-		  // Last Runge-Kutta point
-		  const Acts::Vector3 pos2 = pos + h * dir + h2 * 0.5 * sd.k3;
-		  //sd.B_last = getField(state.stepping, pos2);
-		  sd.k4 = evaluatek(state, sd.B_last, 3, h, sd.k3);
-		  
-		  // Compute and check the local integration error estimate
-		  // @Todo
-		  error_estimate =
-		      std::max(h2 * (sd.k1 - sd.k2 - sd.k3 + sd.k4).template lpNorm<1>(), static_cast<Acts::ActsScalar>(1e-20));
-		  
-		  return (error_estimate <= state.tolerance);
-		  
-	      };
 
-	Acts::ActsScalar step_size_scaling = 1.;
-	size_t n_step_trials = 0;
-	
-	while (!try_rk4(state.step_size)) {
-	    step_size_scaling =
-		std::min(std::max(0.25, std::pow((state.tolerance / std::abs(2. * error_estimate)), 0.25)), 4.);
+        Acts::ActsScalar error_estimate = 0.;
 
-	    state.step_size = state.step_size * step_size_scaling;
+        sd.k1 = evaluatek(state, sd.B_first, 0);
 
-	    //std::cout << state.step_size << "  " << step_size_scaling << std::endl;
-	    
-	    // Todo: adapted error handling on GPU?
-	    // If step size becomes too small the particle remains at the initial
-	    // place
-	    if (state.step_size * state.step_size <
-		state.step_size_cutoff * state.step_size_cutoff) {
-		// Not moving due to too low momentum needs an aborter
-		return false;
-	    }
-	    
-	    // If the parameter is off track too much or given stepSize is not
-	    // appropriate
-	    if (n_step_trials > state.max_rk_step_trials) {
-		// Too many trials, have to abort
-		return false;
-	    }
-	    n_step_trials++;	    	    	    
-	}
+        // The following functor starts to perform a Runge-Kutta step of a
+        // certain size, going up to the point where it can return an estimate
+        // of the local integration error. The results are stated in the local
+        // variables above, allowing integration to continue once the error is
+        // deemed satisfactory
+        const auto try_rk4 = [&](const double& h) -> bool {
+            // State the square and half of the step size
+            const double h2 = h * h;
+            const double half_h = h * 0.5;
+            const auto& pos = state.pars.template segment<3>(Acts::eFreePos0);
 
-	// Todo: Propagate Time
-	
-	auto& h = state.step_size;
+            const auto& dir = state.pars.template segment<3>(Acts::eFreeDir0);
 
-	auto pos = state.pars.template segment<3>(Acts::eFreePos0);
-	auto dir = state.pars.template segment<3>(Acts::eFreeDir0);
-		
-	// Update the track parameters according to the equations of motion
-	pos += h * dir + h * h / 6. * (sd.k1 + sd.k2 + sd.k3);
-	
-	dir += h / 6. * (sd.k1 + 2. * (sd.k2 + sd.k3) + sd.k4);
-	
-	dir /= dir.norm();
+            // Second Runge-Kutta point
+            const Acts::Vector3 pos1 = pos + half_h * dir + h2 * 0.125 * sd.k1;
+            // sd.B_middle = getField(state.stepping, pos1);
+            sd.k2 = evaluatek(state, sd.B_middle, 1, half_h, sd.k1);
 
-	state.derivative.template head<3>() = dir;
-	state.derivative.template segment<3>(4) = sd.k4;
-	
-	state.path_accumulated += h;	
-	return true;
+            // Third Runge-Kutta point
+            sd.k3 = evaluatek(state, sd.B_middle, 2, half_h, sd.k2);
+
+            // Last Runge-Kutta point
+            const Acts::Vector3 pos2 = pos + h * dir + h2 * 0.5 * sd.k3;
+            // sd.B_last = getField(state.stepping, pos2);
+            sd.k4 = evaluatek(state, sd.B_last, 3, h, sd.k3);
+
+            // Compute and check the local integration error estimate
+            // @Todo
+            error_estimate = std::max(
+                h2 * (sd.k1 - sd.k2 - sd.k3 + sd.k4).template lpNorm<1>(),
+                static_cast<Acts::ActsScalar>(1e-20));
+
+            return (error_estimate <= state.tolerance);
+        };
+
+        Acts::ActsScalar step_size_scaling = 1.;
+        size_t n_step_trials = 0;
+
+        while (!try_rk4(state.step_size)) {
+            step_size_scaling = std::min(
+                std::max(0.25, std::pow((state.tolerance /
+                                         std::abs(2. * error_estimate)),
+                                        0.25)),
+                4.);
+
+            state.step_size = state.step_size * step_size_scaling;
+
+            // std::cout << state.step_size << "  " << step_size_scaling <<
+            // std::endl;
+
+            // Todo: adapted error handling on GPU?
+            // If step size becomes too small the particle remains at the
+            // initial place
+            if (state.step_size * state.step_size <
+                state.step_size_cutoff * state.step_size_cutoff) {
+                // Not moving due to too low momentum needs an aborter
+                return false;
+            }
+
+            // If the parameter is off track too much or given stepSize is not
+            // appropriate
+            if (n_step_trials > state.max_rk_step_trials) {
+                // Too many trials, have to abort
+                return false;
+            }
+            n_step_trials++;
+        }
+
+        // Todo: Propagate Time
+
+        auto& h = state.step_size;
+
+        auto pos = state.pars.template segment<3>(Acts::eFreePos0);
+        auto dir = state.pars.template segment<3>(Acts::eFreeDir0);
+
+        // Update the track parameters according to the equations of motion
+        pos += h * dir + h * h / 6. * (sd.k1 + sd.k2 + sd.k3);
+
+        dir += h / 6. * (sd.k1 + 2. * (sd.k2 + sd.k3) + sd.k4);
+
+        dir /= dir.norm();
+
+        state.derivative.template head<3>() = dir;
+        state.derivative.template segment<3>(4) = sd.k4;
+
+        state.path_accumulated += h;
+        return true;
     }
 
-    static __CUDA_HOST_DEVICE__
-    Acts::Vector3 evaluatek(const state &state,
-			    const Acts::Vector3 &bField, const int i = 0,
-			    const Acts::ActsScalar h = 0.,
-			    const Acts::Vector3 &kprev = Acts::Vector3(0, 0, 0)){
+    static __CUDA_HOST_DEVICE__ Acts::Vector3 evaluatek(
+        const state& state, const Acts::Vector3& bField, const int i = 0,
+        const Acts::ActsScalar h = 0.,
+        const Acts::Vector3& kprev = Acts::Vector3(0, 0, 0)) {
 
-	Acts::Vector3 knew;
+        Acts::Vector3 knew;
         const auto& qop = state.pars[Acts::eFreeQOverP];
         const auto& dir = state.pars.template segment<3>(Acts::eFreeDir0);
-	
-	// First step does not rely on previous data
-	if (i == 0) {
-	    knew = qop * dir.cross(bField);
-	} else {
-	    knew = qop * (dir + h * kprev).cross(bField);
-	}
-	return knew;
+
+        // First step does not rely on previous data
+        if (i == 0) {
+            knew = qop * dir.cross(bField);
+        } else {
+            knew = qop * (dir + h * kprev).cross(bField);
+        }
+        return knew;
     }
-    
+
     template <typename propagator_state_t>
     static void cov_transport(propagator_state_t& state) {
         cov_transport(state.stepping, state.options.mass);

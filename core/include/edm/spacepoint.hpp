@@ -50,11 +50,11 @@ struct spacepoint {
     // only used for truth tracking
     measurement make_measurement(host_surface_collection& surfaces) {
         const auto& pos = this->position();
-	
+
         traccc::geometry_id geom_id = this->geom_id;
 
-	//std::cout << geom_id << std::endl;
-	
+        // std::cout << geom_id << std::endl;
+
         // find the surface with the same geometry id
         auto surf_it = std::find_if(
             surfaces.items.begin(), surfaces.items.end(),
@@ -62,10 +62,10 @@ struct spacepoint {
 
         // vector indicies of surface
         auto surface_id = std::distance(surfaces.items.begin(), surf_it);
-	
+
         // Note: loc3[2] should be equal or very close to 0
         Acts::Vector3 loc3 = (*surf_it).global_to_local(pos);
-	
+
         traccc::point2 loc({loc3[0], loc3[1]});
         traccc::variance2 var({0, 0});
 
@@ -89,7 +89,7 @@ struct spacepoint {
 
         // Note: loc3[2] should be equal or very close to 0
         Acts::Vector3 loc3 = (*surf_it).global_to_local(pos);
-	
+
         traccc::point2 loc({loc3[0], loc3[1]});
         traccc::variance2 var({0, 0});
 
