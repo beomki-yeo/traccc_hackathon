@@ -31,14 +31,7 @@ class propagator final {
 
         state(const propagator_options_t& tops,
               stepper_state_t stepping_in)
-            : options(tops), stepping(stepping_in) {
-
-	    // for test
-	    //auto pos = stepping.pars.template segment<3>(Acts::eFreePos0);
-	    //std::cout << stepping.pars[Acts::eFreePos0] << "  " << stepping.pars[Acts::eFreePos1] << "  " << stepping.pars[Acts::eFreePos2] << std::endl;
-		
-
-	}
+            : options(tops), stepping(stepping_in) {}
 
         /// These are the options - provided for each propagation step
         propagator_options_t options;

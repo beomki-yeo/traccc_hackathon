@@ -11,6 +11,7 @@
 
 #include "edm/collection.hpp"
 #include "utils/arch_qualifiers.hpp"
+#include "utils/intersection.hpp"
 
 // Acts
 #include "Acts/EventData/TrackParameters.hpp"
@@ -22,12 +23,6 @@ class surface {
     public:
     surface() = default;
 
-    // construct surface based on center and normal vector
-    /*
-    surface(const Acts::Vector3& center, const Acts::Vector3& normal,
-            geometry_id geom_id)
-        {}
-    */
     // construct surface based on transform3
     surface(const traccc::transform3& tf, geometry_id geom_id) {
         Acts::Vector3 normal;
@@ -79,6 +74,31 @@ class surface {
         return m_transform.inverse() * glo;
     }
 
+    __CUDA_HOST_DEVICE__
+    intersection intersection_estimate(const Acts::Vector3& position, const Acts::Vector3& direction){
+	
+	// Get the matrix from the transform (faster access)
+	const auto& t_matrix = m_transform.matrix();
+	const Acts::Vector3 pnormal = t_matrix.block<3, 1>(0, 2).transpose();
+	const Acts::Vector3 pcenter = t_matrix.block<3, 1>(0, 3).transpose();
+	// It is solvable, so go on
+	Acts::ActsScalar denom = direction.dot(pnormal);
+	if (denom != 0.0) {
+	    // Translate that into a path
+	    Acts::ActsScalar path = (pnormal.dot((pcenter - position))) / (denom);
+	    // Is valid hence either on surface or reachable
+	    intersection::status status =
+		(path * path < Acts::s_onSurfaceTolerance * Acts::s_onSurfaceTolerance)
+		? intersection::status::on_surface
+		: intersection::status::reachable;
+	    // Return the intersection
+	    return intersection{(position + path * direction), path, status};
+	}
+	
+	return intersection();
+	
+    }
+    
     private:
     Acts::Transform3 m_transform;
     geometry_id m_geom_id;

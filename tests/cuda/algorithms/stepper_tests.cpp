@@ -182,6 +182,7 @@ TEST(algebra, stepper) {
     using stepper_t = typename traccc::eigen_stepper;
     using stepper_state_t = typename traccc::eigen_stepper::state;
     using navigator_t = typename traccc::direct_navigator<traccc::surface>;
+    using navigator_state_t = typename traccc::direct_navigator<traccc::surface>::state;
     using propagator_t = typename traccc::propagator<stepper_t, navigator_t>;
     using propagator_options_t = typename traccc::void_propagator_options;
     using propagator_state_t = typename propagator_t::state<propagator_options_t>;
@@ -216,6 +217,24 @@ TEST(algebra, stepper) {
 	// propagator state that takes stepper state as input
 	propagator_state_t prop_state(void_po, stepper_state);
 
+	/*
+	for (auto sp: spacepoints_per_particle){
+	    std::cout << sp.x() << "  " << sp.y() << "  " << sp.z() << std::endl;
+	}
+	*/
+	
+	// fill the surface seqeunce
+	auto& surf_seq = prop_state.navigation.surface_sequence;
+	auto& surf_seq_size = prop_state.navigation.surface_sequence_size;       
+	for (auto ms: measurements_per_particle){
+	    surf_seq[surf_seq_size] = ms.surface_id;
+	    surf_seq_size++;
+
+	    if (surf_seq_size >= 30){
+		std::cout << "too many surfaces!" << std::endl;
+	    }
+	}
+
 	// manipulate eigen stepper state
 	auto& sd = prop_state.stepping.step_data;
 
@@ -223,22 +242,31 @@ TEST(algebra, stepper) {
 	sd.B_first = Acts::Vector3(0,0,2*Acts::UnitConstants::T);
 	sd.B_middle = Acts::Vector3(0,0,2*Acts::UnitConstants::T);
 	sd.B_last = Acts::Vector3(0,0,2*Acts::UnitConstants::T);
-	// initial step size
-	prop_state.stepping.step_size = 1.;
 
 	// do the eigen stepper
-	for (int i_s = 0; i_s < 1000 ; i_s++){       	
+	for (int i_s = 0; i_s < prop_state.options.maxRungeKuttaStepTrials ; i_s++){
+	    navigator_t::status(prop_state, surfaces);
+
+	    auto& stepper_state = prop_state.stepping;
+	    	    
 	    auto res = stepper_t::rk4(prop_state);
 
+	    //std::cout << stepper_state.step_size << " " << stepper_state.pars[Acts::eFreePos0] << "  " << stepper_state.pars[Acts::eFreePos1] << "  " << stepper_state.pars[Acts::eFreePos2] << std::endl;
+	    
 	    if (!res){
 		std::cout << "stepping failed" << std::endl;
 		break;
 	    }
 
 	    // do the covaraince transport
-	    stepper_t::cov_transport(prop_state);       	
-	}
-	
+	    stepper_t::cov_transport(prop_state);
+
+	    if (prop_state.navigation.surface_iterator_id >= prop_state.navigation.surface_sequence_size){
+		std::cout << "Total RK steps: " << i_s << std::endl;
+		std::cout << "All surfaces are reached" << std::endl;
+		break;
+	    }
+	}	
     }    
 
     /*---------

@@ -41,13 +41,6 @@ class eigen_stepper {
               step_size(ndir * std::abs(ssize)),
 	      step_size_cutoff(ssize_cutoff),
               tolerance(stolerance) {
-
-	    // test
-	    //std::cout << par.m_vector(0) << "  " << par.m_vector(1) << std::endl;
-	    //std::cout << par.qop() << std::endl;
-	    
-	    //auto test_pos = par.position(surfaces);
-	    //std::cout << test_pos[0] << "  " << test_pos[1] << "  " << test_pos[2] << std::endl;
 	    
             pars.template segment<3>(Acts::eFreePos0) = par.position(surfaces);
             pars.template segment<3>(Acts::eFreeDir0) = par.unit_direction();
@@ -94,7 +87,7 @@ class eigen_stepper {
         double path_accumulated = 0.;
 
         /// Adaptive step size of the runge-kutta integration
-        double step_size = 0.;
+        double step_size = 1.;
 
 	// cutoff stepsize
 	double step_size_cutoff = 0;
@@ -192,6 +185,8 @@ class eigen_stepper {
 
 	    state.step_size = state.step_size * step_size_scaling;
 
+	    //std::cout << state.step_size << "  " << step_size_scaling << std::endl;
+	    
 	    // Todo: adapted error handling on GPU?
 	    // If step size becomes too small the particle remains at the initial
 	    // place
@@ -335,6 +330,8 @@ class eigen_stepper {
 
         state.jac_transport = D * state.jac_transport;
     }
+
+    Acts::ActsScalar m_overstep_limit = 0.01;
 };
 
 }  // namespace traccc
