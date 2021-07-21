@@ -176,7 +176,7 @@ TEST(algebra, covariance_transport) {
     // define tracking components
     using stepper_t = typename traccc::eigen_stepper;
     using stepper_state_t = typename traccc::eigen_stepper::state;
-    using navigator_t = typename traccc::direct_navigator;
+    using navigator_t = typename traccc::direct_navigator<traccc::surface>;;
     using propagator_t = typename traccc::propagator<stepper_t, navigator_t>;
     using propagator_options_t = typename traccc::void_propagator_options;
     using propagator_state_t = typename propagator_t::state<propagator_options_t>;
@@ -203,21 +203,19 @@ TEST(algebra, covariance_transport) {
 				      surfaces);
 
 	// propagator state that takes stepper state as input
-	propagator_state_t prop_state(bound_track_parameters_per_particle[0],
-				      void_po,
+	propagator_state_t prop_state(void_po,
 				      stepper_state);
 
 	// manipulate eigen stepper state
 	auto& sd = prop_state.stepping.step_data;
-	sd.B_first = Acts::Vector3(0,0,2);
-	sd.B_middle = Acts::Vector3(0,0,2);
-	sd.B_last = Acts::Vector3(0,0,2);
-	sd.k1 = Acts::Vector3::Random();
-	sd.k2 = Acts::Vector3::Random();
-	sd.k3 = Acts::Vector3::Random();
-	sd.k4 = Acts::Vector3::Random();     	
-	prop_state.stepping.step_size = 0.1;
 
+	// set B Field to 2T
+	sd.B_first = Acts::Vector3(0,0,2*Acts::UnitConstants::T);
+	sd.B_middle = Acts::Vector3(0,0,2*Acts::UnitConstants::T);
+	sd.B_last = Acts::Vector3(0,0,2*Acts::UnitConstants::T);
+	// initial step size
+	prop_state.stepping.step_size = 1.;
+	
 	// do the covaraince transport
 	stepper_t::cov_transport(prop_state);       	
     }    
@@ -227,7 +225,7 @@ TEST(algebra, covariance_transport) {
       ---------*/
     
     using cuda_stepper_t = traccc::cuda::eigen_stepper;
-    using cuda_navigator_t = traccc::cuda::direct_navigator;
+    using cuda_navigator_t = traccc::cuda::direct_navigator<traccc::surface>;;
     using cuda_propagator_t = traccc::cuda::propagator<cuda_stepper_t, cuda_navigator_t>;    
     using cuda_propagator_state_t = cuda_propagator_t::state<propagator_options_t>;
 

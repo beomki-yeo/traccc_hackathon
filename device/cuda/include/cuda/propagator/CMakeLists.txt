@@ -9,7 +9,8 @@ target_include_directories(traccc_cuda_propagator
   )
 
 target_compile_options(traccc_cuda_propagator
-  PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:  
+  PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:
+  --expt-relaxed-constexpr
   #--fmad=false
   >)
 

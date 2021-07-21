@@ -19,11 +19,14 @@
 namespace traccc {
 namespace cuda {
 
+template < typename surface_type = surface >
 class direct_navigator{
     
 public:
 
-    using state = traccc::direct_navigator::state;    
+    using surface_t = surface_type;
+
+    using state = typename traccc::direct_navigator<surface_t>::state;    
     using host_state_collection = host_collection<state>;
     using device_state_collection = device_collection<state>;
     using state_collection_data = collection_data<state>;

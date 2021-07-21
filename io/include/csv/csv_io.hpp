@@ -199,7 +199,7 @@ std::map<geometry_id, transform3> read_surfaces(surface_reader& sreader) {
     while (sreader.read(iosurface)) {
 
         geometry_id module = iosurface.geometry_id;
-
+	
         vector3 t{iosurface.cx, iosurface.cy, iosurface.cz};
         vector3 x{iosurface.rot_xu, iosurface.rot_yu, iosurface.rot_zu};
         vector3 z{iosurface.rot_xw, iosurface.rot_yw, iosurface.rot_zw};

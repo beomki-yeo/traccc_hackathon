@@ -42,7 +42,7 @@
 
 
 // This defines the local frame test suite
-TEST(algebra, stepper) {
+TEST(algebra, rk4) {
     
     /*-------------------
       Surface Reading
@@ -69,12 +69,7 @@ TEST(algebra, stepper) {
 
     // fill surface collection
     for (auto tf: surface_transforms){
-	//std::cout << tf.first << std::endl;
-	
 	traccc::surface surface(tf.second, tf.first);
-
-	//std::cout << surface.geom_id() << std::endl;
-	
 	surfaces.items.push_back(std::move(surface));	
     }
 
@@ -181,7 +176,7 @@ TEST(algebra, stepper) {
     // define tracking components
     using stepper_t = typename traccc::eigen_stepper;
     using stepper_state_t = typename traccc::eigen_stepper::state;
-    using navigator_t = typename traccc::direct_navigator<traccc::surface>;
+    using navigator_t = typename traccc::direct_navigator<traccc::surface>;;
     using propagator_t = typename traccc::propagator<stepper_t, navigator_t>;
     using propagator_options_t = typename traccc::void_propagator_options;
     using propagator_state_t = typename propagator_t::state<propagator_options_t>;
@@ -194,27 +189,22 @@ TEST(algebra, stepper) {
     // iterate over truth particles
     for (int i_h = 0; i_h < measurements_per_event.headers.size(); i_h++){
 
-	// test only single particle for the moment
-	if (i_h > 0) continue;
-	
 	// truth particle information
 	auto& t_particle = measurements_per_event.headers[i_h];
 
-	// vector of spacepoints associated with a truth particle
-	auto& spacepoints_per_particle = spacepoints_per_event.items[i_h];
-	
 	// vector of measurements associated with a truth particle
 	auto& measurements_per_particle = measurements_per_event.items[i_h];
 
 	// vector of bound_track_parameters associated with a truth particle
 	auto& bound_track_parameters_per_particle = bound_track_parameters_per_event.items[i_h];
-	
+
 	// steper state
 	stepper_state_t stepper_state(bound_track_parameters_per_particle[0],
 				      surfaces);
 
 	// propagator state that takes stepper state as input
-	propagator_state_t prop_state(void_po, stepper_state);
+	propagator_state_t prop_state(void_po,
+				      stepper_state);
 
 	// manipulate eigen stepper state
 	auto& sd = prop_state.stepping.step_data;
@@ -225,20 +215,9 @@ TEST(algebra, stepper) {
 	sd.B_last = Acts::Vector3(0,0,2*Acts::UnitConstants::T);
 	// initial step size
 	prop_state.stepping.step_size = 1.;
-
-	// do the eigen stepper
-	for (int i_s = 0; i_s < 1000 ; i_s++){       	
-	    auto res = stepper_t::rk4(prop_state);
-
-	    if (!res){
-		std::cout << "stepping failed" << std::endl;
-		break;
-	    }
-
-	    // do the covaraince transport
-	    stepper_t::cov_transport(prop_state);       	
-	}
 	
+	// do the RK4
+	auto res = stepper_t::rk4(prop_state);       	
     }    
 
     /*---------
@@ -274,4 +253,3 @@ int main(int argc, char **argv) {
 
     return RUN_ALL_TESTS();
 }
-

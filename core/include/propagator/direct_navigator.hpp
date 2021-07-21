@@ -7,10 +7,16 @@
 
 #pragma once
 
+#include "geometry/surface.hpp"
+
 namespace traccc {
 
+template < typename surface_type = surface >    
 class direct_navigator {
-    public:
+public:
+
+    using surface_t = surface_type;
+    
     struct state {};
 };
 

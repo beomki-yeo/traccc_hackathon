@@ -23,9 +23,25 @@ class surface {
     surface() = default;
 
     // construct surface based on center and normal vector
+    /*
     surface(const Acts::Vector3& center, const Acts::Vector3& normal,
             geometry_id geom_id)
-        : m_geom_id(geom_id) {
+        {}
+    */
+    // construct surface based on transform3
+    surface(const traccc::transform3& tf, geometry_id geom_id) {
+        Acts::Vector3 normal;
+        normal(0, 0) = tf._data[2][0];
+        normal(1, 0) = tf._data[2][1];
+        normal(2, 0) = tf._data[2][2];
+
+        Acts::Vector3 center;
+        center(0, 0) = tf._data[3][0];
+        center(1, 0) = tf._data[3][1];
+        center(2, 0) = tf._data[3][2];
+
+        //surface(e_center, e_normal, geom_id);
+
         Acts::Vector3 T = normal.normalized();
         Acts::Vector3 U = std::abs(T.dot(Acts::Vector3::UnitZ())) <
                                   Acts::s_curvilinearProjTolerance
@@ -40,28 +56,17 @@ class surface {
         // curvilinear surfaces are boundless
         m_transform = Acts::Transform3{curvilinearRotation};
         m_transform.pretranslate(center);
-    }
 
-    // construct surface based on transform3
-    surface(const traccc::transform3& tf, const traccc::geometry_id& geom_id) {
-        Acts::Vector3 e_normal;
-        e_normal(0, 0) = tf._data[2][0];
-        e_normal(1, 0) = tf._data[2][1];
-        e_normal(2, 0) = tf._data[2][2];
-
-        Acts::Vector3 e_center;
-        e_center(0, 0) = tf._data[3][0];
-        e_center(1, 0) = tf._data[3][1];
-        e_center(2, 0) = tf._data[3][2];
-
-        surface(e_center, e_normal, geom_id);
+	m_geom_id = geom_id;        
     }
 
     __CUDA_HOST_DEVICE__
     Acts::Transform3 transform() { return m_transform; }
 
     __CUDA_HOST_DEVICE__
-    geometry_id geom_id() { return m_geom_id; }
+    geometry_id geom_id() {
+	return m_geom_id;
+    }
 
     __CUDA_HOST_DEVICE__
     Acts::Vector3 local_to_global(const Acts::Vector2& loc) {
