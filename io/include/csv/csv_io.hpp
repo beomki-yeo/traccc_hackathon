@@ -19,8 +19,8 @@
 #include "definitions/algebra.hpp"
 #include "definitions/primitives.hpp"
 #include "edm/cell.hpp"
-#include "edm/measurement.hpp"
 #include "edm/cluster.hpp"
+#include "edm/measurement.hpp"
 #include "edm/spacepoint.hpp"
 
 /// reader
@@ -84,10 +84,11 @@ struct csv_measurement {
     scalar var_theta = 0.;
     scalar var_time = 0.;
 
-    DFE_NAMEDTUPLE(csv_measurement, geometry_id, local0, local1, phi, theta, time, var_local0, var_local1, var_phi, var_theta, var_time);
+    DFE_NAMEDTUPLE(csv_measurement, geometry_id, local0, local1, phi, theta,
+                   time, var_local0, var_local1, var_phi, var_theta, var_time);
 };
 
-using measurement_reader = dfe::NamedTupleCsvReader<csv_measurement>;    
+using measurement_reader = dfe::NamedTupleCsvReader<csv_measurement>;
 using measurement_writer = dfe::NamedTupleCsvWriter<csv_measurement>;
 
 struct csv_internal_spacepoint {
@@ -324,12 +325,13 @@ std::vector<cluster_collection> read_truth_clusters(
 host_measurement_container read_measurements(
     measurement_reader& mreader, vecmem::memory_resource& resource,
     const std::map<geometry_id, transform3>& tfmap = {},
-    unsigned int max_measurements = std::numeric_limits<unsigned int>::max()){
-   
+    unsigned int max_measurements = std::numeric_limits<unsigned int>::max()) {
+
     uint64_t reference_id = 0;
-    host_measurement_container result = {host_measurement_container::header_vector(&resource),
-					 host_measurement_container::item_vector(&resource)};
-    
+    host_measurement_container result = {
+        host_measurement_container::header_vector(&resource),
+        host_measurement_container::item_vector(&resource)};
+
     bool first_line_read = false;
     unsigned int read_measurements = 0;
     csv_measurement iomeasurement;
@@ -344,7 +346,7 @@ host_measurement_container read_measurements(
                     module.placement = tfentry->second;
                 }
             }
-	    
+
             result.headers.push_back(module);
             result.items.push_back(measurements);
             // Clear for next round
@@ -356,10 +358,9 @@ host_measurement_container read_measurements(
 
         module.module = reference_id;
 
-        measurements.push_back(measurement{{iomeasurement.local0,
-					    iomeasurement.local1},
-					   {iomeasurement.var_local0,
-					    iomeasurement.var_local1}});
+        measurements.push_back(
+            measurement{{iomeasurement.local0, iomeasurement.local1},
+                        {iomeasurement.var_local0, iomeasurement.var_local1}});
         if (++read_measurements >= max_measurements) {
             break;
         }
@@ -369,11 +370,10 @@ host_measurement_container read_measurements(
     result.items.push_back(measurements);
 
     assert(result.items.size() == result.headers.size());
-    
-    return result;    
 
+    return result;
 }
-    
+
 /// Read the collection of hits per module and fill into a collection
 ///
 /// @param hreader The hit reader type
