@@ -19,10 +19,9 @@
 #include "definitions/algebra.hpp"
 #include "definitions/primitives.hpp"
 #include "edm/cell.hpp"
-#include "edm/measurement.hpp"
 #include "edm/cluster.hpp"
+#include "edm/measurement.hpp"
 #include "edm/spacepoint.hpp"
-
 #include "edm/truth/truth_measurement.hpp"
 #include "edm/truth/truth_spacepoint.hpp"
 
@@ -83,11 +82,12 @@ struct csv_particle {
     scalar m;
     scalar q;
 
-    DFE_NAMEDTUPLE(csv_particle, particle_id, particle_type, vx, vy, vz, vt, px, py, pz, m, q);    
+    DFE_NAMEDTUPLE(csv_particle, particle_id, particle_type, vx, vy, vz, vt, px,
+                   py, pz, m, q);
 };
 
 using fatras_particle_reader = dfe::NamedTupleCsvReader<csv_particle>;
-    
+
 /// writer
 
 struct csv_measurement {
@@ -105,10 +105,11 @@ struct csv_measurement {
     scalar var_theta = 0.;
     scalar var_time = 0.;
 
-    DFE_NAMEDTUPLE(csv_measurement, geometry_id, local0, local1, phi, theta, time, var_local0, var_local1, var_phi, var_theta, var_time);
+    DFE_NAMEDTUPLE(csv_measurement, geometry_id, local0, local1, phi, theta,
+                   time, var_local0, var_local1, var_phi, var_theta, var_time);
 };
 
-using measurement_reader = dfe::NamedTupleCsvReader<csv_measurement>;    
+using measurement_reader = dfe::NamedTupleCsvReader<csv_measurement>;
 using measurement_writer = dfe::NamedTupleCsvWriter<csv_measurement>;
 
 struct csv_internal_spacepoint {
@@ -199,7 +200,7 @@ std::map<geometry_id, transform3> read_surfaces(surface_reader& sreader) {
     while (sreader.read(iosurface)) {
 
         geometry_id module = iosurface.geometry_id;
-	
+
         vector3 t{iosurface.cx, iosurface.cy, iosurface.cz};
         vector3 x{iosurface.rot_xu, iosurface.rot_yu, iosurface.rot_zu};
         vector3 z{iosurface.rot_xw, iosurface.rot_yw, iosurface.rot_zw};
@@ -345,12 +346,13 @@ std::vector<cluster_collection> read_truth_clusters(
 host_measurement_container read_measurements(
     measurement_reader& mreader, vecmem::memory_resource& resource,
     const std::map<geometry_id, transform3>& tfmap = {},
-    unsigned int max_measurements = std::numeric_limits<unsigned int>::max()){
-   
+    unsigned int max_measurements = std::numeric_limits<unsigned int>::max()) {
+
     uint64_t reference_id = 0;
-    host_measurement_container result = {host_measurement_container::header_vector(&resource),
-					 host_measurement_container::item_vector(&resource)};
-    
+    host_measurement_container result = {
+        host_measurement_container::header_vector(&resource),
+        host_measurement_container::item_vector(&resource)};
+
     bool first_line_read = false;
     unsigned int read_measurements = 0;
     csv_measurement iomeasurement;
@@ -365,7 +367,7 @@ host_measurement_container read_measurements(
                     module.placement = tfentry->second;
                 }
             }
-	    
+
             result.headers.push_back(module);
             result.items.push_back(measurements);
             // Clear for next round
@@ -377,10 +379,9 @@ host_measurement_container read_measurements(
 
         module.module = reference_id;
 
-        measurements.push_back(measurement{{iomeasurement.local0,
-					    iomeasurement.local1},
-					   {iomeasurement.var_local0,
-					    iomeasurement.var_local1}});
+        measurements.push_back(
+            measurement{{iomeasurement.local0, iomeasurement.local1},
+                        {iomeasurement.var_local0, iomeasurement.var_local1}});
         if (++read_measurements >= max_measurements) {
             break;
         }
@@ -390,11 +391,10 @@ host_measurement_container read_measurements(
     result.items.push_back(measurements);
 
     assert(result.items.size() == result.headers.size());
-    
-    return result;    
 
+    return result;
 }
-    
+
 /// Read the collection of hits per module and fill into a collection
 ///
 /// @param hreader The hit reader type
@@ -445,8 +445,7 @@ host_spacepoint_container read_hits(
 /// @param hreader The hit reader type
 /// @param resource The memory resource to use for the return value
 host_truth_spacepoint_container read_truth_hits(
-    fatras_hit_reader& hreader,
-    fatras_particle_reader& preader,
+    fatras_hit_reader& hreader, fatras_particle_reader& preader,
     vecmem::memory_resource& resource,
     unsigned int max_hits = std::numeric_limits<unsigned int>::max()) {
     uint64_t reference_id = 0;
@@ -461,39 +460,35 @@ host_truth_spacepoint_container read_truth_hits(
     csv_fatras_hit iohit;
 
     while (preader.read(ioparticle)) {
-	particle_id pid = ioparticle.particle_id;
-	int p_type = ioparticle.particle_type;
-	Acts::ActsScalar mass = ioparticle.m;
-	free_track_parameters vertex(ioparticle.vx, ioparticle.vy,
-				     ioparticle.vz, ioparticle.vt,
-				     ioparticle.px, ioparticle.py, ioparticle.pz,
-				     ioparticle.q);
-	result.headers.push_back({pid,p_type, mass, vertex});
+        particle_id pid = ioparticle.particle_id;
+        int p_type = ioparticle.particle_type;
+        Acts::ActsScalar mass = ioparticle.m;
+        free_track_parameters vertex(
+            ioparticle.vx, ioparticle.vy, ioparticle.vz, ioparticle.vt,
+            ioparticle.px, ioparticle.py, ioparticle.pz, ioparticle.q);
+        result.headers.push_back({pid, p_type, mass, vertex});
     }
 
     result.items.resize(result.headers.size());
-    
+
     while (hreader.read(iohit)) {
-	particle_id pid = iohit.particle_id;
+        particle_id pid = iohit.particle_id;
 
         geometry_id geom_id = iohit.geometry_id;
         point3 position({iohit.tx, iohit.ty, iohit.tz});
         variance3 variance({0, 0, 0});
-	Acts::Vector3 truth_mom(iohit.tpx, iohit.tpy, iohit.tpz);
-	Acts::ActsScalar time(iohit.tt);
+        Acts::Vector3 truth_mom(iohit.tpx, iohit.tpy, iohit.tpz);
+        Acts::ActsScalar time(iohit.tt);
         spacepoint sp({position, variance, geom_id, truth_mom, time});
 
-	auto it =
-            std::find_if(result.headers.begin(),
-			 result.headers.end(),
-			 [&pid](auto& aParticle){
-			     return aParticle.pid == pid;
-			 });
+        auto it = std::find_if(
+            result.headers.begin(), result.headers.end(),
+            [&pid](auto& aParticle) { return aParticle.pid == pid; });
 
-	auto header_id = std::distance(result.headers.begin(), it);
+        auto header_id = std::distance(result.headers.begin(), it);
 
-	// add spacepoint
-	result.items[header_id].push_back(sp);
+        // add spacepoint
+        result.items[header_id].push_back(sp);
     }
 
     assert(result.items.size() == result.headers.size());
@@ -501,6 +496,4 @@ host_truth_spacepoint_container read_truth_hits(
     return result;
 }
 
-    
-    
 }  // namespace traccc

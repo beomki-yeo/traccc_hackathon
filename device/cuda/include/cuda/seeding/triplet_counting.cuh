@@ -21,15 +21,16 @@ namespace traccc {
 namespace cuda {
 
 /// Forward declaration of triplet counting function
-/// The number of triplets per mid-bot doublets are counted and recorded into triplet counter container
-///    
+/// The number of triplets per mid-bot doublets are counted and recorded into
+/// triplet counter container
+///
 /// @param config seed finder config
 /// @param internal_sp_view vecmem container for internal spacepoint
 /// @param doublet_counter_container vecmem container for doublet_counter
 /// @param mid_bot_doublet_container vecmem container for mid-bot doublets
 /// @param mid_top_doublet_container vecmem container for mid-top doublets
 /// @param triplet_counter_container vecmem container for triplet counters
-/// @resource vecmem memory resource            
+/// @resource vecmem memory resource
 void triplet_counting(const seedfinder_config& config,
                       host_internal_spacepoint_container& internal_sp_container,
                       host_doublet_counter_container& doublet_counter_container,

@@ -13,9 +13,9 @@ namespace traccc {
 namespace cuda {
 
 /// Definition the container for doublet counter
-///    
-/// header element: number of the middle sp which have positive number (>0) of compatible mid-bot and mid-top doublets    
-/// item element: doublet counter
+///
+/// header element: number of the middle sp which have positive number (>0) of
+/// compatible mid-bot and mid-top doublets item element: doublet counter
 struct doublet_counter {
 
     /// index of a given middle spacepoint

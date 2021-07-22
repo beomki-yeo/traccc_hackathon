@@ -20,10 +20,10 @@ struct cuda_helper {
 
     /// reduce sum function to obtain the sum of elements in array
     ///
-    /// @param array the input array    
+    /// @param array the input array
     template <typename T>
     static __device__ void reduce_sum(T* array) {
-	const auto& tid = threadIdx.x;
+        const auto& tid = threadIdx.x;
         array[tid] +=
             __shfl_down_sync(0xFFFFFFFF, array[tid], WARP_SIZE / 2, WARP_SIZE);
         array[tid] += __shfl_down_sync(0xFFFFFFFF, array[tid], WARP_SIZE / 4,
@@ -46,18 +46,18 @@ struct cuda_helper {
 
     /// Get index of header vector of event data container for a given block ID.
     ///
-    /// @param jag_vec the item jagged vector of edm 
+    /// @param jag_vec the item jagged vector of edm
     /// @param header_idx the header idx
-    /// @param ref_block_idx the reference block idx for a given header idx    
+    /// @param ref_block_idx the reference block idx for a given header idx
     template <typename T>
     static __device__ void get_header_idx(
-        const vecmem::jagged_device_vector<T>& jag_vec, unsigned int& header_idx,
-        unsigned int& ref_block_idx) {
+        const vecmem::jagged_device_vector<T>& jag_vec,
+        unsigned int& header_idx, unsigned int& ref_block_idx) {
 
-	/// number of blocks accumulated upto current header idx
+        /// number of blocks accumulated upto current header idx
         unsigned int nblocks_accum = 0;
 
-	/// number of blocks for one header entry
+        /// number of blocks for one header entry
         unsigned int nblocks_per_header = 0;
         for (unsigned int i = 0; i < jag_vec.size(); ++i) {
             nblocks_per_header = jag_vec[i].size() / blockDim.x + 1;
@@ -75,18 +75,19 @@ struct cuda_helper {
 
     /// Get index of header vector of event data container for a given block ID.
     ///
-    /// @param container event data container where header element indicates the number of elements in item vector
+    /// @param container event data container where header element indicates the
+    /// number of elements in item vector
     /// @param header_idx the header idx
-    /// @param ref_block_idx the reference block idx for a given header idx        
+    /// @param ref_block_idx the reference block idx for a given header idx
     template <typename header_t, typename item_t>
     static __device__ void get_header_idx(
         const device_container<header_t, item_t>& container,
         unsigned int& header_idx, unsigned int& ref_block_idx) {
 
-	/// number of blocks accumulated upto current header idx
+        /// number of blocks accumulated upto current header idx
         unsigned int nblocks_accum = 0;
 
-	/// number of blocks for one header entry
+        /// number of blocks for one header entry
         unsigned int nblocks_per_header = 0;
         for (unsigned int i = 0; i < container.headers.size(); ++i) {
             nblocks_per_header = container.headers[i] / blockDim.x + 1;

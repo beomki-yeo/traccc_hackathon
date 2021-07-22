@@ -7,21 +7,17 @@
 
 #include <cuda/propagator/eigen_stepper.cuh>
 
-namespace traccc {    
+namespace traccc {
 namespace cuda {
 
 // Reserved to Xiangyang
-bool traccc::cuda::eigen_stepper::rk4(host_collection<state>& state){
+bool traccc::cuda::eigen_stepper::rk4(host_collection<state>& state) {
     return true;
 }
 
-// Reserved to Johannes    
-void traccc::cuda::eigen_stepper::cov_transport(host_collection<state>& state, const Acts::ActsScalar mass){
+// Reserved to Johannes
+void traccc::cuda::eigen_stepper::cov_transport(host_collection<state>& state,
+                                                const Acts::ActsScalar mass) {}
 
-    
-    
-}
-    
-} // namespace cuda    
-} // namespace traccc
-    
+}  // namespace cuda
+}  // namespace traccc
