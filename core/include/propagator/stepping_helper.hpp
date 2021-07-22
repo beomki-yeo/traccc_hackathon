@@ -15,11 +15,11 @@ struct stepping_helper {
 
     template <typename stepper_state_t, typename surface_t>
     static __CUDA_HOST_DEVICE__ intersection::status update_surface_status(
-        stepper_state_t& state, surface_t surface) {
+        stepper_state_t& state, surface_t* surface) {
         const auto& pos = state.pars.template segment<3>(Acts::eFreePos0);
         const auto& dir = state.pars.template segment<3>(Acts::eFreeDir0);
 
-        auto s_intersection = surface.intersection_estimate(pos, dir);
+        auto s_intersection = surface->intersection_estimate(pos, dir);
         if (s_intersection.m_status == intersection::status::on_surface) {
             // release the step size
             state.step_size = 1.;  // need to fix...

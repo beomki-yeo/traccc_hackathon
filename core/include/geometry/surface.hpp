@@ -78,8 +78,8 @@ class surface {
 
         // Get the matrix from the transform (faster access)
         const auto& t_matrix = m_transform.matrix();
-        const Acts::Vector3 pnormal = t_matrix.block<3, 1>(0, 2).transpose();
-        const Acts::Vector3 pcenter = t_matrix.block<3, 1>(0, 3).transpose();
+        const Acts::Vector3& pnormal = t_matrix.block<3, 1>(0, 2).transpose();
+        const Acts::Vector3& pcenter = t_matrix.block<3, 1>(0, 3).transpose();
         // It is solvable, so go on
         Acts::ActsScalar denom = direction.dot(pnormal);
         if (denom != 0.0) {

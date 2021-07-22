@@ -1,5 +1,6 @@
 add_library(traccc_cuda_propagator SHARED
-  ${TRACCC_CUDA_PROPAGATOR_SOURCE_DIR}/eigen_stepper.cu)
+  ${TRACCC_CUDA_PROPAGATOR_SOURCE_DIR}/eigen_stepper.cu
+  ${TRACCC_CUDA_PROPAGATOR_SOURCE_DIR}/direct_navigator.cu)
 
 target_include_directories(traccc_cuda_propagator
   PUBLIC

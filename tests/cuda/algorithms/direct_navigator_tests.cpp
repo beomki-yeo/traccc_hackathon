@@ -41,8 +41,12 @@
 #include "csv/csv_io.hpp"
 
 
+// sorry for ugly global variables
+int my_argc;
+char** my_argv;
+
 // This defines the local frame test suite
-TEST(algebra, covariance_transport) {
+TEST(algebra, direct_navigator) {
     
     /*-------------------
       Surface Reading
@@ -69,7 +73,12 @@ TEST(algebra, covariance_transport) {
 
     // fill surface collection
     for (auto tf: surface_transforms){
+	//std::cout << tf.first << std::endl;
+	
 	traccc::surface surface(tf.second, tf.first);
+
+	//std::cout << surface.geom_id() << std::endl;
+	
 	surfaces.items.push_back(std::move(surface));	
     }
 
@@ -81,6 +90,14 @@ TEST(algebra, covariance_transport) {
     std::string io_hits_file = dir + std::string("/data/hits.csv");    
     std::string io_particle_file = dir + std::string("/data/particles.csv");
 
+    if (my_argc == 3){
+	io_hits_file = std::string(my_argv[1]);
+	io_particle_file = std::string(my_argv[2]);
+    }
+
+    std::cout << "hit file: " << io_hits_file << std::endl;
+    std::cout << "particle file: " << io_particle_file << std::endl;
+    
     // truth hit reader
     traccc::fatras_hit_reader hreader(
             io_hits_file,
@@ -168,43 +185,62 @@ TEST(algebra, covariance_transport) {
       you can do global <-> local transformation with surface object
       
       ---------------------------------------------------*/
-								     
+
+    double cpu_elapse(0);
+    double gpu_elapse(0);    
+    
     /*---------
       For CPU
       ---------*/
-
+    
     // define tracking components
     using stepper_t = typename traccc::eigen_stepper;
     using stepper_state_t = typename traccc::eigen_stepper::state;
     using navigator_t = typename traccc::direct_navigator;
+    using navigator_state_t = typename traccc::direct_navigator::state;
     using propagator_t = typename traccc::propagator<stepper_t, navigator_t>;
     using propagator_options_t = typename traccc::void_propagator_options;
     using propagator_state_t = typename propagator_t::state<propagator_options_t>;
 
-    stepper_t stepper;	
-    navigator_t navigator;	
-    propagator_t prop(stepper, navigator);       
     propagator_options_t void_po;
     
     // iterate over truth particles
     for (int i_h = 0; i_h < measurements_per_event.headers.size(); i_h++){
 
+	stepper_t stepper;	
+	navigator_t navigator;	
+	propagator_t prop(stepper, navigator);       
+	
 	// truth particle information
 	auto& t_particle = measurements_per_event.headers[i_h];
 
+	// vector of spacepoints associated with a truth particle
+	auto& spacepoints_per_particle = spacepoints_per_event.items[i_h];
+	
 	// vector of measurements associated with a truth particle
 	auto& measurements_per_particle = measurements_per_event.items[i_h];
 
 	// vector of bound_track_parameters associated with a truth particle
 	auto& bound_track_parameters_per_particle = bound_track_parameters_per_event.items[i_h];
-
+	
 	// steper state
 	stepper_state_t stepper_state(bound_track_parameters_per_particle[0],
 				      surfaces);
 
 	// propagator state that takes stepper state as input
-	propagator_state_t prop_state(void_po,
-				      stepper_state);
+	propagator_state_t prop_state(void_po, stepper_state);
+	
+	// fill the surface seqeunce
+	auto& surf_seq = prop_state.navigation.surface_sequence;
+	auto& surf_seq_size = prop_state.navigation.surface_sequence_size;       
+	for (auto ms: measurements_per_particle){
+	    surf_seq[surf_seq_size] = ms.surface_id;
+	    surf_seq_size++;
+
+	    if (surf_seq_size >= 30){
+		std::cout << "too many surfaces!" << std::endl;
+	    }
+	}
 
 	// manipulate eigen stepper state
 	auto& sd = prop_state.stepping.step_data;
@@ -213,11 +249,17 @@ TEST(algebra, covariance_transport) {
 	sd.B_first = Acts::Vector3(0,0,2*Acts::UnitConstants::T);
 	sd.B_middle = Acts::Vector3(0,0,2*Acts::UnitConstants::T);
 	sd.B_last = Acts::Vector3(0,0,2*Acts::UnitConstants::T);
-	// initial step size
-	prop_state.stepping.step_size = 1.;
+
+	/*time*/ auto start_cpu = std::chrono::system_clock::now();
 	
-	// do the covaraince transport
-	stepper_t::cov_transport(prop_state);       	
+	// run navigator
+	for (int i_s = 0; i_s < 1000; i_s++){
+	    auto navi_res = navigator_t::status(prop_state, &surfaces.items[0]);
+	}
+	
+	/*time*/ auto end_cpu = std::chrono::system_clock::now();
+	/*time*/ std::chrono::duration<double> time_cpu = end_cpu - start_cpu;
+	/*time*/ cpu_elapse += time_cpu.count();
     }    
 
     /*---------
@@ -228,7 +270,7 @@ TEST(algebra, covariance_transport) {
     using cuda_navigator_t = traccc::cuda::direct_navigator;
     using cuda_propagator_t = traccc::cuda::propagator<cuda_stepper_t, cuda_navigator_t>;    
     using cuda_propagator_state_t = cuda_propagator_t::state<propagator_options_t>;
-
+    
     // iterate over truth particles
     std::vector<traccc::bound_track_parameters> bp_collection;
     
@@ -240,8 +282,24 @@ TEST(algebra, covariance_transport) {
 	bp_collection.push_back(bound_track_parameters_per_particle[0]);	
     } 
     
-    cuda_propagator_state_t cuda_prop_states(bp_collection, void_po, &mng_mr);   
-    cuda_stepper_t::cov_transport(cuda_prop_states);        
+    cuda_propagator_state_t cuda_prop_states(bp_collection, void_po, &mng_mr);
+
+    /*time*/ auto start_gpu = std::chrono::system_clock::now();
+    
+    // run the navigator
+    for (int i_s = 0; i_s < 1000; i_s++){
+    
+	auto navi_res = cuda_navigator_t::status(cuda_prop_states, surfaces, &mng_mr);
+    }
+
+    /*time*/ auto end_gpu = std::chrono::system_clock::now();
+    /*time*/ std::chrono::duration<double> time_gpu = end_gpu - start_gpu;
+    /*time*/ gpu_elapse += time_gpu.count();
+
+    std::cout << "==> Elpased time ... " << std::endl;
+    std::cout << "cpu time: " << cpu_elapse << std::endl;
+    std::cout << "gpu time: " << gpu_elapse << std::endl;
+    
 }
 
 // Google Test can be run manually from the main() function
@@ -250,5 +308,9 @@ TEST(algebra, covariance_transport) {
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
+    my_argc = argc;
+    my_argv = argv;
+    
     return RUN_ALL_TESTS();
 }
+

@@ -12,10 +12,8 @@
 
 namespace traccc {
 
-template <typename surface_type = surface>
 class direct_navigator {
     public:
-    using surface_t = surface_type;
 
     struct state {
 
@@ -44,16 +42,17 @@ class direct_navigator {
         bool navigation_break = false;
     };
 
-    template <typename propagator_state_t>
+    template <typename propagator_state_t, typename surface_t>
     static bool status(propagator_state_t& state,
-                       host_collection<surface_t>& surfaces) {
+                       surface_t* surfaces) {
         return status(state.navigation, state.stepping, surfaces);
     }
 
-    template <typename stepper_t>
+    template <typename stepper_state_t, typename surface_t>
     static __CUDA_HOST_DEVICE__ bool status(
-        state& state, stepper_t& stepper_state,
-        host_collection<surface_t>& surfaces) {
+        state& state, stepper_state_t& stepper_state,
+	surface_t* surfaces) {
+        //host_collection<surface_t>& surfaces) {
 
         if (state.surface_iterator_id >= state.surface_sequence_size) {
             return false;
@@ -67,7 +66,7 @@ class direct_navigator {
                 state.target_surface_id = state.surface_sequence[0];
             }
 
-            surface_t& target_surface = surfaces.items[state.target_surface_id];
+            surface_t* target_surface = surfaces + state.target_surface_id;
 
             // establish the surface status
             auto surface_status = stepping_helper::update_surface_status(
@@ -87,15 +86,6 @@ class direct_navigator {
 
         return true;
     }
-
-    template <typename propagator_state_t, typename stepper_t>
-    static void target(propagator_state_t& state, const stepper_t& stepper) {
-        target(state.navigation, stepper);
-    }
-
-    template <typename stepper_t>
-    static __CUDA_HOST_DEVICE__ void target(state& state,
-                                            const stepper_t& stepper) {}
 };
 
 }  // namespace traccc

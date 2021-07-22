@@ -14,18 +14,17 @@
 namespace traccc {    
 namespace cuda {
     
-template <typename stepper_type, typename navigator_type >
+template <typename stepper_t, typename navigator_t >
 class propagator final {
 
 public:
-    using jacobian_t = Acts::BoundMatrix;
-    using stepper_t = stepper_type;
-    using navigator_t = navigator_type;
-    using stepper_state_t = typename stepper_type::host_state_collection;
-    using stepper_state_item_t = typename stepper_type::host_state_collection::item_vector;
-    
-    using navigator_state_t = typename navigator_type::host_state_collection;
+    //using jacobian_t = Acts::BoundMatrix;
+    //using stepper_t = stepper_type;
+    //using navigator_t = navigator_type;
 
+    using stepper_state_t = typename stepper_t::state;
+    using navigator_state_t = typename navigator_t::state;
+    
     explicit propagator(stepper_t stepper, navigator_t navigator):
 	m_stepper(std::move(stepper)), m_navigator(std::move(navigator)){}
     
@@ -38,7 +37,8 @@ public:
 	      const propagator_options_t& tops,
 	      vecmem::memory_resource* mr):
 	    options(tops),
-	    stepping({stepper_state_item_t(start.size(), mr)})
+	    stepping({typename host_collection<stepper_state_t>::item_vector(start.size(), mr)}),
+	    navigation({typename host_collection<navigator_state_t>::item_vector(start.size(), mr)})
 	{
 
 	}
@@ -47,10 +47,10 @@ public:
 	propagator_options_t options;
 
 	/// Stepper state container - internal states of the Stepper
-	stepper_state_t stepping;
+	host_collection<stepper_state_t> stepping;
 
 	/// Navigator state container - internal states of the Navigator
-	navigator_state_t navigator;	
+	host_collection<navigator_state_t> navigation;	
     };
 
     template < typename parameters_container_t, typename propagator_options_t  >
