@@ -1,0 +1,21 @@
+/** TRACCC library, part of the ACTS project (R&D line)
+ *
+ * (c) 2021 CERN for the benefit of the ACTS project
+ *
+ * Mozilla Public License Version 2.0
+ */
+
+#include <cuda/propagator/direct_navigator.cuh>
+
+namespace traccc {    
+namespace cuda {
+    /*
+    template <typename surface_t>
+bool traccc::cuda::direct_navigator<surface_t>::status(host_state_collection& state, stepper_state_t& stepper_state,
+					    host_collection<surface_t>& surfaces){
+    return true;
+}
+    */
+} // namespace cuda    
+} // namespace traccc
+    
