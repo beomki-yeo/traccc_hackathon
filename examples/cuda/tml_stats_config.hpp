@@ -29,12 +29,12 @@ struct pol2_params {
 };
 
 class tml_stats_config : public stats_config {
-   public:
+    public:
     tml_stats_config() {
         safety_factor = 2.0;
         safety_adder = 10;
-	//safety_factor = 10.0;
-        //safety_adder = 50000;
+        // safety_factor = 10.0;
+        // safety_adder = 50000;
         par_for_mb_doublets = {1, 28.77, 0.4221};
         par_for_mt_doublets = {1, 19.73, 0.232};
         par_for_triplets = {1, 0, 0.02149};
@@ -57,7 +57,7 @@ class tml_stats_config : public stats_config {
         return (par_for_seeds(n_internal_sp) + safety_adder) * safety_factor;
     }
 
-   private:
+    private:
     scalar safety_factor;
     scalar safety_adder;
     // mid-bot doublets size allocation parameter

@@ -5,27 +5,22 @@
  * Mozilla Public License Version 2.0
  */
 
+#include <chrono>
 #include <iostream>
 #include <vecmem/memory/host_memory_resource.hpp>
 
-#include "csv/csv_io.hpp"
-#include "edm/cell.hpp"
-#include "edm/cluster.hpp"
-#include "edm/internal_spacepoint.hpp"
-#include "edm/measurement.hpp"
-#include "edm/spacepoint.hpp"
-#include "geometry/pixel_segmentation.hpp"
-
-// clusterization
 #include "clusterization/component_connection.hpp"
 #include "clusterization/measurement_creation.hpp"
 #include "clusterization/spacepoint_formation.hpp"
+#include "csv/csv_io.hpp"
+#include "edm/cell.hpp"
+#include "edm/cluster.hpp"
+#include "edm/measurement.hpp"
+#include "edm/spacepoint.hpp"
+#include "geometry/pixel_segmentation.hpp"
+#include "omp.h"
 
-// seeding
-#include "seeding/seed_finding.hpp"
-#include "seeding/spacepoint_grouping.hpp"
-
-int seq_run(const std::string& detector_file, const std::string& cells_dir,
+int par_run(const std::string &detector_file, const std::string &cells_dir,
             unsigned int events) {
     auto env_d_d = std::getenv("TRACCC_TEST_DATA_DIR");
     if (env_d_d == nullptr) {
@@ -56,6 +51,7 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
     // Memory resource used by the EDM.
     vecmem::host_memory_resource resource;
 
+#pragma omp parallel for reduction (+:n_cells, n_clusters, n_measurements, n_space_points, m_modules)
     // Loop over events
     for (unsigned int event = 0; event < events; ++event) {
 
@@ -83,8 +79,9 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
         spacepoints_per_event.headers.reserve(cells_per_event.headers.size());
         spacepoints_per_event.items.reserve(cells_per_event.headers.size());
 
+#pragma omp parallel for
         for (std::size_t i = 0; i < cells_per_event.items.size(); ++i) {
-            auto& module = cells_per_event.headers[i];
+            auto &module = cells_per_event.headers[i];
             module.pixel =
                 traccc::pixel_segmentation{-8.425, -36.025, 0.05, 0.05};
 
@@ -104,83 +101,25 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
             n_measurements += measurements_per_module.size();
             n_space_points += spacepoints_per_module.size();
 
-            measurements_per_event.items.push_back(
-                std::move(measurements_per_module));
-            measurements_per_event.headers.push_back(module);
+#pragma omp critical
+            {
+                measurements_per_event.items.push_back(
+                    std::move(measurements_per_module));
+                measurements_per_event.headers.push_back(module);
 
-            spacepoints_per_event.items.push_back(
-                std::move(spacepoints_per_module));
-            spacepoints_per_event.headers.push_back(module.module);
+                spacepoints_per_event.items.push_back(
+                    std::move(spacepoints_per_module));
+                spacepoints_per_event.headers.push_back(module.module);
+            }
         }
-
-        /*-------------------
-             Seed finding
-          -------------------*/
-
-        // Seed finder config
-        traccc::seedfinder_config config;
-        // silicon detector max
-        config.rMax = 160.;
-        config.deltaRMin = 5.;
-        config.deltaRMax = 160.;
-        config.collisionRegionMin = -250.;
-        config.collisionRegionMax = 250.;
-        // config.zMin = -2800.; // this value introduces redundant bins without
-        // any spacepoints config.zMax = 2800.;
-        config.zMin = -1186.;
-        config.zMax = 1186.;
-        config.maxSeedsPerSpM = 5;
-        // 2.7 eta
-        config.cotThetaMax = 7.40627;
-        config.sigmaScattering = 1.00000;
-
-        config.minPt = 500.;
-        config.bFieldInZ = 0.00199724;
-
-        config.beamPos = {-.5, -.5};
-        config.impactMax = 10.;
-
-        config.highland = 13.6 * std::sqrt(config.radLengthPerSeed) *
-                          (1 + 0.038 * std::log(config.radLengthPerSeed));
-        float maxScatteringAngle = config.highland / config.minPt;
-        config.maxScatteringAngle2 = maxScatteringAngle * maxScatteringAngle;
-        // helix radius in homogeneous magnetic field. Units are Kilotesla, MeV
-        // and millimeter
-        // TODO: change using ACTS units
-        config.pTPerHelixRadius = 300. * config.bFieldInZ;
-        config.minHelixDiameter2 =
-            std::pow(config.minPt * 2 / config.pTPerHelixRadius, 2);
-        config.pT2perRadius =
-            std::pow(config.highland / config.pTPerHelixRadius, 2);
-
-        // setup spacepoint grid config
-        traccc::spacepoint_grid_config grid_config;
-        grid_config.bFieldInZ = config.bFieldInZ;
-        grid_config.minPt = config.minPt;
-        grid_config.rMax = config.rMax;
-        grid_config.zMax = config.zMax;
-        grid_config.zMin = config.zMin;
-        grid_config.deltaRMax = config.deltaRMax;
-        grid_config.cotThetaMax = config.cotThetaMax;
-
-        traccc::spacepoint_grouping sg(config, grid_config);
-        auto internal_sp_per_event = sg(spacepoints_per_event, &resource);
-
-        // seed finding
-        traccc::seed_finding sf(config);
-        auto seeds = sf(internal_sp_per_event);
-
-        /*------------
-             Writer
-          ------------*/
 
         traccc::measurement_writer mwriter{std::string("event") + event_number +
                                            "-measurements.csv"};
         for (size_t i = 0; i < measurements_per_event.items.size(); ++i) {
             auto measurements_per_module = measurements_per_event.items[i];
             auto module = measurements_per_event.headers[i];
-            for (const auto& measurement : measurements_per_module) {
-                const auto& local = measurement.local;
+            for (const auto &measurement : measurements_per_module) {
+                const auto &local = measurement.local;
                 mwriter.append({module.module, "", local[0], local[1], 0., 0.,
                                 0., 0., 0., 0., 0., 0.});
             }
@@ -192,25 +131,9 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
             auto spacepoints_per_module = spacepoints_per_event.items[i];
             auto module = spacepoints_per_event.headers[i];
 
-            for (const auto& spacepoint : spacepoints_per_module) {
-                const auto& pos = spacepoint.global;
+            for (const auto &spacepoint : spacepoints_per_module) {
+                const auto &pos = spacepoint.global;
                 spwriter.append({module, pos[0], pos[1], pos[2], 0., 0., 0.});
-            }
-        }
-
-        traccc::internal_spacepoint_writer internal_spwriter{
-            std::string("event") + event_number + "-internal_spacepoints.csv"};
-        for (size_t i = 0; i < internal_sp_per_event.items.size(); ++i) {
-            auto internal_sp_per_bin = internal_sp_per_event.items[i];
-            auto bin = internal_sp_per_event.headers[i].global_index;
-
-            for (const auto& internal_sp : internal_sp_per_bin) {
-                const auto& x = internal_sp.m_x;
-                const auto& y = internal_sp.m_y;
-                const auto& z = internal_sp.m_z;
-                const auto& varR = internal_sp.m_varianceR;
-                const auto& varZ = internal_sp.m_varianceZ;
-                internal_spwriter.append({bin, x, y, z, varR, varZ});
             }
         }
     }
@@ -229,10 +152,10 @@ int seq_run(const std::string& detector_file, const std::string& cells_dir,
 
 // The main routine
 //
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
     if (argc < 4) {
         std::cout << "Not enough arguments, minimum requirement: " << std::endl;
-        std::cout << "./seq_example <detector_file> <cell_directory> <events>"
+        std::cout << "./par_example <detector_file> <cell_directory> <events>"
                   << std::endl;
         return -1;
     }
@@ -241,7 +164,13 @@ int main(int argc, char* argv[]) {
     auto cell_directory = std::string(argv[2]);
     auto events = std::atoi(argv[3]);
 
-    std::cout << "Running ./seq_exammple " << detector_file << " "
+    std::cout << "Running ./par_exammple " << detector_file << " "
               << cell_directory << " " << events << std::endl;
-    return seq_run(detector_file, cell_directory, events);
+    auto start = std::chrono::system_clock::now();
+    auto result = par_run(detector_file, cell_directory, events);
+    auto end = std::chrono::system_clock::now();
+
+    std::chrono::duration<double> diff = end - start;
+    std::cout << "Execution time: " << diff.count() << " sec." << std::endl;
+    return result;
 }

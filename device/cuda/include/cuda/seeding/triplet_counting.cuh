@@ -32,7 +32,8 @@ namespace cuda {
 /// @param triplet_counter_container vecmem container for triplet counters
 /// @resource vecmem memory resource
 void triplet_counting(const seedfinder_config& config,
-                      host_internal_spacepoint_container& internal_sp_container, host_doublet_counter_container& doublet_counter_container,
+                      host_internal_spacepoint_container& internal_sp_container,
+                      host_doublet_counter_container& doublet_counter_container,
                       host_doublet_container& mid_bot_doublet_container,
                       host_doublet_container& mid_top_doublet_container,
                       host_triplet_counter_container& triplet_counter_container,

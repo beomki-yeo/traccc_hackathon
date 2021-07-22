@@ -146,8 +146,8 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
         auto seeds = sf(internal_sp_per_event);
 
         /*time*/ auto end_seeding_cpu = std::chrono::system_clock::now();
-        //n_seeds += seeds.size();
-	n_seeds += seeds.items[0].size();
+        // n_seeds += seeds.size();
+        n_seeds += seeds.items[0].size();
 
         /*time*/ std::chrono::duration<double> time_seeding_cpu =
             end_seeding_cpu - start_seeding_cpu;
@@ -191,13 +191,13 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
 
         traccc::seed_writer sd_writer{std::string("event") + event_number +
                                       "-seeds.csv"};
-        //for (size_t i = 0; i < seeds.size(); ++i) {
-	for (auto seed: seeds.items[0]) {
-                auto weight = seed.weight;
-                auto z_vertex = seed.z_vertex;
-                auto spB = seed.spB;
-                auto spM = seed.spM;
-                auto spT = seed.spT;
+        // for (size_t i = 0; i < seeds.size(); ++i) {
+        for (auto seed : seeds.items[0]) {
+            auto weight = seed.weight;
+            auto z_vertex = seed.z_vertex;
+            auto spB = seed.spB;
+            auto spM = seed.spM;
+            auto spT = seed.spT;
 
             sd_writer.append({weight, z_vertex, spB.x(), spB.y(), spB.z(), 0, 0,
                               spM.x(), spM.y(), spM.z(), 0, 0, spT.x(), spT.y(),

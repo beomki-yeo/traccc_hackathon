@@ -32,8 +32,13 @@ struct seed_finding {
     /// @param sp_grid spacepoint grid
     /// @param stats_config experiment-dependent statistics estimator
     /// @param mr vecmem memory resource
-    seed_finding(seedfinder_config& config, std::shared_ptr<spacepoint_grid> sp_grid, stats_config* stats_cfg, vecmem::memory_resource* mr)
-        : m_seedfinder_config(config), m_sp_grid(sp_grid), m_stats_config(stats_cfg), m_mr(mr),
+    seed_finding(seedfinder_config& config,
+                 std::shared_ptr<spacepoint_grid> sp_grid,
+                 stats_config* stats_cfg, vecmem::memory_resource* mr)
+        : m_seedfinder_config(config),
+          m_sp_grid(sp_grid),
+          m_stats_config(stats_cfg),
+          m_mr(mr),
 
           // initialize all vecmem containers:
           // the size of header and item vector = the number of spacepoint bins
