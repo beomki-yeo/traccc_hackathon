@@ -8,15 +8,11 @@
 #include "cuda/propagator/detail/eigen_stepper_impl.cuh"
 
 namespace traccc {
-namespace cuda{
-            
+namespace cuda {
+
 template <typename stepper_state_t>
 void eigen_stepper_impl::cov_transport(host_collection<stepper_state_t>& state,
-				       const Acts::ActsScalar mass){
-    
+                                       const Acts::ActsScalar mass) {}
 
-}
-    
 }  // namespace cuda
 }  // namespace traccc
-

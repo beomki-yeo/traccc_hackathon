@@ -8,8 +8,8 @@
 #pragma once
 
 // Acts
-#include "Acts/EventData/TrackParameters.hpp"
 #include "Acts/Definitions/Common.hpp"
+#include "Acts/EventData/TrackParameters.hpp"
 
 // std
 #include <limits>
@@ -19,32 +19,28 @@
 namespace traccc {
 namespace cuda {
 
-class direct_navigator{
-    
-public:
-    
-    using state = typename traccc::direct_navigator::state;    
+class direct_navigator {
+
+    public:
+    using state = typename traccc::direct_navigator::state;
 
     // Wrapper for status call
     template <typename propagator_state_t, typename surface_t>
     static bool status(propagator_state_t& state,
                        host_collection<surface_t>& surfaces,
-		       vecmem::memory_resource* resource) {
+                       vecmem::memory_resource* resource) {
         return status(state.navigation, state.stepping, surfaces, resource);
     }
 
     // status call declaration in direct navigator.cu
     template <typename stepper_state_t, typename surface_t>
     static bool status(host_collection<state>& state,
-		       host_collection<stepper_state_t>& stepper_state,
-		       host_collection<surface_t>& surfaces,
-		       vecmem::memory_resource* resource);
+                       host_collection<stepper_state_t>& stepper_state,
+                       host_collection<surface_t>& surfaces,
+                       vecmem::memory_resource* resource);
 
-    
-private:
+    private:
+};
 
-};    
-   
-} // namespace cuda    
-} // namespace traccc
-    
+}  // namespace cuda
+}  // namespace traccc
