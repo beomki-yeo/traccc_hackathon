@@ -14,7 +14,6 @@ namespace traccc {
 
 class direct_navigator {
     public:
-
     struct state {
 
         // surface sequence: takes surface id as input
@@ -43,16 +42,15 @@ class direct_navigator {
     };
 
     template <typename propagator_state_t, typename surface_t>
-    static bool status(propagator_state_t& state,
-                       surface_t* surfaces) {
+    static bool status(propagator_state_t& state, surface_t* surfaces) {
         return status(state.navigation, state.stepping, surfaces);
     }
 
     template <typename stepper_state_t, typename surface_t>
-    static __CUDA_HOST_DEVICE__ bool status(
-        state& state, stepper_state_t& stepper_state,
-	surface_t* surfaces) {
-        //host_collection<surface_t>& surfaces) {
+    static __CUDA_HOST_DEVICE__ bool status(state& state,
+                                            stepper_state_t& stepper_state,
+                                            surface_t* surfaces) {
+        // host_collection<surface_t>& surfaces) {
 
         if (state.surface_iterator_id >= state.surface_sequence_size) {
             return false;
