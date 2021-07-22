@@ -23,33 +23,29 @@ class eigen_stepper{
 public:
 
     using state = traccc::eigen_stepper::state;    
-    using host_state_collection = host_collection<state>;
-    using device_state_collection = device_collection<state>;
-    using state_collection_data = collection_data<state>;
-    using state_collection_buffer = collection_buffer<state>;
-    using state_collection_view = collection_view<state>;
     
     template <typename propagator_state_t>
     void step(propagator_state_t& state){
-
-
+	// left empty for the moment
     }
 
+    // Wrapper for rk4
     template <typename propagator_state_t>
     static bool rk4(propagator_state_t& state){
 	return rk4(state.stepping);
     }
 
-    // implementation in eigen_stepper.cu
-    static bool rk4(host_state_collection& state);
-    
+    // rk4 declaration in eigen_stepper.cu
+    static bool rk4(host_collection<state>& state);
+
+    // Wrapper for cov transport
     template <typename propagator_state_t>
     static void cov_transport(propagator_state_t& state){
 	cov_transport(state.stepping, state.options.mass);
     }
 
-    // implementation in eigen_stepper.cu
-    static void cov_transport(host_state_collection& state, const Acts::ActsScalar mass);
+    // cov transport declaration in eigen_stepper.cu
+    static void cov_transport(host_collection<state>& state, const Acts::ActsScalar mass);
     
 private:
     

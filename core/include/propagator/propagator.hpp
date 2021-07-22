@@ -22,7 +22,6 @@ class propagator final {
     using stepper_state_t = typename stepper_type::state;
     using navigator_t = navigator_type;
     using navigator_state_t = typename navigator_type::state;
-    using surface_t = typename navigator_type::surface_t;
 
     explicit propagator(stepper_t stepper, navigator_t navigator)
         : m_stepper(std::move(stepper)), m_navigator(std::move(navigator)) {}
@@ -43,7 +42,7 @@ class propagator final {
         navigator_state_t navigation;
     };
 
-    template <typename propagator_options_t>
+    template <typename propagator_options_t, typename surface_t>
     void propagate(state<propagator_options_t>& state,
                    host_collection<surface_t>& surfaces) {
 
@@ -51,7 +50,7 @@ class propagator final {
         for (int i_s = 0; i_s < state.options.maxSteps; i_s++) {
 
             // do navigator
-            auto navi_res = navigator_t::status(state, surfaces);
+            auto navi_res = navigator_t::status(state, &surfaces.items[0]);
 
             if (!navi_res) {
                 // std::cout << "Total RK steps: " << i_s << std::endl;

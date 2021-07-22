@@ -30,7 +30,7 @@
 
 // traccc cuda
 #include <cuda/propagator/eigen_stepper.cuh>
-#include <cuda/propagator/direct_navigator.hpp>
+#include <cuda/propagator/direct_navigator.cuh>
 #include <cuda/propagator/propagator.hpp>
 
 // std
@@ -181,8 +181,8 @@ TEST(algebra, stepper) {
     // define tracking components
     using stepper_t = typename traccc::eigen_stepper;
     using stepper_state_t = typename traccc::eigen_stepper::state;
-    using navigator_t = typename traccc::direct_navigator<traccc::surface>;
-    using navigator_state_t = typename traccc::direct_navigator<traccc::surface>::state;
+    using navigator_t = typename traccc::direct_navigator;
+    using navigator_state_t = typename traccc::direct_navigator::state;
     using propagator_t = typename traccc::propagator<stepper_t, navigator_t>;
     using propagator_options_t = traccc::propagator_options<traccc::void_actor, traccc::void_aborter>;
     using propagator_state_t = typename propagator_t::state<propagator_options_t>;
@@ -244,7 +244,7 @@ TEST(algebra, stepper) {
     propagator_options_t po;
     
     using cuda_stepper_t = traccc::cuda::eigen_stepper;
-    using cuda_navigator_t = traccc::cuda::direct_navigator<traccc::surface>;;
+    using cuda_navigator_t = traccc::cuda::direct_navigator;
     using cuda_propagator_t = traccc::cuda::propagator<cuda_stepper_t, cuda_navigator_t>;    
     using cuda_propagator_state_t = cuda_propagator_t::state<propagator_options_t>;
 
