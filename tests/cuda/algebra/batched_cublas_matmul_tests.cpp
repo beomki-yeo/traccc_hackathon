@@ -7,7 +7,7 @@
 
 #include <gtest/gtest.h>
 
-#include <cuda/fitter/detail/cublas_wrapper.hpp>
+#include "cublas_wrapper.hpp"
 #include <cuda/utils/definitions.hpp>
 
 // vecmem
