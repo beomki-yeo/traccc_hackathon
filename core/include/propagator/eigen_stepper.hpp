@@ -14,7 +14,10 @@
 // std
 #include <edm/track_parameters.hpp>
 #include <limits>
+
+// traccc
 #include <utils/vector_helpers.hpp>
+#include <edm/detail/transform_bound_to_free.hpp>
 
 namespace traccc {
 
@@ -41,14 +44,11 @@ class eigen_stepper {
               step_size(ndir * std::abs(ssize)),
               step_size_cutoff(ssize_cutoff),
               tolerance(stolerance) {
-
-            pars.template segment<3>(Acts::eFreePos0) = par.position(surfaces);
-            pars.template segment<3>(Acts::eFreeDir0) = par.unit_direction();
-            pars[Acts::eFreeTime] = par.time();
-            pars[Acts::eFreeQOverP] = par.qop();
-
+	    
             // Get the reference surface for navigation
-            const auto& surface = par.reference_surface(surfaces);
+            const auto& surface = par.reference_surface(surfaces);	    	    
+	    pars = detail::transform_bound_to_free_parameters(par.vector(),surface);
+	    
             // set the covariance transport flag to true and copy
             covTransport = true;
             cov = par.m_covariance;

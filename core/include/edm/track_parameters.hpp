@@ -49,6 +49,11 @@ struct bound_track_parameters {
     auto& covariance() { return m_covariance; }
 
     __CUDA_HOST_DEVICE__
+    const auto& local() {
+	return Acts::Vector2(m_vector[Acts::eBoundLoc0],m_vector[Acts::eBoundLoc1]);
+    }
+    
+    __CUDA_HOST_DEVICE__
     auto position(host_surface_collection& surfaces) const {
         const Acts::Vector2 loc(m_vector[Acts::eBoundLoc0],
                                 m_vector[Acts::eBoundLoc1]);

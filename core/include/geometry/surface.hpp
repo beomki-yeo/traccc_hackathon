@@ -62,7 +62,7 @@ class surface {
     geometry_id geom_id() { return m_geom_id; }
 
     __CUDA_HOST_DEVICE__
-    Acts::Vector3 local_to_global(const Acts::Vector2& loc) {
+    Acts::Vector3 local_to_global(const Acts::Vector2& loc) const {
         return m_transform *
                Acts::Vector3(loc[Acts::eBoundLoc0], loc[Acts::eBoundLoc1], 0.);
     }
