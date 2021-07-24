@@ -16,10 +16,10 @@
 #include <limits>
 
 // traccc
-#include <utils/vector_helpers.hpp>
 #include <edm/detail/transform_bound_to_free.hpp>
 #include <edm/detail/transform_free_to_bound.hpp>
 #include <propagator/detail/covariance_engine.hpp>
+#include <utils/vector_helpers.hpp>
 
 namespace traccc {
 
@@ -46,11 +46,12 @@ class eigen_stepper {
               step_size(ndir * std::abs(ssize)),
               step_size_cutoff(ssize_cutoff),
               tolerance(stolerance) {
-	    
+
             // Get the reference surface for navigation
-            const auto& surface = par.reference_surface(surfaces);	    	    
-	    pars = detail::transform_bound_to_free_parameters(par.vector(),surface);
-	    
+            const auto& surface = par.reference_surface(surfaces);
+            pars = detail::transform_bound_to_free_parameters(par.vector(),
+                                                              surface);
+
             // set the covariance transport flag to true and copy
             covTransport = true;
             cov = par.m_covariance;
@@ -122,12 +123,12 @@ class eigen_stepper {
         return state(par, surfaces, ndir, ssize, stolerance);
     }
 
-    template < typename surface_t >
-    bound_track_parameters bound_state(const surface& surface){
-	//return detail::bound_state();
-	std::cout << "hi" << std::endl;
+    template <typename surface_t>
+    bound_track_parameters bound_state(const surface& surface) {
+        // return detail::bound_state();
+        std::cout << "hi" << std::endl;
     }
-    
+
     template <typename propagator_state_t>
     static void step(propagator_state_t& state) {
 
