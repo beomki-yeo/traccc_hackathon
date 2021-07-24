@@ -7,14 +7,18 @@
 
 #pragma once
 
+// Acts
+#include "Acts/Definitions/TrackParametrization.hpp"
+#include "Acts/EventData/TrackParameters.hpp"
+
+// traccc
 #include <definitions/algebra.hpp>
 
 #include "edm/collection.hpp"
+#include "edm/detail/transform_bound_to_free.hpp"
 #include "utils/arch_qualifiers.hpp"
 #include "utils/intersection.hpp"
-
-// Acts
-#include "Acts/EventData/TrackParameters.hpp"
+#include "utils/vector_helpers.hpp"
 
 namespace traccc {
 
@@ -62,7 +66,7 @@ class surface {
     geometry_id geom_id() { return m_geom_id; }
 
     __CUDA_HOST_DEVICE__
-    Acts::Vector3 local_to_global(const Acts::Vector2& loc) {
+    Acts::Vector3 local_to_global(const Acts::Vector2& loc) const {
         return m_transform *
                Acts::Vector3(loc[Acts::eBoundLoc0], loc[Acts::eBoundLoc1], 0.);
     }
@@ -70,6 +74,103 @@ class surface {
     __CUDA_HOST_DEVICE__
     Acts::Vector3 global_to_local(const Acts::Vector3& glo) {
         return m_transform.inverse() * glo;
+    }
+
+    __CUDA_HOST_DEVICE__
+    Acts::Vector3 global_to_local(const Acts::Vector3& glo) const {
+        return m_transform.inverse() * glo;
+    }
+
+    __CUDA_HOST_DEVICE__
+    Acts::RotationMatrix3 reference_frame() const {
+        return m_transform.matrix().block<3, 3>(0, 0);
+    }
+
+    __CUDA_HOST_DEVICE__
+    Acts::FreeToBoundMatrix free_to_bound_jacobian(
+        const Acts::FreeVector& free_vector) const {
+        // The global position
+        const auto position = free_vector.segment<3>(Acts::eFreePos0);
+        // The direction
+        const auto direction = free_vector.segment<3>(Acts::eFreeDir0);
+        // Use fast evaluation function of sin/cos
+        auto [cosPhi, sinPhi, cosTheta, sinTheta, invSinTheta] =
+            vector_helpers::evaluate_trigonomics(direction);
+
+        // The measurement frame of the surface
+        const auto& rframeT = reference_frame().transpose();
+
+        // Initalize the jacobian from global to local
+        Acts::FreeToBoundMatrix jac_to_local = Acts::FreeToBoundMatrix::Zero();
+        // Local position component given by the refernece frame
+        jac_to_local.block<2, 3>(Acts::eBoundLoc0, Acts::eFreePos0) =
+            rframeT.block<2, 3>(0, 0);
+        // Time component
+        jac_to_local(Acts::eBoundTime, Acts::eFreeTime) = 1;
+        // Directional and momentum elements for reference frame surface
+        jac_to_local(Acts::eBoundPhi, Acts::eFreeDir0) = -sinPhi * invSinTheta;
+        jac_to_local(Acts::eBoundPhi, Acts::eFreeDir1) = cosPhi * invSinTheta;
+        jac_to_local(Acts::eBoundTheta, Acts::eFreeDir0) = cosPhi * cosTheta;
+        jac_to_local(Acts::eBoundTheta, Acts::eFreeDir1) = sinPhi * cosTheta;
+        jac_to_local(Acts::eBoundTheta, Acts::eFreeDir2) = -sinTheta;
+        jac_to_local(Acts::eBoundQOverP, Acts::eFreeQOverP) = 1;
+
+        return jac_to_local;
+    }
+
+    __CUDA_HOST_DEVICE__
+    Acts::FreeToPathMatrix free_to_path_derivative(
+        const Acts::FreeVector& free_vector) const {
+        // The global position
+        const auto& position = free_vector.segment<3>(Acts::eFreePos0);
+        // The direction
+        const auto& direction = free_vector.segment<3>(Acts::eFreeDir0);
+        // The measurement frame of the surface
+        const Acts::RotationMatrix3& rframe = reference_frame();
+
+        // The measurement frame z axis
+        const Acts::Vector3 refZAxis = rframe.col(2);
+        // Cosine of angle between momentum direction and measurement frame z
+        // axis
+        const Acts::ActsScalar dz = refZAxis.dot(direction);
+        // Initialize the derivative
+        Acts::FreeToPathMatrix free_to_path = Acts::FreeToPathMatrix::Zero();
+        free_to_path.segment<3>(Acts::eFreePos0) =
+            -1.0 * refZAxis.transpose() / dz;
+        return free_to_path;
+    }
+
+    __CUDA_HOST_DEVICE__
+    Acts::BoundToFreeMatrix bound_to_free_jacobian(
+        const Acts::BoundVector& bound_vector) const {
+        // Transform from bound to free parameters
+        Acts::FreeVector free_vector =
+            detail::transform_bound_to_free_parameters(bound_vector, *this);
+
+        // The global position
+        const Acts::Vector3 position = free_vector.segment<3>(Acts::eFreePos0);
+        // The direction
+        const Acts::Vector3 direction = free_vector.segment<3>(Acts::eFreeDir0);
+        // Use fast evaluation function of sin/cos
+        auto [cosPhi, sinPhi, cosTheta, sinTheta, invSinTheta] =
+            vector_helpers::evaluate_trigonomics(direction);
+
+        // retrieve the reference frame
+        const Acts::RotationMatrix3& rframe = reference_frame();
+        // Initialize the jacobian from local to global
+        Acts::BoundToFreeMatrix jac_to_global = Acts::BoundToFreeMatrix::Zero();
+        // the local error components - given by reference frame
+        jac_to_global.topLeftCorner<3, 2>() = rframe.topLeftCorner<3, 2>();
+        // the time component
+        jac_to_global(Acts::eFreeTime, Acts::eBoundTime) = 1;
+        // the momentum components
+        jac_to_global(Acts::eFreeDir0, Acts::eBoundPhi) = (-sinTheta) * sinPhi;
+        jac_to_global(Acts::eFreeDir0, Acts::eBoundTheta) = cosTheta * cosPhi;
+        jac_to_global(Acts::eFreeDir1, Acts::eBoundPhi) = sinTheta * cosPhi;
+        jac_to_global(Acts::eFreeDir1, Acts::eBoundTheta) = cosTheta * sinPhi;
+        jac_to_global(Acts::eFreeDir2, Acts::eBoundTheta) = (-sinTheta);
+        jac_to_global(Acts::eFreeQOverP, Acts::eBoundQOverP) = 1;
+        return jac_to_global;
     }
 
     __CUDA_HOST_DEVICE__

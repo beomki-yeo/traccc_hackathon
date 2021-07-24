@@ -7,8 +7,9 @@
 
 #include <gtest/gtest.h>
 
-#include "cublas_wrapper.hpp"
 #include <cuda/utils/definitions.hpp>
+
+#include "cublas_wrapper.hpp"
 
 // vecmem
 #include <vecmem/containers/vector.hpp>
