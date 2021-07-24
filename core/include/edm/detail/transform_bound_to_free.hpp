@@ -13,10 +13,9 @@
 
 // traccc
 #include "edm/track_parameters.hpp"
-#include "geometry/surface.hpp"
 #include "utils/unit_vectors.hpp"
 
-namespace traccc {
+namespace traccc {    
 namespace detail{
     
 template< typename surface_t >

@@ -19,6 +19,7 @@
 #include <utils/vector_helpers.hpp>
 #include <edm/detail/transform_bound_to_free.hpp>
 #include <edm/detail/transform_free_to_bound.hpp>
+#include <propagator/detail/covariance_engine.hpp>
 
 namespace traccc {
 
@@ -124,7 +125,7 @@ class eigen_stepper {
     template < typename surface_t >
     bound_track_parameters bound_state(const surface& surface){
 	//return detail::bound_state();
-
+	std::cout << "hi" << std::endl;
     }
     
     template <typename propagator_state_t>
