@@ -200,7 +200,7 @@ class eigen_stepper {
 
             // printf("%f %f \n", state.step_size, step_size_scaling);
             //	    std::cout << state.step_size << "  " << step_size_scaling <<
-            //std::endl;
+            // std::endl;
 
             // Todo: adapted error handling on GPU?
             // If step size becomes too small the particle remains at the
