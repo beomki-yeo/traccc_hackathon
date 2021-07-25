@@ -25,7 +25,7 @@ namespace traccc {
 
 class eigen_stepper {
     public:
-    struct state {
+    struct __CUDA_ALIGN__(16) state {
         using jacobian_t = typename bound_track_parameters::jacobian_t;
         using covariance_t = typename bound_track_parameters::covariance_t;
         using bound_state_t =
@@ -35,15 +35,15 @@ class eigen_stepper {
 
         state() = default;
 
-        explicit state(bound_track_parameters par,
-                       host_surface_collection& surfaces,
-                       Acts::NavigationDirection ndir = Acts::forward,
-                       double ssize = std::numeric_limits<double>::max(),
-                       double ssize_cutoff = std::numeric_limits<double>::max(),
-                       double stolerance = Acts::s_onSurfaceTolerance)
+        state(bound_track_parameters par, host_surface_collection& surfaces,
+              Acts::NavigationDirection ndir = Acts::forward,
+              double ssize = std::numeric_limits<double>::max(),
+              double ssize_cutoff = std::numeric_limits<double>::max(),
+              double stolerance = Acts::s_onSurfaceTolerance)
+
             : q(par.charge()),
               nav_dir(ndir),
-              step_size(ndir * std::abs(ssize)),
+              // step_size(ndir * std::abs(ssize)), whyyyy?
               step_size_cutoff(ssize_cutoff),
               tolerance(stolerance) {
 
@@ -59,20 +59,39 @@ class eigen_stepper {
             ///// ToDo
             // jacToGlobal = surface.boundToFreeJacobian(gctx,par.parameters());
         }
+        /// Navigation direction, this is needed for searching
+        Acts::NavigationDirection nav_dir;
+        // double nav_dir;
 
-        /// Internal free vector parameters
-        Acts::FreeVector pars = Acts::FreeVector::Zero();
+        /// Covariance matrix (and indicator)
+        /// associated with the initial error on track parameters
+        int covTransport = true;
+        // double covTransport = true;
 
         /// The charge as the free vector can be 1/p or q/p
         double q = 1.;
 
-        /// Covariance matrix (and indicator)
-        /// associated with the initial error on track parameters
-        bool covTransport = true;
-        covariance_t cov = covariance_t::Zero();
+        /// Accummulated path length state
+        double path_accumulated = 0.;
 
-        /// Navigation direction, this is needed for searching
-        Acts::NavigationDirection nav_dir;
+        /// Adaptive step size of the runge-kutta integration
+        double step_size = 10.;
+
+        // cutoff stepsize
+        double step_size_cutoff = 0;
+
+        /// Last performed step (for overstep limit calculation)
+        double previous_step_size = 0.;
+
+        /// The tolerance for the stepping
+        double tolerance = Acts::s_onSurfaceTolerance;
+
+        size_t max_rk_step_trials = 10000;
+
+        /// Internal free vector parameters
+        Acts::FreeVector pars = Acts::FreeVector::Zero();
+
+        covariance_t cov = covariance_t::Zero();
 
         /// The full jacobian of the transport entire transport
         jacobian_t jacobian = jacobian_t::Identity();
@@ -86,25 +105,9 @@ class eigen_stepper {
         /// The propagation derivative
         Acts::FreeVector derivative = Acts::FreeVector::Zero();
 
-        /// Accummulated path length state
-        double path_accumulated = 0.;
-
-        /// Adaptive step size of the runge-kutta integration
-        double step_size = 1.;
-
-        // cutoff stepsize
-        double step_size_cutoff = 0;
-
-        /// Last performed step (for overstep limit calculation)
-        double previous_step_size = 0.;
-
-        /// The tolerance for the stepping
-        double tolerance = Acts::s_onSurfaceTolerance;
-
-        size_t max_rk_step_trials = 10000;
-
         /// @brief Storage of magnetic field and the sub steps during a RKN4
         /// step
+
         struct {
             /// Magnetic field evaulations
             Acts::Vector3 B_first, B_middle, B_last;
@@ -125,8 +128,8 @@ class eigen_stepper {
 
     template <typename surface_t>
     bound_track_parameters bound_state(const surface& surface) {
+        // defined at covariance_engine.hpp
         // return detail::bound_state();
-        std::cout << "hi" << std::endl;
     }
 
     template <typename propagator_state_t>
@@ -136,7 +139,7 @@ class eigen_stepper {
     }
 
     template <typename propagator_state_t>
-    static bool rk4(propagator_state_t& state) {
+    static __CUDA_HOST_DEVICE__ bool rk4(propagator_state_t& state) {
         return rk4(state.stepping);
     }
 
@@ -195,7 +198,8 @@ class eigen_stepper {
 
             state.step_size = state.step_size * step_size_scaling;
 
-            // std::cout << state.step_size << "  " << step_size_scaling <<
+            // printf("%f %f \n", state.step_size, step_size_scaling);
+            //	    std::cout << state.step_size << "  " << step_size_scaling <<
             // std::endl;
 
             // Todo: adapted error handling on GPU?
@@ -204,6 +208,7 @@ class eigen_stepper {
             if (state.step_size * state.step_size <
                 state.step_size_cutoff * state.step_size_cutoff) {
                 // Not moving due to too low momentum needs an aborter
+                printf("step size is too small. will break. \n");
                 return false;
             }
 
@@ -211,6 +216,7 @@ class eigen_stepper {
             // appropriate
             if (n_step_trials > state.max_rk_step_trials) {
                 // Too many trials, have to abort
+                printf("too many rk4 trials. will break. \n");
                 return false;
             }
             n_step_trials++;
@@ -256,7 +262,7 @@ class eigen_stepper {
     }
 
     template <typename propagator_state_t>
-    static void cov_transport(propagator_state_t& state) {
+    static __CUDA_HOST_DEVICE__ void cov_transport(propagator_state_t& state) {
         cov_transport(state.stepping, state.options.mass);
     }
 

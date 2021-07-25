@@ -14,31 +14,31 @@ namespace traccc {
 
 class direct_navigator {
     public:
-    struct state {
-
-        // surface sequence: takes surface id as input
-        array<size_t, 30> surface_sequence;
-
-        /// The surface sequence size
-        size_t surface_sequence_size = 0;
-
-        // surface iterator id
-        size_t surface_iterator_id = 0;
-
-        /// Navigation state - external interface: the start surface
-        size_t start_surface_id = 0;
-
-        /// Navigation state - external interface: the current surface
-        size_t current_surface_id = 0;
-
-        /// Navigation state - external interface: the target surface
-        size_t target_surface_id = 0;
+    struct __CUDA_ALIGN__(16) state {
 
         /// Navigation state - external interface: target is reached
-        bool target_reached = false;
+        int target_reached = false;
 
         /// Navigation state - external interface: a break has been detected
-        bool navigation_break = false;
+        int navigation_break = false;
+
+        // surface sequence: takes surface id as input
+        std::array<unsigned int, 30> surface_sequence;
+
+        /// The surface sequence size
+        unsigned int surface_sequence_size = 0;
+
+        // surface iterator id
+        unsigned int surface_iterator_id = 0;
+
+        /// Navigation state - external interface: the start surface
+        unsigned int start_surface_id = 0;
+
+        /// Navigation state - external interface: the current surface
+        unsigned int current_surface_id = 0;
+
+        /// Navigation state - external interface: the target surface
+        unsigned int target_surface_id = 0;
     };
 
     template <typename propagator_state_t, typename surface_t>
@@ -50,7 +50,6 @@ class direct_navigator {
     static __CUDA_HOST_DEVICE__ bool status(state& state,
                                             stepper_state_t& stepper_state,
                                             surface_t* surfaces) {
-        // host_collection<surface_t>& surfaces) {
 
         if (state.surface_iterator_id >= state.surface_sequence_size) {
             return false;
@@ -72,6 +71,9 @@ class direct_navigator {
 
             // if the stepper state is on surface
             if (surface_status == intersection::status::on_surface) {
+
+                // printf("on surface %u %u \n", state.surface_iterator_id,
+                // state.surface_sequence_size);
 
                 // increase the iterator id
                 state.surface_iterator_id++;

@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cassert>
 #include <climits>
 #include <dfe/dfe_io_dsv.hpp>
@@ -489,6 +490,14 @@ host_truth_spacepoint_container read_truth_hits(
 
         // add spacepoint
         result.items[header_id].push_back(sp);
+    }
+
+    for (int i_h = 0; i_h < result.headers.size(); i_h++) {
+
+        std::sort(std::begin(result.items[i_h]), std::end(result.items[i_h]),
+                  [](const auto& a, const auto& b) {
+                      return a.radius() < b.radius();
+                  });
     }
 
     assert(result.items.size() == result.headers.size());
