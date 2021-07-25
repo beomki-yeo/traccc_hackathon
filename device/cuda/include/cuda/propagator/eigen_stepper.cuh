@@ -44,7 +44,7 @@ class eigen_stepper {
     }
 
     // cov transport declaration in eigen_stepper.cu
-    template<typename propagator_options_t>
+    template <typename propagator_options_t>
     static void cov_transport(host_collection<state>& state,
                               host_collection<propagator_options_t>& options);
 

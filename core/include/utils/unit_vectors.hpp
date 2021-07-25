@@ -14,13 +14,13 @@ namespace traccc {
 template <typename T>
 static __CUDA_HOST_DEVICE__ Eigen::Matrix<T, 3, 1>
 make_direction_unit_from_phi_theta(T phi, T theta) {
-  const auto cosTheta = std::cos(theta);
-  const auto sinTheta = std::sin(theta);
-  return {
-      std::cos(phi) * sinTheta,
-      std::sin(phi) * sinTheta,
-      cosTheta,
-  };
+    const auto cosTheta = std::cos(theta);
+    const auto sinTheta = std::sin(theta);
+    return {
+        std::cos(phi) * sinTheta,
+        std::sin(phi) * sinTheta,
+        cosTheta,
+    };
 }
 
 }  // namespace traccc

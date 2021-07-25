@@ -21,9 +21,9 @@ class direct_navigator {
 
         /// Navigation state - external interface: a break has been detected
         int navigation_break = false;
-	
+
         // surface sequence: takes surface id as input
-	std::array<unsigned int, 30> surface_sequence;
+        std::array<unsigned int, 30> surface_sequence;
 
         /// The surface sequence size
         unsigned int surface_sequence_size = 0;
@@ -40,7 +40,7 @@ class direct_navigator {
         /// Navigation state - external interface: the target surface
         unsigned int target_surface_id = 0;
     };
-    
+
     template <typename propagator_state_t, typename surface_t>
     static bool status(propagator_state_t& state, surface_t* surfaces) {
         return status(state.navigation, state.stepping, surfaces);
@@ -50,7 +50,7 @@ class direct_navigator {
     static __CUDA_HOST_DEVICE__ bool status(state& state,
                                             stepper_state_t& stepper_state,
                                             surface_t* surfaces) {
-	
+
         if (state.surface_iterator_id >= state.surface_sequence_size) {
             return false;
         }
@@ -72,8 +72,9 @@ class direct_navigator {
             // if the stepper state is on surface
             if (surface_status == intersection::status::on_surface) {
 
-		//printf("on surface %u %u \n", state.surface_iterator_id, state.surface_sequence_size);
-		
+                // printf("on surface %u %u \n", state.surface_iterator_id,
+                // state.surface_sequence_size);
+
                 // increase the iterator id
                 state.surface_iterator_id++;
 
@@ -82,9 +83,8 @@ class direct_navigator {
                     state.surface_sequence[state.surface_iterator_id];
             }
         }
-	
-        return true;
 
+        return true;
     }
 };
 

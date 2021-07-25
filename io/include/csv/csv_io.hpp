@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cassert>
 #include <climits>
 #include <dfe/dfe_io_dsv.hpp>
@@ -15,7 +16,6 @@
 #include <iostream>
 #include <map>
 #include <vecmem/memory/memory_resource.hpp>
-#include <algorithm>
 
 #include "definitions/algebra.hpp"
 #include "definitions/primitives.hpp"
@@ -492,14 +492,14 @@ host_truth_spacepoint_container read_truth_hits(
         result.items[header_id].push_back(sp);
     }
 
+    for (int i_h = 0; i_h < result.headers.size(); i_h++) {
 
-    for (int i_h = 0; i_h < result.headers.size(); i_h++){
-		
-	std::sort(std::begin(result.items[i_h]), 
-		  std::end(result.items[i_h]), 
-		  [](const auto& a, const auto& b) {return a.radius() < b.radius(); });
+        std::sort(std::begin(result.items[i_h]), std::end(result.items[i_h]),
+                  [](const auto& a, const auto& b) {
+                      return a.radius() < b.radius();
+                  });
     }
-    
+
     assert(result.items.size() == result.headers.size());
 
     return result;

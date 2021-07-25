@@ -17,7 +17,7 @@ namespace traccc {
 
 /// @brief Options for propagate() call
 ///
-template <typename action_t = void_actor, typename aborter_t = void_aborter >
+template <typename action_t = void_actor, typename aborter_t = void_aborter>
 struct __CUDA_ALIGN__(16) propagator_options {
     using action_type = action_t;
 
@@ -60,10 +60,10 @@ struct __CUDA_ALIGN__(16) propagator_options {
     double stepSizeCutOff = 0.;
 
     /// The single actor
-    //action_t action;
+    // action_t action;
 
     /// The single aborter
-    //aborter_t aborter;
+    // aborter_t aborter;
 
     /// The navigator initializer
     // DirectNavigatorInitializer initializer;

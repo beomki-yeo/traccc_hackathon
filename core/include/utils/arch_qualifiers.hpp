@@ -14,9 +14,8 @@
 #define __CUDA_HOST_DEVICE__
 #endif
 
-
 #ifdef __CUDACC__
-# define __CUDA_ALIGN__(x) __align__(x)
+#define __CUDA_ALIGN__(x) __align__(x)
 #else
-# define __CUDA_ALIGN__(x) alignas(x)
+#define __CUDA_ALIGN__(x) alignas(x)
 #endif

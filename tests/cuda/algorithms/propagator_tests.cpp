@@ -102,7 +102,7 @@ TEST(algebra, propagator) {
 
     std::cout << "hit file: " << io_hits_file << std::endl;
     std::cout << "particle file: " << io_particle_file << std::endl;
-    
+
     // truth hit reader
     traccc::fatras_hit_reader hreader(
         io_hits_file,
@@ -212,34 +212,33 @@ TEST(algebra, propagator) {
         traccc::propagator_options<traccc::void_actor, traccc::void_aborter>;
     using propagator_state_t =
         typename propagator_t::state<propagator_options_t>;
-    
+
     using cuda_stepper_t = traccc::cuda::eigen_stepper;
     using cuda_navigator_t = traccc::cuda::direct_navigator;
-    
-    using cuda_propagator_t =
-        traccc::cuda::propagator<stepper_t, navigator_t>;
+
+    using cuda_propagator_t = traccc::cuda::propagator<stepper_t, navigator_t>;
 
     using cuda_propagator_state_t =
-	typename cuda_propagator_t::state<propagator_options_t>;
+        typename cuda_propagator_t::state<propagator_options_t>;
 
     // for timing measurement
     double cpu_elapse(0);
     double gpu_elapse(0);
-        
+
     const int n_tracks = measurements_per_event.headers.size();
     cuda_propagator_state_t cuda_prop_state(0, &mng_mr);
 
-    std::vector<propagator_state_t>cpu_prop_state;
-    
+    std::vector<propagator_state_t> cpu_prop_state;
+
     /*---------
       For CPU
       ---------*/
 
     std::cout << "CPU propagation start..." << std::endl;
-    
+
     // iterate over truth particles
     for (int i_h = 0; i_h < measurements_per_event.headers.size(); i_h++) {
-	
+
         // truth particle information
         auto& t_particle = measurements_per_event.headers[i_h];
 
@@ -259,11 +258,11 @@ TEST(algebra, propagator) {
         // steper state
         stepper_state_t stepper_state(bound_track_parameters_per_particle[0],
                                       surfaces);
-	
+
         // propagator state that takes stepper state as input
-	propagator_options_t po;
+        propagator_options_t po;
         propagator_state_t prop_state(po, stepper_state);
-	
+
         // fill the surface seqeunce
         auto& surf_seq = prop_state.navigation.surface_sequence;
         auto& surf_seq_size = prop_state.navigation.surface_sequence_size;
@@ -276,30 +275,30 @@ TEST(algebra, propagator) {
             }
         }
 
-        // manipulate eigen stepper state	
+        // manipulate eigen stepper state
         auto& sd = prop_state.stepping.step_data;
 
         // set B Field to 2T
         sd.B_first = Acts::Vector3(0, 0, 2 * Acts::UnitConstants::T);
         sd.B_middle = Acts::Vector3(0, 0, 2 * Acts::UnitConstants::T);
         sd.B_last = Acts::Vector3(0, 0, 2 * Acts::UnitConstants::T);
-	
-	// fill gpu propagator state	
-	cuda_prop_state.options.items.push_back(prop_state.options);	 
-	cuda_prop_state.stepping.items.push_back(prop_state.stepping);
-	cuda_prop_state.navigation.items.push_back(prop_state.navigation);
 
-	/*time*/ auto start_cpu = std::chrono::system_clock::now();
-	
+        // fill gpu propagator state
+        cuda_prop_state.options.items.push_back(prop_state.options);
+        cuda_prop_state.stepping.items.push_back(prop_state.stepping);
+        cuda_prop_state.navigation.items.push_back(prop_state.navigation);
+
+        /*time*/ auto start_cpu = std::chrono::system_clock::now();
+
         // propagate for cpu
         prop.propagate(prop_state, &surfaces.items[0]);
 
-	/*time*/ auto end_cpu = std::chrono::system_clock::now();
+        /*time*/ auto end_cpu = std::chrono::system_clock::now();
         /*time*/ std::chrono::duration<double> time_cpu = end_cpu - start_cpu;
         /*time*/ cpu_elapse += time_cpu.count();
 
-	cpu_prop_state.push_back(prop_state);
-    }    
+        cpu_prop_state.push_back(prop_state);
+    }
 
     /*---------
       For GPU
@@ -308,29 +307,30 @@ TEST(algebra, propagator) {
     std::cout << "CUDA propagation start..." << std::endl;
 
     /*time*/ auto start_gpu = std::chrono::system_clock::now();
-    
+
     cuda_propagator_t cuda_prop;
     cuda_prop.propagate(cuda_prop_state, surfaces, &mng_mr);
 
     /*time*/ auto end_gpu = std::chrono::system_clock::now();
     /*time*/ std::chrono::duration<double> time_gpu = end_gpu - start_gpu;
-    /*time*/ gpu_elapse += time_gpu.count();	
-    
+    /*time*/ gpu_elapse += time_gpu.count();
+
     std::cout << "==> Elpased time ... " << std::endl;
     std::cout << "cpu time: " << cpu_elapse << std::endl;
     std::cout << "gpu time: " << gpu_elapse << std::endl;
 
     // Check if CPU and GPU results are the same
-    for (int i_t = 0; i_t < n_tracks; i_t++){
-	auto& cpu_stepping = cpu_prop_state[i_t].stepping;
-	auto& cuda_stepping = cuda_prop_state.stepping.items[i_t];
+    for (int i_t = 0; i_t < n_tracks; i_t++) {
+        auto& cpu_stepping = cpu_prop_state[i_t].stepping;
+        auto& cuda_stepping = cuda_prop_state.stepping.items[i_t];
 
-	for (int i = 0; i<Acts::eFreeSize; i++){
-	    //std::cout << cpu_stepping.pars(i) << std::endl;
-	    //std::cout << cuda_stepping.pars(i) << std::endl;
-            EXPECT_TRUE(abs(cpu_stepping.pars(i) - cuda_stepping.pars(i)) < 1e-8);
-	}       	
-    }    
+        for (int i = 0; i < Acts::eFreeSize; i++) {
+            // std::cout << cpu_stepping.pars(i) << std::endl;
+            // std::cout << cuda_stepping.pars(i) << std::endl;
+            EXPECT_TRUE(abs(cpu_stepping.pars(i) - cuda_stepping.pars(i)) <
+                        1e-8);
+        }
+    }
 }
 
 // Google Test can be run manually from the main() function
@@ -341,6 +341,6 @@ int main(int argc, char** argv) {
 
     my_argc = argc;
     my_argv = argv;
-    
+
     return RUN_ALL_TESTS();
 }

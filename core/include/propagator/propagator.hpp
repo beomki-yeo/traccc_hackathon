@@ -26,15 +26,15 @@ class propagator final {
     using navigator_t = navigator_type;
     using navigator_state_t = typename navigator_type::state;
 
-    explicit __CUDA_HOST_DEVICE__
-    propagator(stepper_t stepper, navigator_t navigator)
+    explicit __CUDA_HOST_DEVICE__ propagator(stepper_t stepper,
+                                             navigator_t navigator)
         : m_stepper(std::move(stepper)), m_navigator(std::move(navigator)) {}
 
     template <typename propagator_options_t>
     struct __CUDA_ALIGN__(16) state {
 
-	state() = default;
-	
+        state() = default;
+
         state(const propagator_options_t& tops, stepper_state_t stepping_in)
             : options(tops), stepping(stepping_in) {}
 
@@ -49,25 +49,25 @@ class propagator final {
     };
 
     template <typename state_t, typename surface_t>
-    void propagate(state_t& state,
-		   surface_t * surfaces) {
-	propagate(state.options, state.stepping, state.navigation, surfaces);
+    void propagate(state_t& state, surface_t* surfaces) {
+        propagate(state.options, state.stepping, state.navigation, surfaces);
     }
-    
-    template < typename propagator_options_t, typename stepper_state_t, typename navigation_state_t, typename surface_t >
+
+    template <typename propagator_options_t, typename stepper_state_t,
+              typename navigation_state_t, typename surface_t>
     __CUDA_HOST_DEVICE__ void propagate(propagator_options_t& options,
-					stepper_state_t& stepping,
-					navigation_state_t& navigation,
-					surface_t * surfaces) {
+                                        stepper_state_t& stepping,
+                                        navigation_state_t& navigation,
+                                        surface_t* surfaces) {
         // do the eigen stepper
         for (int i_s = 0; i_s < options.maxSteps; i_s++) {
-	    
+
             // do navigator
             auto navi_res = navigator_t::status(navigation, stepping, surfaces);
 
             if (!navi_res) {
-		//printf("Total RK steps: %d \n", i_s);
-		//printf("all targets reached \n");
+                // printf("Total RK steps: %d \n", i_s);
+                // printf("all targets reached \n");
                 break;
             }
 
@@ -75,7 +75,7 @@ class propagator final {
             auto stepper_res = stepper_t::rk4(stepping);
 
             if (!stepper_res) {
-		printf("stepper break \n");
+                printf("stepper break \n");
                 break;
             }
 
@@ -83,11 +83,11 @@ class propagator final {
             stepper_t::cov_transport(stepping, options.mass);
 
             // do action for kalman filtering -- currently empty
-            //state.options.action(state, m_stepper);
+            // state.options.action(state, m_stepper);
         }
     }
-    
-private:
+
+    private:
     stepper_t m_stepper;
     navigator_t m_navigator;
 };
