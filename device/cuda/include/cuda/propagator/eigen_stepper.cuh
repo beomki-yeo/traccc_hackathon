@@ -40,12 +40,13 @@ class eigen_stepper {
     // Wrapper for cov transport
     template <typename propagator_state_t>
     static void cov_transport(propagator_state_t& state) {
-        cov_transport(state.stepping, state.options.mass);
+        cov_transport(state.stepping, state.options);
     }
 
     // cov transport declaration in eigen_stepper.cu
+    template<typename propagator_options_t>
     static void cov_transport(host_collection<state>& state,
-                              const Acts::ActsScalar mass);
+                              host_collection<propagator_options_t>& options);
 
     private:
 };

@@ -6,6 +6,7 @@
  */
 
 #include <cuda/propagator/eigen_stepper.cuh>
+#include <propagator/propagator_options.hpp>
 
 namespace traccc {
 namespace cuda {
@@ -15,9 +16,15 @@ bool traccc::cuda::eigen_stepper::rk4(host_collection<state>& state) {
     return true;
 }
 
+template 
+void traccc::cuda::eigen_stepper::cov_transport< propagator_options < void_actor, void_aborter > >(
+     host_collection< state >& state,
+     host_collection< propagator_options < void_actor, void_aborter > >& options);
+    
 // Reserved to Johannes
+template<typename propagator_options_t>    
 void traccc::cuda::eigen_stepper::cov_transport(host_collection<state>& state,
-                                                const Acts::ActsScalar mass) {}
+						host_collection<propagator_options_t>& options) {}
 
 }  // namespace cuda
 }  // namespace traccc

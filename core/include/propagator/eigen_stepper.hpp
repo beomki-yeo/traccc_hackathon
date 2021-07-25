@@ -106,8 +106,6 @@ class eigen_stepper {
 	
         /// The propagation derivative
         Acts::FreeVector derivative = Acts::FreeVector::Zero();	
-
-	//step_info step_data;
 	
         /// @brief Storage of magnetic field and the sub steps during a RKN4
         /// step
