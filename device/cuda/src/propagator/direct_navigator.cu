@@ -25,6 +25,7 @@ template bool direct_navigator::status<typename eigen_stepper::state, surface>(
     host_collection<typename eigen_stepper::state>& stepper_state,
     host_collection<surface>& surfaces, vecmem::memory_resource* resource);
 
+// definition
 template <typename stepper_state_t, typename surface_t>
 bool direct_navigator::status(host_collection<state>& navigator_state,
                               host_collection<stepper_state_t>& stepper_state,

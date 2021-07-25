@@ -22,7 +22,7 @@
 
 namespace traccc {
 
-class surface {
+class __CUDA_ALIGN__(16) surface {
 
     public:
     surface() = default;
@@ -193,6 +193,7 @@ class surface {
                  Acts::s_onSurfaceTolerance * Acts::s_onSurfaceTolerance)
                     ? intersection::status::on_surface
                     : intersection::status::reachable;
+
             // Return the intersection
             return intersection{(position + path * direction), path, status};
         }

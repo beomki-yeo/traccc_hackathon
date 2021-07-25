@@ -95,8 +95,8 @@ struct spacepoint {
 
         Acts::Vector3 truth_mom = this->truth_mom;
         Acts::Vector3 truth_mom_dir = truth_mom.normalized();
-        Acts::ActsScalar truth_p = truth_mom.norm();
-
+        Acts::ActsScalar truth_p = truth_mom.norm();	
+	
         traccc::bound_track_parameters params;
         params.vector()[Acts::eBoundLoc0] = loc[0];
         params.vector()[Acts::eBoundLoc1] = loc[1];

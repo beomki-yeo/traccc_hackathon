@@ -22,7 +22,7 @@ struct stepping_helper {
         auto s_intersection = surface->intersection_estimate(pos, dir);
         if (s_intersection.m_status == intersection::status::on_surface) {
             // release the step size
-            state.step_size = 1.;  // need to fix...
+            state.step_size = 10.;  // need to fix...
             return intersection::status::on_surface;
         } else if (s_intersection.m_status == intersection::status::reachable) {
             Acts::ActsScalar climit = s_intersection.path_length;

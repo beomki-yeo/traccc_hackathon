@@ -17,8 +17,8 @@ namespace traccc {
 
 /// @brief Options for propagate() call
 ///
-template <typename action_t, typename aborter_t>
-struct propagator_options {
+template <typename action_t = void_actor, typename aborter_t = void_aborter >
+struct __CUDA_ALIGN__(16) propagator_options {
     using action_type = action_t;
 
     /// Default constructor
@@ -38,7 +38,7 @@ struct propagator_options {
     double mass = 105.6583755 * Acts::UnitConstants::MeV;
 
     /// Maximum number of steps for one propagate call
-    unsigned int maxSteps = 10000;
+    unsigned int maxSteps = 1000;
 
     /// Maximum number of Runge-Kutta steps for the stepper step call
     unsigned int maxRungeKuttaStepTrials = 10000;
@@ -60,10 +60,10 @@ struct propagator_options {
     double stepSizeCutOff = 0.;
 
     /// The single actor
-    action_t action;
+    //action_t action;
 
     /// The single aborter
-    aborter_t aborter;
+    //aborter_t aborter;
 
     /// The navigator initializer
     // DirectNavigatorInitializer initializer;

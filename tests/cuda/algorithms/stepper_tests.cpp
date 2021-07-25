@@ -33,7 +33,7 @@
 // traccc cuda
 #include <cuda/propagator/direct_navigator.cuh>
 #include <cuda/propagator/eigen_stepper.cuh>
-#include <cuda/propagator/propagator.hpp>
+#include <cuda/propagator/propagator.cuh>
 
 // std
 #include <unistd.h>

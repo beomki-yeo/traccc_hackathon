@@ -33,7 +33,7 @@
 // traccc cuda
 #include <cuda/propagator/direct_navigator.cuh>
 #include <cuda/propagator/eigen_stepper.cuh>
-#include <cuda/propagator/propagator.hpp>
+#include <cuda/propagator/propagator.cuh>
 
 // std
 #include <unistd.h>
@@ -43,14 +43,20 @@
 // io
 #include "csv/csv_io.hpp"
 
+// sorry for ugly global variables
+int my_argc;
+char** my_argv;
+
 // This defines the local frame test suite
-TEST(algebra, stepper) {
+TEST(algebra, propagator) {
 
     /*-------------------
       Surface Reading
       -------------------*/
 
     // Memory resource used by the EDM.
+    vecmem::cuda::host_memory_resource host_mr;
+    vecmem::cuda::device_memory_resource dev_mr;
     vecmem::cuda::managed_memory_resource mng_mr;
 
     // Geometry file
@@ -67,8 +73,8 @@ TEST(algebra, stepper) {
     auto surface_transforms = traccc::read_surfaces(sreader);
 
     // surface collection where all surfaces are saved
-    traccc::host_surface_collection surfaces(
-        {traccc::host_surface_collection::item_vector(0, &mng_mr)});
+    traccc::host_collection<traccc::surface> surfaces(
+        {traccc::host_collection<traccc::surface>::item_vector(0, &mng_mr)});
 
     // fill surface collection
     for (auto tf : surface_transforms) {
@@ -89,6 +95,14 @@ TEST(algebra, stepper) {
     std::string io_hits_file = dir + std::string("/data/hits.csv");
     std::string io_particle_file = dir + std::string("/data/particles.csv");
 
+    if (my_argc == 3) {
+        io_hits_file = std::string(my_argv[1]);
+        io_particle_file = std::string(my_argv[2]);
+    }
+
+    std::cout << "hit file: " << io_hits_file << std::endl;
+    std::cout << "particle file: " << io_particle_file << std::endl;
+    
     // truth hit reader
     traccc::fatras_hit_reader hreader(
         io_hits_file,
@@ -188,10 +202,6 @@ TEST(algebra, stepper) {
 
       ---------------------------------------------------*/
 
-    /*---------
-      For CPU
-      ---------*/
-
     // define tracking components
     using stepper_t = typename traccc::eigen_stepper;
     using stepper_state_t = typename traccc::eigen_stepper::state;
@@ -203,17 +213,45 @@ TEST(algebra, stepper) {
     using propagator_state_t =
         typename propagator_t::state<propagator_options_t>;
 
+    propagator_options_t po;
+
+    using cuda_stepper_t = traccc::eigen_stepper;
+    using cuda_navigator_t = traccc::direct_navigator;
+    
+    using cuda_propagator_t =
+        traccc::cuda::propagator<cuda_stepper_t, cuda_navigator_t>;
+
+    using cuda_propagator_state_t =
+	typename cuda_propagator_t::state<propagator_options_t>;
+
+    const int n_tracks = measurements_per_event.headers.size();
+    //cuda_propagator_state_t cu_prop_state(n_tracks, &mng_mr);
+    cuda_propagator_state_t cu_prop_state(0, &mng_mr);
+
+    traccc::host_collection<propagator_options_t> cuda_options({traccc::host_collection<propagator_options_t>::item_vector(&mng_mr)});
+    traccc::host_collection<typename stepper_t::state> cuda_stepping({traccc::host_collection<typename stepper_t::state>::item_vector(&mng_mr)});
+    traccc::host_collection<typename navigator_t::state> cuda_navigation({traccc::host_collection<typename navigator_t::state>::item_vector(&mng_mr)});
+
+    double cpu_elapse(0);
+    double gpu_elapse(0);
+    
+    /*---------
+      For CPU
+      ---------*/
+
+    std::cout << "CPU propagation start..." << std::endl;
+    
     // iterate over truth particles
     for (int i_h = 0; i_h < measurements_per_event.headers.size(); i_h++) {
-
+    //for (int i_h = 0; i_h < 30; i_h++) {
+	
         // truth particle information
         auto& t_particle = measurements_per_event.headers[i_h];
 
-        // vector of spacepoints associated with a truth particle
-        auto& spacepoints_per_particle = spacepoints_per_event.items[i_h];
-
         // vector of measurements associated with a truth particle
         auto& measurements_per_particle = measurements_per_event.items[i_h];
+        // vector of spacepoints associated with a truth particle
+        auto& spacepoints_per_particle = spacepoints_per_event.items[i_h];
 
         // vector of bound_track_parameters associated with a truth particle
         auto& bound_track_parameters_per_particle =
@@ -222,15 +260,14 @@ TEST(algebra, stepper) {
         stepper_t stepper;
         navigator_t navigator;
         propagator_t prop(stepper, navigator);
-        propagator_options_t po;
 
         // steper state
         stepper_state_t stepper_state(bound_track_parameters_per_particle[0],
                                       surfaces);
-
+	
         // propagator state that takes stepper state as input
         propagator_state_t prop_state(po, stepper_state);
-
+	
         // fill the surface seqeunce
         auto& surf_seq = prop_state.navigation.surface_sequence;
         auto& surf_seq_size = prop_state.navigation.surface_sequence_size;
@@ -244,43 +281,49 @@ TEST(algebra, stepper) {
         }
 
         // manipulate eigen stepper state
+	
         auto& sd = prop_state.stepping.step_data;
 
         // set B Field to 2T
         sd.B_first = Acts::Vector3(0, 0, 2 * Acts::UnitConstants::T);
         sd.B_middle = Acts::Vector3(0, 0, 2 * Acts::UnitConstants::T);
         sd.B_last = Acts::Vector3(0, 0, 2 * Acts::UnitConstants::T);
+	
+	// fill gpu propagator state
+	
+	cu_prop_state.options.items.push_back(prop_state.options);	 
+	cu_prop_state.stepping.items.push_back(prop_state.stepping);
+	cu_prop_state.navigation.items.push_back(prop_state.navigation);
 
-        // propagate
-        prop.propagate(prop_state, surfaces);
-    }
+	/*time*/ auto start_cpu = std::chrono::system_clock::now();
+	
+        // propagate for cpu
+        prop.propagate(prop_state, &surfaces.items[0]);
+
+	/*time*/ auto end_cpu = std::chrono::system_clock::now();
+        /*time*/ std::chrono::duration<double> time_cpu = end_cpu - start_cpu;
+        /*time*/ cpu_elapse += time_cpu.count();	
+    }    
 
     /*---------
       For GPU
       ---------*/
-    propagator_options_t po;
 
-    using cuda_stepper_t = traccc::cuda::eigen_stepper;
-    using cuda_navigator_t = traccc::cuda::direct_navigator;
-    using cuda_propagator_t =
-        traccc::cuda::propagator<cuda_stepper_t, cuda_navigator_t>;
-    using cuda_propagator_state_t =
-        cuda_propagator_t::state<propagator_options_t>;
+    std::cout << "CUDA propagation start..." << std::endl;
 
-    // iterate over truth particles
-    std::vector<traccc::bound_track_parameters> bp_collection;
+    /*time*/ auto start_gpu = std::chrono::system_clock::now();
+    
+    cuda_propagator_t cu_prop;
+    cu_prop.propagate(cu_prop_state, surfaces, &mng_mr);
 
-    for (int i_h = 0; i_h < measurements_per_event.headers.size(); i_h++) {
+    /*time*/ auto end_gpu = std::chrono::system_clock::now();
+    /*time*/ std::chrono::duration<double> time_gpu = end_gpu - start_gpu;
+    /*time*/ gpu_elapse += time_gpu.count();	
 
-        auto& bound_track_parameters_per_particle =
-            bound_track_parameters_per_event.items[i_h];
-
-        bp_collection.push_back(bound_track_parameters_per_particle[0]);
-    }
-
-    cuda_propagator_state_t cuda_prop_states(bp_collection, po, &mng_mr);
-    // do the RK4
-    auto res = cuda_stepper_t::rk4(cuda_prop_states);
+    std::cout << "==> Elpased time ... " << std::endl;
+    std::cout << "cpu time: " << cpu_elapse << std::endl;
+    std::cout << "gpu time: " << gpu_elapse << std::endl;
+    
 }
 
 // Google Test can be run manually from the main() function
@@ -289,5 +332,8 @@ TEST(algebra, stepper) {
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
+    my_argc = argc;
+    my_argv = argv;
+    
     return RUN_ALL_TESTS();
 }
