@@ -1,5 +1,5 @@
 add_library(traccc_cuda_fitter SHARED
-    ${TRACCC_CUDA_FITTER_SOURCE_DIR}/gain_matrix_updater.cu)
+  ${TRACCC_CUDA_FITTER_SOURCE_DIR}/gain_matrix_updater.cu)
 
 target_include_directories(traccc_cuda_fitter
   PUBLIC
@@ -9,7 +9,8 @@ target_include_directories(traccc_cuda_fitter
   )
 
 target_compile_options(traccc_cuda_fitter
-  PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:  
+  PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:
+  --expt-relaxed-constexpr
   #--fmad=false
   >)
 

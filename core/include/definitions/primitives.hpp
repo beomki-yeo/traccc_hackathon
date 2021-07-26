@@ -15,6 +15,7 @@
 namespace traccc {
 
 using scalar = float;
+using particle_id = uint64_t;
 using geometry_id = uint64_t;
 using event_id = uint64_t;
 using channel_id = unsigned int;

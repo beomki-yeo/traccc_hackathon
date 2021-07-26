@@ -116,17 +116,17 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
 
     traccc::spacepoint_grouping sg(config, grid_config);
     traccc::seed_finding sf(config);
-    
+
     traccc::cuda::tml_stats_config tml_cfg;
     traccc::cuda::seed_finding sf_cuda(config, sg.get_spgrid(), &tml_cfg,
-                                       &mng_mr);        
+                                       &mng_mr);
 
     /*-----------------
       hit reading
       -----------------*/
 
     /*time*/ auto start_wall_time = std::chrono::system_clock::now();
-    
+
     std::vector<traccc::host_spacepoint_container> all_spacepoints;
 
     // Loop over events
@@ -189,12 +189,12 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
 
         /*time*/ auto start_seeding_cpu = std::chrono::system_clock::now();
 
-	traccc::host_seed_container seeds;
+        traccc::host_seed_container seeds;
 
         if (skip_cpu == false) {
             seeds = sf(internal_sp_per_event);
-            //n_seeds += seeds.size();
-	    n_seeds += seeds.headers[0];
+            // n_seeds += seeds.size();
+            n_seeds += seeds.headers[0];
 
             /*time*/ auto end_seeding_cpu = std::chrono::system_clock::now();
             /*time*/ std::chrono::duration<double> time_seeding_cpu =
@@ -205,7 +205,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
                 n_internal_spacepoints += internal_sp_per_event.items[i].size();
             }
         }
-	
+
         /*-----------------------
           seed finding -- cuda
           -----------------------*/
@@ -225,7 +225,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
 
         if (!skip_cpu) {
             int n_match = 0;
-	    for (auto seed : seeds.items[0]) {
+            for (auto seed : seeds.items[0]) {
                 if (std::find(
                         seeds_cuda.items[0].begin(),
                         seeds_cuda.items[0].begin() + seeds_cuda.headers[0],
@@ -234,7 +234,7 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
                     n_match++;
                 }
             }
-	    float matching_rate = float(n_match) / seeds.headers[0];
+            float matching_rate = float(n_match) / seeds.headers[0];
             std::cout << "event " << std::to_string(skip_events + event)
                       << " seed matching rate: " << matching_rate << std::endl;
         }
@@ -280,8 +280,8 @@ int seq_run(const std::string& detector_file, const std::string& hits_dir,
 
             traccc::seed_writer sd_writer{"event" + event_string +
                                           "-seeds.csv"};
-            //for (size_t i = 0; i < seeds.size(); ++i) {
-	    for (auto seed: seeds.items[0]) {
+            // for (size_t i = 0; i < seeds.size(); ++i) {
+            for (auto seed : seeds.items[0]) {
                 auto weight = seed.weight;
                 auto z_vertex = seed.z_vertex;
                 auto spB = seed.spB;
