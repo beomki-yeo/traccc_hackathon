@@ -8,8 +8,8 @@
 #pragma once
 
 // traccc include
+#include "definitions/primitives.hpp"
 #include "edm/collection.hpp"
-#include "geometry/surface.hpp"
 #include "utils/arch_qualifiers.hpp"
 
 // Acts
@@ -49,7 +49,14 @@ struct bound_track_parameters {
     auto& covariance() { return m_covariance; }
 
     __CUDA_HOST_DEVICE__
-    auto position(host_surface_collection& surfaces) const {
+    const auto& local() {
+        return Acts::Vector2(m_vector[Acts::eBoundLoc0],
+                             m_vector[Acts::eBoundLoc1]);
+    }
+
+    template <typename surface_t>
+    __CUDA_HOST_DEVICE__ auto position(
+        host_collection<surface_t>& surfaces) const {
         const Acts::Vector2 loc(m_vector[Acts::eBoundLoc0],
                                 m_vector[Acts::eBoundLoc1]);
         Acts::Vector3 global = surfaces.items[surface_id].local_to_global(loc);
@@ -69,8 +76,9 @@ struct bound_track_parameters {
     __CUDA_HOST_DEVICE__
     auto qop() const { return m_vector[Acts::eBoundQOverP]; }
 
-    __CUDA_HOST_DEVICE__
-    auto reference_surface(host_surface_collection& surfaces) const {
+    template <typename surface_t>
+    __CUDA_HOST_DEVICE__ auto reference_surface(
+        host_collection<surface_t>& surfaces) const {
         return surfaces.items[surface_id];
     }
 };
@@ -119,15 +127,11 @@ struct free_track_parameters {
     auto& vector() { return m_vector; }
 
     __CUDA_HOST_DEVICE__
-    auto pos(){
-	return m_vector.template segment<3>(Acts::eFreePos0);
-    }
+    auto pos() { return m_vector.template segment<3>(Acts::eFreePos0); }
 
     __CUDA_HOST_DEVICE__
-    auto dir(){
-	return m_vector.template segment<3>(Acts::eFreeDir0);
-    }
-    
+    auto dir() { return m_vector.template segment<3>(Acts::eFreeDir0); }
+
     __CUDA_HOST_DEVICE__
     auto& covariance() { return m_covariance; }
 

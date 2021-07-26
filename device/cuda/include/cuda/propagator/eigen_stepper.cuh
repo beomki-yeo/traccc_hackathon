@@ -8,53 +8,48 @@
 #pragma once
 
 // Acts
-#include "Acts/EventData/TrackParameters.hpp"
 #include "Acts/Definitions/Common.hpp"
+#include "Acts/EventData/TrackParameters.hpp"
 
 // std
 #include <limits>
 #include <propagator/eigen_stepper.hpp>
 
-namespace traccc {    
+namespace traccc {
 namespace cuda {
-    
-class eigen_stepper{
-    
-public:
 
-    using state = traccc::eigen_stepper::state;    
-    using host_state_collection = host_collection<state>;
-    using device_state_collection = device_collection<state>;
-    using state_collection_data = collection_data<state>;
-    using state_collection_buffer = collection_buffer<state>;
-    using state_collection_view = collection_view<state>;
-    
-    template <typename propagator_state_t>
-    void step(propagator_state_t& state){
+class eigen_stepper {
 
-
-    }
+    public:
+    using state = traccc::eigen_stepper::state;
 
     template <typename propagator_state_t>
-    static bool rk4(propagator_state_t& state){
-	return rk4(state.stepping);
+    void step(propagator_state_t& state) {
+        // left empty for the moment
     }
 
-    // implementation in eigen_stepper.cu
-    static bool rk4(host_state_collection& state);
-    
+    // Wrapper for rk4
     template <typename propagator_state_t>
-    static void cov_transport(propagator_state_t& state){
-	cov_transport(state.stepping, state.options.mass);
+    static bool rk4(propagator_state_t& state) {
+        return rk4(state.stepping);
     }
 
-    // implementation in eigen_stepper.cu
-    static void cov_transport(host_state_collection& state, const Acts::ActsScalar mass);
-    
-private:
-    
+    // rk4 declaration in eigen_stepper.cu
+    static bool rk4(host_collection<state>& state);
+
+    // Wrapper for cov transport
+    template <typename propagator_state_t>
+    static void cov_transport(propagator_state_t& state) {
+        cov_transport(state.stepping, state.options);
+    }
+
+    // cov transport declaration in eigen_stepper.cu
+    template <typename propagator_options_t>
+    static void cov_transport(host_collection<state>& state,
+                              host_collection<propagator_options_t>& options);
+
+    private:
 };
 
-
-} // namespace cuda    
-} // namespace traccc
+}  // namespace cuda
+}  // namespace traccc

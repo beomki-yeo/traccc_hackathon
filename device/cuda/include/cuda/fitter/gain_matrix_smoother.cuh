@@ -7,30 +7,27 @@
 
 #pragma once
 
+#include <edm/measurement.hpp>
 #include <edm/track_parameters.hpp>
 #include <edm/track_state.hpp>
-#include <edm/measurement.hpp>
 #include <fitter/gain_matrix_smoother_impl.hpp>
 
 namespace traccc {
 namespace cuda {
 
-template <typename track_state_t >    
-class gain_matrix_smoother{
-public:
-    
+template <typename track_state_t>
+class gain_matrix_smoother {
+    public:
     gain_matrix_smoother() = default;
 
     ~gain_matrix_smoother() = default;
 
     // declaration of kalman gain matrix update function
-    void operator()(host_track_state_collection< track_state_t >& track_states, vecmem::memory_resource* resource);
-    
-private:   
-};
+    void operator()(host_track_state_collection<track_state_t>& track_states,
+                    vecmem::memory_resource* resource);
 
+    private:
+};
 
 }  // namespace cuda
 }  // namespace traccc
-
-    

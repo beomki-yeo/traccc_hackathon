@@ -8,8 +8,9 @@
 #include <gtest/gtest.h>
 
 // vecmem
-#include <vecmem/memory/host_memory_resource.hpp>
 #include <vecmem/memory/cuda/managed_memory_resource.hpp>
+#include <vecmem/memory/host_memory_resource.hpp>
+
 #include "vecmem/memory/cuda/device_memory_resource.hpp"
 #include "vecmem/memory/cuda/host_memory_resource.hpp"
 #include "vecmem/utils/cuda/copy.hpp"
@@ -23,12 +24,7 @@
 #include <chrono>
 
 // This defines the local frame test suite
-TEST(algebra, convariance_engine) {
-
-
-
-
-}
+TEST(algebra, convariance_engine) {}
 
 // Google Test can be run manually from the main() function
 // or, it can be linked to the gtest_main library for an already
@@ -38,4 +34,3 @@ int main(int argc, char **argv) {
 
     return RUN_ALL_TESTS();
 }
-

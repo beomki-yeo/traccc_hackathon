@@ -11,6 +11,9 @@
 #include "Acts/Definitions/Common.hpp"
 #include "Acts/EventData/TrackParameters.hpp"
 
+// traccc
+#include <utils/arch_qualifiers.hpp>
+
 namespace traccc {
 
 template <typename stepper_type, typename navigator_type>
@@ -23,22 +26,17 @@ class propagator final {
     using navigator_t = navigator_type;
     using navigator_state_t = typename navigator_type::state;
 
-    explicit propagator(stepper_t stepper, navigator_t navigator)
+    explicit __CUDA_HOST_DEVICE__ propagator(stepper_t stepper,
+                                             navigator_t navigator)
         : m_stepper(std::move(stepper)), m_navigator(std::move(navigator)) {}
 
     template <typename propagator_options_t>
-    struct state {
+    struct __CUDA_ALIGN__(16) state {
 
-        state(const propagator_options_t& tops,
-              stepper_state_t stepping_in)
-            : options(tops), stepping(stepping_in) {
+        state() = default;
 
-	    // for test
-	    //auto pos = stepping.pars.template segment<3>(Acts::eFreePos0);
-	    //std::cout << stepping.pars[Acts::eFreePos0] << "  " << stepping.pars[Acts::eFreePos1] << "  " << stepping.pars[Acts::eFreePos2] << std::endl;
-		
-
-	}
+        state(const propagator_options_t& tops, stepper_state_t stepping_in)
+            : options(tops), stepping(stepping_in) {}
 
         /// These are the options - provided for each propagation step
         propagator_options_t options;
@@ -50,32 +48,42 @@ class propagator final {
         navigator_state_t navigation;
     };
 
-    template <typename parameters_t, typename propagator_options_t>
-    void propagate(const parameters_t& start,
-                   const propagator_options_t& options) const {
+    template <typename state_t, typename surface_t>
+    void propagate(state_t& state, surface_t* surfaces) {
+        propagate(state.options, state.stepping, state.navigation, surfaces);
+    }
 
-        // define state container type
-        using state_t = state<propagator_options_t>;
+    template <typename propagator_options_t, typename stepper_state_t,
+              typename navigation_state_t, typename surface_t>
+    __CUDA_HOST_DEVICE__ void propagate(propagator_options_t& options,
+                                        stepper_state_t& stepping,
+                                        navigation_state_t& navigation,
+                                        surface_t* surfaces) {
+        // do the eigen stepper
+        for (int i_s = 0; i_s < options.maxSteps; i_s++) {
 
-        state_t state{start, options,
-                      m_stepper.make_state(start, options.maxStepSize,
-                                           options.tolerance)};
+            // do navigator
+            auto navi_res = navigator_t::status(navigation, stepping, surfaces);
 
-        // Start propagation
-        m_navigator.target(state, m_stepper);
-        for (size_t i_s = 0; i_s < state.options.maxSteps; ++i_s) {
-
-            m_stepper.step(state);
-
-            m_navigator.status(state, m_stepper);
-
-            state.options.action(state, m_stepper);
-
-            if (state.options.abort(state, m_stepper)) {
+            if (!navi_res) {
+                // printf("Total RK steps: %d \n", i_s);
+                // printf("all targets reached \n");
                 break;
             }
 
-            m_navigator.target(state, m_stepper);
+            // do RK 4th order
+            auto stepper_res = stepper_t::rk4(stepping);
+
+            if (!stepper_res) {
+                printf("stepper break \n");
+                break;
+            }
+
+            // do the covaraince transport
+            stepper_t::cov_transport(stepping, options.mass);
+
+            // do action for kalman filtering -- currently empty
+            // state.options.action(state, m_stepper);
         }
     }
 
