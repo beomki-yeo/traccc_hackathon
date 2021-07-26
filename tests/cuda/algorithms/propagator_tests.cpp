@@ -287,10 +287,10 @@ TEST(algebra, propagator) {
         cuda_prop_state.options.items[i_h] = prop_state.options;
         cuda_prop_state.stepping.items[i_h] = prop_state.stepping;
         cuda_prop_state.navigation.items[i_h] = prop_state.navigation;
-	
-        //cuda_prop_state.options.items.push_back(prop_state.options);
-        //cuda_prop_state.stepping.items.push_back(prop_state.stepping);
-        //cuda_prop_state.navigation.items.push_back(prop_state.navigation);
+
+        // cuda_prop_state.options.items.push_back(prop_state.options);
+        // cuda_prop_state.stepping.items.push_back(prop_state.stepping);
+        // cuda_prop_state.navigation.items.push_back(prop_state.navigation);
 
         /*time*/ auto start_cpu = std::chrono::system_clock::now();
 
@@ -325,15 +325,26 @@ TEST(algebra, propagator) {
 
     // Check if CPU and GPU results are the same
     for (int i_t = 0; i_t < n_tracks; i_t++) {
+
+        // Check if the final states of cpu and cuda are the same
         auto& cpu_stepping = cpu_prop_state[i_t].stepping;
         auto& cuda_stepping = cuda_prop_state.stepping.items[i_t];
 
         for (int i = 0; i < Acts::eFreeSize; i++) {
-            // std::cout << cpu_stepping.pars(i) << std::endl;
-            // std::cout << cuda_stepping.pars(i) << std::endl;
             EXPECT_TRUE(abs(cpu_stepping.pars(i) - cuda_stepping.pars(i)) <
                         1e-8);
         }
+
+        // Check if all targeted surfaces are passed
+        auto& cpu_navigation = cpu_prop_state[i_t].navigation;
+        auto& cuda_navigation = cuda_prop_state.navigation.items[i_t];
+
+        EXPECT_TRUE(cpu_navigation.surface_sequence_size ==
+                    cpu_navigation.surface_iterator_id);
+        EXPECT_TRUE(cuda_navigation.surface_sequence_size ==
+                    cuda_navigation.surface_iterator_id);
+        EXPECT_TRUE(cpu_navigation.surface_iterator_id ==
+                    cuda_navigation.surface_iterator_id);
     }
 }
 
