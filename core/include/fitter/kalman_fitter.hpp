@@ -61,6 +61,14 @@ class kalman_fitter {
         void operator()(propagator_state_t& state,
                         const stepper_t& stepper) const {
 
+	    // SOME POINTERS
+	    //
+	    // -> Follow the ACTS filter code
+	    // -> BoundState from the stepper
+	    // -> Covariance transport
+	    // -> Fill track state proxy in the same way
+	    // Basically look into what is done up to the m_updater call, and how the result is treated
+
 	    // Find matching measurement
 	    auto res = std::find_if(input_measurements.begin(), input_measurements.end(),
 			 [this] (traccc::measurement &m) {
@@ -76,13 +84,14 @@ class kalman_fitter {
 	    // Find the surface itself
 	    if (target_surface_id >= surfaces.items.size())
 		return;
-
 	    traccc::surface &surf = surfaces.items.at(target_surface_id);
 
 	    //state: measurement, predicted vector + covariance
 	    typename updater_t::track_state_type tr_state;
 	    tr_state.measurement() = meas;
 	    tr_state.predicted().covariance() = state.stepping.cov;
+
+	    // FIXME this is predefined somewhere
 	    tr_state.projector() = Acts::ActsMatrix<2,6>::Zero();
 	    tr_state.projector()(0,0) = 1;
 	    tr_state.projector()(1,1) = 1;
