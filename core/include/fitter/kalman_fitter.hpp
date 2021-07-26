@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <edm/measurement.hpp>
 #include <geometry/surface.hpp>
 
 namespace traccc {
@@ -19,9 +20,6 @@ class kalman_fitter {
     public:
     kalman_fitter(propagator_t pPropagator)
         : m_propagator(std::move(pPropagator)) {}
-
-    private:
-    propagator_t m_propagator;
 
     template <typename parameters_t>
     class actor {
@@ -38,10 +36,19 @@ class kalman_fitter {
         /// Whether run reversed filtering
         bool reversed_filtering = false;
 
+	// FIXME
+	traccc::host_measurement_collection* input_measurements;
+
         template <typename propagator_state_t, typename stepper_t>
         void operator()(propagator_state_t& state,
-                        const stepper_t& stepper) const {}
+                        const stepper_t& stepper) const {
+	}
     };
+
+private:
+    propagator_t m_propagator;
+
+
 
     template <typename parameters_t>
     class aborter {};
