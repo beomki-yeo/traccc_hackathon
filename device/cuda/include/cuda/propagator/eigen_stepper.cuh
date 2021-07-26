@@ -35,7 +35,7 @@ class eigen_stepper {
     }
 
     // rk4 declaration in eigen_stepper.cu
-    static bool rk4(host_collection<state>& state);
+    static bool rk4(host_collection<state>& states);
 
     // Wrapper for cov transport
     template <typename propagator_state_t>
