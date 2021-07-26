@@ -25,7 +25,42 @@ template void traccc::cuda::eigen_stepper::cov_transport<
 template <typename propagator_options_t>
 void traccc::cuda::eigen_stepper::cov_transport(
     host_collection<state>& state,
-    host_collection<propagator_options_t>& options) {}
+    host_collection<propagator_options_t>& options) {
+
+    vecmem::cuda::managed_memory_resource mng_mr;
+    auto state_view = get_data(state, mng_mr);
+    auto options_view = get_data(state, mng_mr);
+
+    unsigned int num_threads = WARP_SIZE * 2;
+    unsigned int num_blocks = state_view.items.size() / num_threads + 1;
+
+    // run the kernel
+    cov_transport_kernel<propagator_options_t><<<num_blocks, num_threads>>>(state_view, options_view);
+
+    // cuda error check
+    CUDA_ERROR_CHECK(cudaGetLastError());
+    CUDA_ERROR_CHECK(cudaDeviceSynchronize());
+}
+
+template <typename propagator_options_t>
+__global__ void cov_transport_kernel(
+    collection_view<track_state_t> states_view, collection_view<propagator_options_t> options_view) {
+    
+    //access collection
+    device_collection<state> states_device({states_view.items});
+    device_collection<propagator_options_t> options_device({options_view.items});
+
+    int gid = threadIdx.x + blockIdx.x * blockDim.x;
+
+    if (gid >= states_device.items.size()) {
+        return;
+    }
+
+    //run cov_transport function
+    traccc::eigen_stepper::cov_transport(
+        states_device.items.at(gid), options_device.items.at(gid).mass);
+}
 
 }  // namespace cuda
 }  // namespace traccc
+
