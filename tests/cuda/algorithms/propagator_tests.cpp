@@ -226,7 +226,7 @@ TEST(algebra, propagator) {
     double gpu_elapse(0);
 
     const int n_tracks = measurements_per_event.headers.size();
-    cuda_propagator_state_t cuda_prop_state(0, &mng_mr);
+    cuda_propagator_state_t cuda_prop_state(n_tracks, &mng_mr);
 
     std::vector<propagator_state_t> cpu_prop_state;
 
@@ -284,9 +284,13 @@ TEST(algebra, propagator) {
         sd.B_last = Acts::Vector3(0, 0, 2 * Acts::UnitConstants::T);
 
         // fill gpu propagator state
-        cuda_prop_state.options.items.push_back(prop_state.options);
-        cuda_prop_state.stepping.items.push_back(prop_state.stepping);
-        cuda_prop_state.navigation.items.push_back(prop_state.navigation);
+        cuda_prop_state.options.items[i_h] = prop_state.options;
+        cuda_prop_state.stepping.items[i_h] = prop_state.stepping;
+        cuda_prop_state.navigation.items[i_h] = prop_state.navigation;
+	
+        //cuda_prop_state.options.items.push_back(prop_state.options);
+        //cuda_prop_state.stepping.items.push_back(prop_state.stepping);
+        //cuda_prop_state.navigation.items.push_back(prop_state.navigation);
 
         /*time*/ auto start_cpu = std::chrono::system_clock::now();
 
