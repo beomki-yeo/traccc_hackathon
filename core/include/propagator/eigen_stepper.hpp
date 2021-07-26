@@ -129,8 +129,8 @@ class eigen_stepper {
 
     template <typename propagator_state_t>
     static void step(propagator_state_t& state) {
-
         // state.stepping -> eigen_stepper::state
+        
     }
 
     template <typename propagator_state_t>
