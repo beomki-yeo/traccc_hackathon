@@ -56,8 +56,7 @@ class eigen_stepper {
             covTransport = true;
             cov = par.m_covariance;
 
-            ///// ToDo
-            // jacToGlobal = surface.boundToFreeJacobian(gctx,par.parameters());
+	    jac_to_global = surface.bound_to_free_jacobian(par.vector());
         }
         /// Navigation direction, this is needed for searching
         Acts::NavigationDirection nav_dir;
@@ -127,9 +126,15 @@ class eigen_stepper {
     }
 
     template <typename surface_t>
-    bound_track_parameters bound_state(const surface& surface) {
+    bound_track_parameters bound_state(state& state, const int& surface_id,
+				       host_collection<surface_t>& surfaces) {
         // defined at covariance_engine.hpp
-        // return detail::bound_state();
+	auto results =  detail::bound_state(state.cov, state.jacobian, state.jac_transport,
+					    state.derivative, state.jac_to_global, state.pars,
+					    state.covTransport, state.path_accumulated, surface_id, surfaces);
+
+	return std::get<0>(results);
+	
     }
 
     template <typename propagator_state_t>
