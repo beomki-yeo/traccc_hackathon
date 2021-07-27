@@ -5,6 +5,7 @@
 #include <edm/measurement.hpp>
 #include <edm/track_parameters.hpp>
 #include <edm/track_state.hpp>
+#include <edm/truth/truth_bound_track_parameters.hpp>
 #include <fitter/gain_matrix_smoother.hpp>
 #include <fitter/gain_matrix_updater.hpp>
 #include <fitter/kalman_fitter.hpp>
@@ -52,12 +53,10 @@ traccc::host_surface_collection read_surfaces()
 	return surfaces;
 }
 
-std::vector<std::pair<traccc::free_track_parameters, traccc::host_measurement_collection>>
+std::vector<std::pair<traccc::host_truth_bound_track_parameters_collection, traccc::host_measurement_collection>>
 read_particles(traccc::host_surface_collection& surfaces)
 {
-	// Need: *local* measurements
-	// Need: *global* track parameters
-	std::vector<std::pair<traccc::free_track_parameters, traccc::host_measurement_collection>>
+	std::vector<std::pair<traccc::host_truth_bound_track_parameters_collection, traccc::host_measurement_collection>>
 		retv;
 
 	std::string full_name = std::string(__FILE__);
@@ -86,102 +85,78 @@ read_particles(traccc::host_surface_collection& surfaces)
 
 	for (size_t i = 0; i < n_particles; i++) {
 		traccc::truth_particle& t_particle = spacepoints_per_event.headers[i];
+		traccc::host_truth_bound_track_parameters_collection tbps;
 		 traccc::host_measurement_collection meas;
-		 // std::cout << t_particle.vertex.vector()[0] << " " <<  t_particle.vertex.vector()[1] << " " <<  t_particle.vertex.vector()[2] << std::endl;
-		 // std::cout << "-----" << std::endl;
 		 for (traccc::spacepoint& sp : spacepoints_per_event.items[i]) {
+			 tbps.items.push_back(sp.make_bound_track_parameters(surfaces, t_particle));
 			 meas.push_back(sp.make_measurement(surfaces));
-			 if (i == 0) {
-				 std::cout << meas.back().local[0] << " " << meas.back().local[1] <<  " " << meas.back().variance[0] << " " << meas.back().variance[1] << " " << meas.back().surface_id << std::endl;
-			 }
-			 meas.back().variance[0] = 0.001 * meas.back().local[0];
-			 meas.back().variance[1] = 0.001 * meas.back().local[1];
+			 meas.back().variance[0] = std::pow(0.001 * meas.back().local[0], 2);
+			 meas.back().variance[1] = std::pow(0.001 * meas.back().local[1], 2);
 		 }
-		 retv.push_back(std::make_pair(t_particle.vertex, std::move(meas)));
+		 retv.push_back(std::make_pair(std::move(tbps), std::move(meas)));
 	}
 	return retv;
 }
 
+traccc::host_surface_collection SURFACES = read_surfaces();
+std::vector<std::pair<traccc::host_truth_bound_track_parameters_collection, traccc::host_measurement_collection>>
+		TRUTH_DATA = read_particles(SURFACES);
+
 
 TEST(algorithm, actor)
 {
-	traccc::host_surface_collection surfaces = read_surfaces();
-
-	measurement_t meas;
-	meas.local = {1, 1};
-	meas.variance = {1, 1};
-	meas.surface_id = 0;
-
-	traccc::host_measurement_collection meascoll = { meas };
+	traccc::bound_track_parameters bpars = TRUTH_DATA.at(0).first.items.at(0);
+	bpars.covariance() = traccc::bound_track_parameters::covariance_t::Identity();
+	traccc::host_measurement_collection  meas = {TRUTH_DATA.at(0).second.at(0)};
 
 	stepper_t stepper;
 	propagator_state_t prop_state;
-
-	actor_t actor(meas.surface_id, meascoll, surfaces);
+	prop_state.stepping = stepper.make_state(bpars, SURFACES);
+	actor_t actor(meas.at(0).surface_id, meas, SURFACES);
 
 	Acts::FreeVector tpars_before = prop_state.stepping.pars;
 	actor(prop_state, stepper);
 	Acts::FreeVector tpars_after = prop_state.stepping.pars;
 
-	bool any_diff = false;
+	// Re-update the parameters using the truth measurement at the
+	// same surface, therefore we expect no change
+	bool no_diff = true;
 	bool has_nan = false;
 	for (int i = 0; i < Acts::eFreeSize; i++) {
-		any_diff |= (tpars_before[i] != tpars_after[i]);
+		std::cout << "#" << i << ": before=" << tpars_before[i] << " after=" << tpars_after[i] << std::endl;
+		no_diff &= (tpars_before[i] - tpars_after[i]) < 1e-8;
 		has_nan |= std::isnan(tpars_after[i]);
 	}
-
-	EXPECT_TRUE(any_diff);	
+	EXPECT_TRUE(no_diff);	
 	EXPECT_FALSE(has_nan);	
 }
 
-void dump(stepper_t::state &state)
+TEST(algorithm, actor2)
 {
-	for (size_t i = 0; i < Acts::eFreeSize; i++) {
-		std::cout << state.pars[i] << " ";
+
+	traccc::bound_track_parameters bpars = TRUTH_DATA.at(0).first.items.at(0);
+	bpars.covariance() = traccc::bound_track_parameters::covariance_t::Identity();
+	traccc::host_measurement_collection  meas = {TRUTH_DATA.at(0).second.at(0)};
+	meas.at(0).local[0] *= 2;
+	meas.at(0).local[1] *= 2;
+
+	stepper_t stepper;
+	propagator_state_t prop_state;
+	prop_state.stepping = stepper.make_state(bpars, SURFACES);
+	actor_t actor(meas.at(0).surface_id, meas, SURFACES);
+
+	Acts::FreeVector tpars_before = prop_state.stepping.pars;
+	actor(prop_state, stepper);
+	Acts::FreeVector tpars_after = prop_state.stepping.pars;
+
+	// Here the measurement was fudged so we expecte a change
+	bool no_diff = true;
+	bool has_nan = false;
+	for (int i = 0; i < Acts::eFreeSize; i++) {
+		std::cout << "#" << i << ": before=" << tpars_before[i] << " after=" << tpars_after[i] << std::endl;
+		no_diff &= (tpars_before[i] - tpars_after[i]) < 1e-8;
+		has_nan |= std::isnan(tpars_after[i]);
 	}
-	std::cout << "\n---------------------" << std::endl;
-		
-}
-
-std::vector<int> get_surfaces_for_this_track(traccc::host_measurement_collection &coll)
-{
-	std::vector<int> retv;
-	for (traccc::measurement & meas : coll) {
-		retv.push_back(meas.surface_id);
-	}
-	return retv;
-}
-
-TEST(aglorithm, actor)
-{
-	traccc::host_surface_collection surfaces = read_surfaces();
-	std::vector<std::pair<traccc::free_track_parameters, traccc::host_measurement_collection>>
-		truth_data = read_particles(surfaces);
-
-	
-	// FIXME: This test is bad
-	// Should just test piece-wise: (Truth State, Measurement) -> Truth State and check it has not changed
-	// Then (TruthState + Perturbation, Measurment) and check that it messes it up
-	// Then (TruthState, Measurement + Perturbation)
-	// Could also compute by hand the result for a very simple output
-	for (auto& [t_pars, meas] : truth_data) {
-		stepper_t stepper;
-		propagator_state_t prop_state;
-		prop_state.stepping.nav_dir = Acts::forward;
-		prop_state.stepping.q = (t_pars.qop() >= 0)? 1 : -1;
-		prop_state.stepping.pars = t_pars.vector();
-
-		prop_state.stepping.cov = 0.001*Acts::BoundSymMatrix::Random();//t_pars.covariance();
-		dump(prop_state.stepping);
-		for (int i : get_surfaces_for_this_track(meas)) {
-			actor_t actor(i, meas, surfaces);
-			actor(prop_state, stepper);
-			dump(prop_state.stepping);
-		}
-		dump(prop_state.stepping);
-
-		// FIXME better check
-		EXPECT_TRUE((t_pars.qop() - prop_state.stepping.pars[Acts::eFreeQOverP]) < 1e-6);
-		break;
-	}
+	EXPECT_FALSE(no_diff);	
+	EXPECT_FALSE(has_nan);	
 }

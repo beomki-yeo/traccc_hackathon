@@ -10,6 +10,7 @@
 #include <edm/detail/transform_free_to_bound.hpp>
 #include <edm/measurement.hpp>
 #include <geometry/surface.hpp>
+#include <propagator/detail/covariance_engine.hpp>
 
 namespace traccc {
 
@@ -61,13 +62,10 @@ class kalman_fitter {
         void operator()(propagator_state_t& state,
                         const stepper_t& stepper) const {
 
-	    // SOME POINTERS
-	    //
-	    // -> Follow the ACTS filter code
-	    // -> BoundState from the stepper
-	    // -> Covariance transport
-	    // -> Fill track state proxy in the same way
-	    // Basically look into what is done up to the m_updater call, and how the result is treated
+	    // + Find the surface
+	    if (target_surface_id >= surfaces.items.size())
+		return;
+	    traccc::surface &surf = surfaces.items.at(target_surface_id);
 
 	    // Find matching measurement
 	    auto res = std::find_if(input_measurements.begin(), input_measurements.end(),
@@ -77,33 +75,52 @@ class kalman_fitter {
 	    );
 	    if (res == input_measurements.end())
 		return;
+	    traccc::measurement meas = *res;
 
+	    // + Transport covariance to the surface
+	    stepper.cov_transport(state);
+	    
+	    // + Pre Material effects (ignored for now)
+	    
+	    // + Bind stepping state to the surface, get boundParams, jacobian, pathlength
+	    // Note: this should be in the stepper
+	    auto [boundParams, jacobian, pathLength] =
+		traccc::detail::bound_state(
+		    state.stepping.cov,
+		    state.stepping.jacobian,
+		    state.stepping.jac_transport,
+		    state.stepping.derivative,
+		    state.stepping.jac_to_global,
+		    state.stepping.pars,
+		    // state.stepping.covTransport,
+		    false, // FIXME!!!!
+		    state.stepping.path_accumulated,
+		    target_surface_id,
+		    surfaces);
 
-	    traccc::measurement &meas = *res;
-
-	    // Find the surface itself
-	    if (target_surface_id >= surfaces.items.size())
-		return;
-	    traccc::surface &surf = surfaces.items.at(target_surface_id);
-
-	    //state: measurement, predicted vector + covariance
+	    // + Creates a track state, fill predicted part, measurement, projector
 	    typename updater_t::track_state_type tr_state;
-	    tr_state.measurement() = meas;
-	    tr_state.predicted().covariance() = state.stepping.cov;
+	    tr_state.measurement() = std::move(meas);
+	    tr_state.predicted() = std::move(boundParams);
+	    tr_state.projector() = tr_state.measurement().projector();
 
-	    // FIXME this is predefined somewhere
-	    tr_state.projector() = Acts::ActsMatrix<2,6>::Zero();
-	    tr_state.projector()(0,0) = 1;
-	    tr_state.projector()(1,1) = 1;
+	    // + Calibrate the measurement (ignored for now)
+	    // + Outlier detection (ignored for now)
 
-	    tr_state.predicted().vector() =
-		traccc::detail::transform_free_to_bound_parameters(state.stepping.pars, surf);
-
+            // + If not outlier, run the updator which fills the filtered state
 	    updater_t updater;
 	    updater(tr_state);
+	    tr_state.filtered().surface_id = target_surface_id;
 
-	    state.stepping.pars = traccc::detail::transform_bound_to_free_parameters(tr_state.filtered().vector(), surf);
-	    state.stepping.cov = tr_state.filtered().covariance();
+	    // + If not Outlier, Update the stepping state
+	    state.stepping = stepper.make_state(
+		tr_state.filtered(),
+		surfaces,
+		state.stepping.nav_dir,
+		state.stepping.step_size,
+		state.stepping.tolerance);
+
+	    // + Post Material effects (ignored for now)
 	}
     };
 
