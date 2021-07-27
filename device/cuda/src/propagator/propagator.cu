@@ -25,13 +25,14 @@ __global__ void propagate_kernel(
     collection_view<surface_t> surfaces_view);
 
 template void
-propagator<traccc::cuda::eigen_stepper, traccc::cuda::direct_navigator>::propagate<
-    traccc::propagator_options<void_actor, void_aborter>, surface>(
-    host_collection<
-        typename traccc::propagator_options<void_actor, void_aborter>>& options,
-    host_collection<typename traccc::cuda::eigen_stepper::state>& stepping,
-    host_collection<typename traccc::cuda::direct_navigator::state>& navigation,
-    host_collection<surface>& surfaces, vecmem::memory_resource* resource);
+propagator<traccc::cuda::eigen_stepper, traccc::cuda::direct_navigator>::
+    propagate<traccc::propagator_options<void_actor, void_aborter>, surface>(
+        host_collection<typename traccc::propagator_options<
+            void_actor, void_aborter>>& options,
+        host_collection<typename traccc::cuda::eigen_stepper::state>& stepping,
+        host_collection<typename traccc::cuda::direct_navigator::state>&
+            navigation,
+        host_collection<surface>& surfaces, vecmem::memory_resource* resource);
 
 // definition
 template <typename cuda_stepper_t, typename cuda_navigator_t>
@@ -51,9 +52,9 @@ void traccc::cuda::propagator<cuda_stepper_t, cuda_navigator_t>::propagate(
     unsigned int num_blocks = options_view.items.size() / num_threads + 1;
 
     // run the kernel
-    propagate_kernel<propagator_options_t, cuda_stepper_t, cuda_navigator_t, surface_t>
-        <<<num_blocks, num_threads>>>(options_view, stepping_view,
-                                      navigation_view, surfaces_view);
+    propagate_kernel<propagator_options_t, cuda_stepper_t, cuda_navigator_t,
+                     surface_t><<<num_blocks, num_threads>>>(
+        options_view, stepping_view, navigation_view, surfaces_view);
 
     // cuda error check
     CUDA_ERROR_CHECK(cudaGetLastError());

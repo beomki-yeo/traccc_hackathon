@@ -15,12 +15,12 @@
 #include <vecmem/memory/host_memory_resource.hpp>
 
 // traccc
+#include <cuda/propagator/direct_navigator.cuh>
+#include <cuda/propagator/eigen_stepper.cuh>
 #include <propagator/direct_navigator.hpp>
 #include <propagator/eigen_stepper.hpp>
 #include <propagator/propagator.hpp>
 #include <propagator/propagator_options.hpp>
-#include <cuda/propagator/eigen_stepper.cuh>
-#include <cuda/propagator/direct_navigator.cuh>
 
 #include "edm/collection.hpp"
 
@@ -29,9 +29,8 @@ namespace cuda {
 
 template <typename cuda_stepper_t, typename cuda_navigator_t>
 class propagator final {
-    
+
     public:
-    
     template <typename propagator_options_t>
     struct state {
 
@@ -69,32 +68,28 @@ class propagator final {
     }
 
     template <typename propagator_options_t, typename surface_t>
-    void propagate(host_collection<propagator_options_t>& options,
-                   host_collection<typename cuda_stepper_t::state>& stepping,
-                   host_collection<typename cuda_navigator_t::state>& navigation,
-                   host_collection<surface_t>& surfaces,
-                   vecmem::memory_resource* resource);
+    void propagate(
+        host_collection<propagator_options_t>& options,
+        host_collection<typename cuda_stepper_t::state>& stepping,
+        host_collection<typename cuda_navigator_t::state>& navigation,
+        host_collection<surface_t>& surfaces,
+        vecmem::memory_resource* resource);
 
     template <typename propagator_state_t, typename surface_t>
     void propagate_sync(propagator_state_t& state,
-			host_collection<surface_t>& surfaces,
-			vecmem::memory_resource* resource) {
+                        host_collection<surface_t>& surfaces,
+                        vecmem::memory_resource* resource) {
 
-	auto& options = state.options;
-	auto& stepping = state.stepping;
-	auto& navigation = state.navigation;
+        auto& options = state.options;
+        auto& stepping = state.stepping;
+        auto& navigation = state.navigation;
 
-	// start stepper
-	while ( true ) {
-	    
-
-
-
-	}	
+        // start stepper
+        while (true) {
+        }
     }
-    
-    private:
 
+    private:
     cuda_stepper_t m_stepper;
     cuda_navigator_t m_navigator;
 };
