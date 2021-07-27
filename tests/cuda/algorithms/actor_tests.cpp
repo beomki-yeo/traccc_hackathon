@@ -1,7 +1,10 @@
+#include <chrono>
+
 #include <gtest/gtest.h>
 #include <vecmem/memory/host_memory_resource.hpp>
 
 #include "csv/csv_io.hpp"
+#include <cuda/fitter/kalman_fitter.hpp>
 #include <edm/measurement.hpp>
 #include <edm/track_parameters.hpp>
 #include <edm/track_state.hpp>
@@ -28,6 +31,10 @@ using updater_t = traccc::gain_matrix_updater<track_state_t>;
 using smoother_t = traccc::gain_matrix_smoother<track_state_t>;
 using kalman_fitter_t = traccc::kalman_fitter<propagator_t, updater_t, smoother_t>;
 using actor_t = kalman_fitter_t::actor<parameters_t>;
+
+using cuda_updater_t = traccc::cuda::gain_matrix_updater<track_state_t>;
+using cuda_kalman_fitter_t = traccc::cuda::kalman_fitter<propagator_t, cuda_updater_t, smoother_t>;
+using cuda_actor_t = cuda_kalman_fitter_t::actor<parameters_t>;
 
 
 traccc::host_surface_collection read_surfaces()
@@ -160,3 +167,85 @@ TEST(algorithm, actor2)
 	EXPECT_FALSE(no_diff);	
 	EXPECT_FALSE(has_nan);	
 }
+
+struct InputData {
+	std::vector<int> target_surface_id;
+	std::vector<propagator_state_t> state;
+	std::vector<stepper_t> stepper;
+	traccc::host_measurement_collection input_measurements;
+	size_t size;
+
+	InputData() :
+		target_surface_id(TRUTH_DATA.size()),
+		state(TRUTH_DATA.size()),
+		stepper(TRUTH_DATA.size()),
+		size(TRUTH_DATA.size()) {
+
+		// Need global vector for all measurements
+		traccc::host_measurement_collection input_measurements;
+		for (auto& [_, meas] : TRUTH_DATA) {
+			for (traccc::measurement& m : meas) {
+				input_measurements.push_back(m);
+			}
+		}
+		// For simplicity, only use the first bound state / measurement pair for every tracks
+		for (size_t i = 0; i < TRUTH_DATA.size(); i++) {
+			state.at(i).stepping = stepper.at(i).make_state(TRUTH_DATA.at(i).first.items.at(0), SURFACES);
+			target_surface_id.push_back(TRUTH_DATA.at(i).second.at(0).surface_id);
+		}
+	}
+};
+
+
+TEST(algorithm, actor_cuda)
+{
+	using time_t = std::chrono::time_point<std::chrono::system_clock>;
+
+
+	// cpu
+	double time_cpu = 0;
+	InputData cpu_data;
+	for (size_t i = 0; i < cpu_data.size; i++) {
+		actor_t cpu_actor(
+			cpu_data.target_surface_id.at(i),
+			cpu_data.input_measurements,
+			SURFACES);
+		time_t cpu_time_0 = std::chrono::system_clock::now();
+		cpu_actor(cpu_data.state.at(i), cpu_data.stepper.at(i));
+		time_t cpu_time_1 = std::chrono::system_clock::now();
+		std::chrono::duration<double> dt_cpu = cpu_time_1 - cpu_time_0;
+		time_cpu += dt_cpu.count();
+	}
+
+	InputData gpu_data;
+	double time_gpu = 0;
+	cuda_actor_t gpu_actor(
+		gpu_data.target_surface_id,
+		gpu_data.input_measurements,
+		SURFACES);
+	
+	time_t gpu_time_0 = std::chrono::system_clock::now();
+	gpu_actor(gpu_data.target_surface_id, gpu_data.state, gpu_data.stepper);
+	time_t gpu_time_1 = std::chrono::system_clock::now();
+	std::chrono::duration<double> dt_gpu = gpu_time_1 - gpu_time_0;
+	time_gpu += dt_gpu.count();
+	
+
+	bool no_diff = true;
+	bool has_nan = false;
+	for (int i = 0; i < cpu_data.size; i++) {
+		Acts::FreeVector cpu_pars = cpu_data.state.at(i).stepping.pars;
+		Acts::FreeVector gpu_pars = cpu_data.state.at(i).stepping.pars;
+		for (int j = 0; j < Acts::eFreeSize; j++) {
+			no_diff &= (cpu_pars[j] - gpu_pars[j]) < 1e-8;
+			has_nan |= std::isnan(cpu_pars[j]);
+			has_nan |= std::isnan(gpu_pars[j]);
+		}
+	}
+	EXPECT_TRUE(no_diff);	
+	EXPECT_FALSE(has_nan);
+
+	std::cout "Time CPU: " << time_cpu << "  /////  Time GPU: " << time_gpu << std::endl;
+	std::cout "GPU/CPU: " << time_gpu / time_cpu << std::endl;
+}
+
