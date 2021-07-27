@@ -216,7 +216,8 @@ TEST(algebra, propagator) {
     using cuda_stepper_t = traccc::cuda::eigen_stepper;
     using cuda_navigator_t = traccc::cuda::direct_navigator;
 
-    using cuda_propagator_t = traccc::cuda::propagator<stepper_t, navigator_t>;
+    using cuda_propagator_t =
+        traccc::cuda::propagator<cuda_stepper_t, cuda_navigator_t>;
 
     using cuda_propagator_state_t =
         typename cuda_propagator_t::state<propagator_options_t>;
