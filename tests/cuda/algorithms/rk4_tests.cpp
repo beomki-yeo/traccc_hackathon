@@ -218,6 +218,7 @@ TEST(algebra, rk4) {
 
     std::cout << "CPU propagation start..." << std::endl;
 
+
     // iterate over truth particles
     for (int i_h = 0; i_h < n_tracks; i_h++) {
 
@@ -278,6 +279,8 @@ TEST(algebra, rk4) {
         /*time*/ auto end_cpu = std::chrono::system_clock::now();
         /*time*/ std::chrono::duration<double> time_cpu = end_cpu - start_cpu;
         /*time*/ cpu_elapse += time_cpu.count();
+
+        cpu_prop_state.push_back(prop_state);
     }
 
     /*---------
@@ -297,10 +300,26 @@ TEST(algebra, rk4) {
     std::cout << "==> Elpased time ... " << std::endl;
     std::cout << "cpu time: " << cpu_elapse << std::endl;
     std::cout << "gpu time: " << gpu_elapse << std::endl;
+    std::cout << "speedup: " << cpu_elapse/gpu_elapse << std::endl;
 
     /*-----------------------------------------
       Check if CPU and GPU results are the same
       -----------------------------------------*/
+    // FreeVector 3D [x,y,z], 3D [px, py, pz], [t, q/p]
+    // cuda_prop_state.stepping.items[0].pars
+    // prop_state.stepping.pars
+    EXPECT_TRUE(cpu_prop_state.size() == cuda_prop_state.stepping.items.size());
+
+    int tot_dim = 8;
+    // loop over tracks and compare the stepper states for each track
+    for(int idx = 0; idx < cpu_prop_state.size(); idx++) {
+        auto& states_in_cuda = cuda_prop_state.stepping.items[idx].pars;
+        auto& states_in_cpu = cpu_prop_state[idx].stepping.pars;
+        for(int ipx = 0; ipx < tot_dim; ipx++) {
+            EXPECT_TRUE(abs(states_in_cuda[ipx] - states_in_cpu[ipx]) < 1e-8);
+        }
+    }
+
 }
 
 // Google Test can be run manually from the main() function
