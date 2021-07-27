@@ -43,6 +43,9 @@
 // io
 #include "csv/csv_io.hpp"
 
+int my_argc;
+char** my_argv;
+
 // This defines the local frame test suite
 TEST(algebra, rk4) {
 
@@ -83,6 +86,17 @@ TEST(algebra, rk4) {
     // Event file
     std::string io_hits_file = dir + std::string("/data/hits.csv");
     std::string io_particle_file = dir + std::string("/data/particles.csv");
+
+    if (my_argc == 3) {
+        io_hits_file = std::string(my_argv[1]);
+        io_particle_file = std::string(my_argv[2]);
+    } else if (my_argc == 2) {
+        dir = std::string(my_argv[1]);
+        io_hits_file = dir + std::string("/event000000000-hits.csv");
+        io_particle_file = dir + std::string("/event000000000-particles_final.csv");
+    }
+    std::cout << "Hits: " << io_hits_file << std::endl;
+    std::cout << "Particles: " << io_particle_file << std::endl;
 
     // truth hit reader
     traccc::fatras_hit_reader hreader(
@@ -327,6 +341,9 @@ TEST(algebra, rk4) {
 // set-up main() function primed to accept Google Test test cases.
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
+
+    my_argc = argc;
+    my_argv = argv;
 
     return RUN_ALL_TESTS();
 }
