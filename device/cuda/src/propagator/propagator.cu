@@ -8,38 +8,38 @@
 #include <cuda/propagator/propagator.cuh>
 #include <cuda/utils/definitions.hpp>
 #include <edm/track_parameters.hpp>
-#include <propagator/direct_navigator.hpp>
-#include <propagator/eigen_stepper.hpp>
+//#include <propagator/direct_navigator.hpp>
+//#include <propagator/eigen_stepper.hpp>
 #include <propagator/propagator_options.hpp>
 
 namespace traccc {
 namespace cuda {
 
 // kernel declaration
-template <typename propagator_options_t, typename stepper_t,
-          typename navigator_t, typename surface_t>
+template <typename propagator_options_t, typename cuda_stepper_t,
+          typename cuda_navigator_t, typename surface_t>
 __global__ void propagate_kernel(
     collection_view<propagator_options_t> options_view,
-    collection_view<typename stepper_t::state> stepping_view,
-    collection_view<typename navigator_t::state> navigator_view,
+    collection_view<typename cuda_stepper_t::state> stepping_view,
+    collection_view<typename cuda_navigator_t::state> navigator_view,
     collection_view<surface_t> surfaces_view);
 
 template void
-propagator<traccc::eigen_stepper, traccc::direct_navigator>::propagate<
+propagator<traccc::cuda::eigen_stepper, traccc::cuda::direct_navigator>::propagate<
     traccc::propagator_options<void_actor, void_aborter>, surface>(
     host_collection<
         typename traccc::propagator_options<void_actor, void_aborter>>& options,
-    host_collection<typename traccc::eigen_stepper::state>& stepping,
-    host_collection<typename traccc::direct_navigator::state>& navigation,
+    host_collection<typename traccc::cuda::eigen_stepper::state>& stepping,
+    host_collection<typename traccc::cuda::direct_navigator::state>& navigation,
     host_collection<surface>& surfaces, vecmem::memory_resource* resource);
 
 // definition
-template <typename stepper_t, typename navigator_t>
+template <typename cuda_stepper_t, typename cuda_navigator_t>
 template <typename propagator_options_t, typename surface_t>
-void traccc::cuda::propagator<stepper_t, navigator_t>::propagate(
+void traccc::cuda::propagator<cuda_stepper_t, cuda_navigator_t>::propagate(
     host_collection<propagator_options_t>& options,
-    host_collection<typename stepper_t::state>& stepping,
-    host_collection<typename navigator_t::state>& navigation,
+    host_collection<typename cuda_stepper_t::state>& stepping,
+    host_collection<typename cuda_navigator_t::state>& navigation,
     host_collection<surface_t>& surfaces, vecmem::memory_resource* resource) {
 
     auto options_view = get_data(options, resource);
@@ -51,7 +51,7 @@ void traccc::cuda::propagator<stepper_t, navigator_t>::propagate(
     unsigned int num_blocks = options_view.items.size() / num_threads + 1;
 
     // run the kernel
-    propagate_kernel<propagator_options_t, stepper_t, navigator_t, surface_t>
+    propagate_kernel<propagator_options_t, cuda_stepper_t, cuda_navigator_t, surface_t>
         <<<num_blocks, num_threads>>>(options_view, stepping_view,
                                       navigation_view, surfaces_view);
 
@@ -61,18 +61,18 @@ void traccc::cuda::propagator<stepper_t, navigator_t>::propagate(
 }
 
 // kernel implementation
-template <typename propagator_options_t, typename stepper_t,
-          typename navigator_t, typename surface_t>
+template <typename propagator_options_t, typename cuda_stepper_t,
+          typename cuda_navigator_t, typename surface_t>
 __global__ void propagate_kernel(
     collection_view<propagator_options_t> options_view,
-    collection_view<typename stepper_t::state> stepping_view,
-    collection_view<typename navigator_t::state> navigator_view,
+    collection_view<typename cuda_stepper_t::state> stepping_view,
+    collection_view<typename cuda_navigator_t::state> navigator_view,
     collection_view<surface_t> surfaces_view) {
     device_collection<propagator_options_t> options_device(
         {options_view.items});
-    device_collection<typename stepper_t::state> stepping_device(
+    device_collection<typename cuda_stepper_t::state> stepping_device(
         {stepping_view.items});
-    device_collection<typename navigator_t::state> navigator_device(
+    device_collection<typename cuda_navigator_t::state> navigator_device(
         {navigator_view.items});
     device_collection<surface_t> surfaces_device({surfaces_view.items});
 
@@ -82,8 +82,8 @@ __global__ void propagate_kernel(
         return;
     }
 
-    stepper_t stepper;
-    navigator_t navigator;
+    typename cuda_stepper_t::stepper_t stepper;
+    typename cuda_navigator_t::navigator_t navigator;
 
     traccc::propagator prop(stepper, navigator);
 
