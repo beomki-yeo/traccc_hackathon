@@ -12,6 +12,8 @@
 namespace traccc {
 namespace cuda {
 
+using state = traccc::eigen_stepper::state;
+
 // Reserved to Xiangyang
 bool traccc::cuda::eigen_stepper::rk4(host_collection<state>& state) {
     return true;
