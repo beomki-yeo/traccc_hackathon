@@ -94,6 +94,9 @@ class propagator final {
     }
     
     private:
+
+    cuda_stepper_t m_stepper;
+    cuda_navigator_t m_navigator;
 };
 
 }  // namespace cuda
