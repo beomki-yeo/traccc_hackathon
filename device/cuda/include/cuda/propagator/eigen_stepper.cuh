@@ -21,7 +21,8 @@ namespace cuda {
 class eigen_stepper {
 
     public:
-    using state = traccc::eigen_stepper::state;
+    using stepper_t = traccc::eigen_stepper;
+    using state = typename stepper_t::state;
 
     template <typename propagator_state_t>
     void step(propagator_state_t& state) {
