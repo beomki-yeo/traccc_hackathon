@@ -105,6 +105,9 @@ class eigen_stepper {
         /// The propagation derivative
         Acts::FreeVector derivative = Acts::FreeVector::Zero();
 
+        /// Status of the stepper
+        bool success = true;
+
         /// @brief Storage of magnetic field and the sub steps during a RKN4
         /// step
 
@@ -209,6 +212,7 @@ class eigen_stepper {
                 state.step_size_cutoff * state.step_size_cutoff) {
                 // Not moving due to too low momentum needs an aborter
                 printf("step size is too small. will break. \n");
+                state.success = false;
                 return false;
             }
 
@@ -217,6 +221,7 @@ class eigen_stepper {
             if (n_step_trials > state.max_rk_step_trials) {
                 // Too many trials, have to abort
                 printf("too many rk4 trials. will break. \n");
+                state.success = false;
                 return false;
             }
             n_step_trials++;
