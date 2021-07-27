@@ -278,10 +278,10 @@ TEST(algebra, convariace_engine_tests) {
         sd.B_middle = Acts::Vector3(0, 0, 2 * Acts::UnitConstants::T);
         sd.B_last = Acts::Vector3(0, 0, 2 * Acts::UnitConstants::T);
 
-	// do the RK4
+        // do the RK4
         auto res = stepper_t::rk4(prop_state);
-	stepper_t::cov_transport(prop_state);
-	
+        stepper_t::cov_transport(prop_state);
+
         // fill gpu propagator state
         cuda_prop_state.options.items[i_h] = prop_state.options;
         cuda_prop_state.stepping.items[i_h] = prop_state.stepping;
@@ -289,7 +289,7 @@ TEST(algebra, convariace_engine_tests) {
 
         cpu_prop_state.push_back(prop_state);
     }
-    
+
     /*-----------------------
       Test covariance matrix
       -----------------------*/
@@ -298,8 +298,8 @@ TEST(algebra, convariace_engine_tests) {
 
     // run the bound state
     stepper_t stepper;
-    auto bound_params = stepper.bound_state(cpu_prop_state[0].stepping, 0, surfaces);
-
+    auto bound_params =
+        stepper.bound_state(cpu_prop_state[0].stepping, 0, surfaces);
 }
 
 // Google Test can be run manually from the main() function
