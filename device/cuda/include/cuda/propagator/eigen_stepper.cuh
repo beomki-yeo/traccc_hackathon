@@ -48,13 +48,13 @@ class eigen_stepper {
     static void cov_transport(host_collection<state>& state,
                               host_collection<propagator_options_t>& options);
 
-    // Kernel for cov transport
-    template <typename propagator_options_t>
-    __global__ void cov_transport_kernel(
-        collection_view<track_state_t> states_view, collection_view<propagator_options_t> options_view);
-
     private:
 };
+
+// Kernel for cov transport
+template <typename propagator_options_t>
+__global__ void cov_transport_kernel(
+    collection_view<state> states_view, collection_view<propagator_options_t> options_view);
 
 }  // namespace cuda
 }  // namespace traccc
