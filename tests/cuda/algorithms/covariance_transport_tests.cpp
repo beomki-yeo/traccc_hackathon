@@ -278,6 +278,8 @@ TEST(algebra, covariance_transport) {
         /*time*/ auto end_cpu = std::chrono::system_clock::now();
         /*time*/ std::chrono::duration<double> time_cpu = end_cpu - start_cpu;
         /*time*/ cpu_elapse += time_cpu.count();
+
+	cpu_prop_state.push_back(prop_state);
     }
 
     /*---------
@@ -301,6 +303,17 @@ TEST(algebra, covariance_transport) {
     /*-----------------------------------------
       Check if CPU and GPU results are the same
       -----------------------------------------*/
+
+    EXPECT_TRUE(cpu_prop_state.size() == cuda_prop_state.stepping.items.size());
+
+    for(int i = 0; i <cpu_prop_state.size(); i++) {
+    	auto& states_in_cuda = cuda_prop_state.stepping.items[i].pars;
+	auto& states_in_cpu = cpu_prop_state[i].stepping.pars;
+	EXPECT_TRUE(states_in_cuda.size() == states_in_cpu.size());
+	for(int j = 0; j < states_in_cuda.size(); j++) {
+	    EXPECT_TRUE(abs(states_in_cuda[j] - states_in_cpu[j]) < 1e-8);
+	}
+    }
 }
 
 // Google Test can be run manually from the main() function

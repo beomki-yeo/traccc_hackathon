@@ -54,11 +54,5 @@ class eigen_stepper {
     private:
 };
 
-using state = traccc::eigen_stepper::state;
-// Kernel for cov transport
-template <typename propagator_options_t>
-__global__ void cov_transport_kernel(
-    collection_view<state> states_view, collection_view<propagator_options_t> options_view);
-
 }  // namespace cuda
 }  // namespace traccc

@@ -14,6 +14,11 @@ namespace cuda {
 
 using state = traccc::eigen_stepper::state;
 
+// Kernel for cov transport
+template <typename propagator_options_t>
+__global__ void cov_transport_kernel(
+    collection_view<state> states_view, collection_view<propagator_options_t> options_view);
+
 // Reserved to Xiangyang
 bool traccc::cuda::eigen_stepper::rk4(host_collection<state>& state) {
     return true;
