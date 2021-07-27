@@ -22,7 +22,8 @@ namespace cuda {
 class direct_navigator {
 
     public:
-    using state = typename traccc::direct_navigator::state;
+    using navigator = traccc::direct_navigator;
+    using state = typename navigator::state;
 
     // Wrapper for status call
     template <typename propagator_state_t, typename surface_t>

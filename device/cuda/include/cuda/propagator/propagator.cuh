@@ -72,9 +72,25 @@ class propagator final {
                    host_collection<surface_t>& surfaces,
                    vecmem::memory_resource* resource);
 
+    template <typename propagator_state_t, typename surface_t>
+    void propagate_sync(propagator_state_t& state,
+			host_collection<surface_t>& surfaces,
+			vecmem::memory_resource* resource) {
+
+	auto& options = state.options;
+	auto& stepping = state.stepping;
+	auto& navigation = state.navigation;
+
+	// start stepper
+	while ( true ) {
+	    
+
+
+
+	}	
+    }
+    
     private:
-    stepper_t m_stepper;
-    navigator_t m_navigator;
 };
 
 }  // namespace cuda
