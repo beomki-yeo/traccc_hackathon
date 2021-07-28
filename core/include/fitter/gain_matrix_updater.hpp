@@ -18,6 +18,7 @@ namespace traccc {
 template <typename track_state_t>
 class gain_matrix_updater {
     public:
+    using track_state_type = track_state_t;
     gain_matrix_updater() = default;
 
     ~gain_matrix_updater() = default;
