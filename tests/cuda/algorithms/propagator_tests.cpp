@@ -256,9 +256,12 @@ TEST(algebra, propagator) {
         navigator_t navigator;
         propagator_t prop(stepper, navigator);
 
-        // steper state
-        stepper_state_t stepper_state(bound_track_parameters_per_particle[0],
-                                      surfaces);
+        stepper_state_t stepper_state;
+
+        if (bound_track_parameters_per_particle.size() > 0) {
+            stepper_state = stepper_state_t(
+                bound_track_parameters_per_particle[0], surfaces);
+        }
 
         // propagator state that takes stepper state as input
         propagator_options_t po;
