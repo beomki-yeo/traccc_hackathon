@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "vecmem/memory/cuda/device_memory_resource.hpp"
-#include "vecmem/memory/cuda/host_memory_resource.hpp"
-#include "vecmem/utils/cuda/copy.hpp"
+// vecmem
+#include <vecmem/memory/memory_resource.hpp>
+#include <vecmem/memory/cuda/managed_memory_resource.hpp>
 
 #include <cuda/fitter/gain_matrix_updater.cuh>
 #include <edm/detail/transform_free_to_bound.hpp>
@@ -19,6 +19,16 @@
 #include <propagator/detail/covariance_engine.hpp>
 
 
+
+template <typename item_t>
+traccc::host_collection<item_t>
+alloc_host_collection(size_t size, vecmem::memory_resource& mr)
+{
+    traccc::host_collection<item_t> hc(
+	{typename traccc::host_collection<item_t>::item_vector(size, &mr)});
+    return hc;
+}
+    
 namespace traccc {
 namespace cuda {
 
@@ -35,7 +45,7 @@ class kalman_fitter {
  
     template <typename parameters_t>
     class actor {
-        public:
+    public:
         // ID of target surface
 	std::vector<int>& target_surface_id;
 
@@ -68,10 +78,11 @@ class kalman_fitter {
 	    reversed_filtering(reversed_filtering) {}
 
 	template <typename propagator_state_t, typename stepper_t>
-	track_state_t make_track_state(int target_surface_id, propagator_state_t& state, stepper_t& stepper) const {
+	std::optional<track_state_t>
+	make_track_state(int target_surface_id, propagator_state_t& state, stepper_t& stepper) const {
 	    // + Find the surface
 	    if (target_surface_id >= surfaces.items.size())
-		return;
+		return std::optional<track_state_t>();
 	    traccc::surface &surf = surfaces.items.at(target_surface_id);
 
 	    // Find matching measurement
@@ -81,7 +92,8 @@ class kalman_fitter {
 				    }
 		);
 	    if (res == input_measurements.end())
-		return;
+		return std::optional<track_state_t>();
+
 	    traccc::measurement meas = *res;
 
 	    // + Transport covariance to the surface
@@ -114,7 +126,7 @@ class kalman_fitter {
 	    // + Calibrate the measurement (ignored for now)
 	    // + Outlier detection (ignored for now)
 
-	    return tr_state;
+	    return std::optional(tr_state);
 	}
 
         template <typename propagator_state_t, typename stepper_t>
@@ -132,35 +144,35 @@ class kalman_fitter {
 		return;
 	    }
 
-	    // vecmem::cuda::device_memory_resource host_mr;
-	    // traccc::host_collection<track_state_t> h_ts(
-	    // 	{typename traccc::host_collection<track_state_t>::item_vector(state.size(), &host_mr)});
+	    vecmem::cuda::managed_memory_resource mng_mr;
+	    auto h_ts = alloc_host_collection<track_state_t>(0, mng_mr);
 
-	    // for (size_t i = 0; i < state.size(); i++) {
-	    // 	h_ts.items.at(i) = make_track_state(target_surface_id.at(i), state.at(i), stepper.at(i));
-	    // }
+	    std::vector<size_t> indices;
 
-	    // vecmem::cuda::copy m_copy;
-	    // vecmem::cuda::device_memory_resource dev_mr;
-	    // traccc::device_collection<track_state_t> d_ts(
-	    // 	{m_copy.to(vecmem::get_data(h_ts.items), dev_mr, vecmem::copy::type::host_to_device)});
-	    
+	    for (size_t i = 0; i < state.size(); i++) {
+		std::optional o_ts = make_track_state(target_surface_id.at(i), state.at(i), stepper.at(i));
+		if (o_ts.has_value()) {
+		    indices.push_back(i);
+		    h_ts.items.push_back(*o_ts);
+		}
+	    }
 
-	    // traccc::cuda::gain_matrix_updater<track_state_t> updater;
-	    // updater(d_ts);
+	    traccc::cuda::gain_matrix_updater<track_state_t> updater;
+	    updater(h_ts, &mng_mr);
 
-	    // m_copy(d_ts, h_ts, vecmem::copy::type::device_to_host);
+	    // i: index into h_ts
+	    // idx: index into "global" space
+	    for (size_t i = 0; i < indices.size(); i++) {
+		size_t idx = indices.at(i);
+		h_ts.items.at(i).filtered().surface_id = target_surface_id.at(idx);
+		state.at(idx).stepping = stepper.at(idx).make_state(
+		    h_ts.items.at(i).filtered(),
+		    surfaces,
+		    state.at(idx).stepping.nav_dir,
+		    state.at(idx).stepping.step_size,
+		    state.at(idx).stepping.tolerance);
 
-	    // for (size_t i = 0; i < state.size; i++) {
-	    // 	h_ts.items.at(i).surface_id = target_surface_id.at(i);
-	    // 	state.at(i).stepping = stepper.at(i).make_state(
-	    // 	    h_ts.at(i).filtered(),
-	    // 	    surfaces,
-	    // 	    state.at(i).stepping.nav_dir
-	    // 	    state.at(i).stepping.nav_dir,
-	    // 	    state.at(i).stepping.step_size,
-	    // 	    state.at(i).stepping.tolerance);
-	    // }
+	    }
 	}
     };
 
