@@ -245,7 +245,7 @@ TEST(algorithm, actor_cuda)
 	EXPECT_TRUE(no_diff);	
 	EXPECT_FALSE(has_nan);
 
-	std::cout "Time CPU: " << time_cpu << "  /////  Time GPU: " << time_gpu << std::endl;
-	std::cout "GPU/CPU: " << time_gpu / time_cpu << std::endl;
+	std::cout << "Time CPU: " << time_cpu << "  /////  Time GPU: " << time_gpu << std::endl;
+	std::cout << "GPU/CPU: " << time_gpu / time_cpu << std::endl;
 }
 

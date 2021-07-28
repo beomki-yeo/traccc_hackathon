@@ -132,35 +132,35 @@ class kalman_fitter {
 		return;
 	    }
 
-	    vecmem::cuda::device_memory_resource host_mr;
-	    traccc::host_collection<track_state_t> h_ts(
-		{typename traccc::host_collection<track_state_t>::item_vector(state.size(), &host_mr)});
+	    // vecmem::cuda::device_memory_resource host_mr;
+	    // traccc::host_collection<track_state_t> h_ts(
+	    // 	{typename traccc::host_collection<track_state_t>::item_vector(state.size(), &host_mr)});
 
-	    for (size_t i = 0; i < state.size(); i++) {
-		h_ts.items.at(i) = make_track_state(target_surface_id.at(i), state.at(i), stepper.at(i));
-	    }
+	    // for (size_t i = 0; i < state.size(); i++) {
+	    // 	h_ts.items.at(i) = make_track_state(target_surface_id.at(i), state.at(i), stepper.at(i));
+	    // }
 
-	    vecmem::cuda::copy m_copy;
-	    vecmem::cuda::device_memory_resource dev_mr;
-	    traccc::device_collection<track_state_t> d_ts(
-		{m_copy.to(vecmem::get_data(h_ts.items), dev_mr, vecmem::copy::type::host_to_device)});
+	    // vecmem::cuda::copy m_copy;
+	    // vecmem::cuda::device_memory_resource dev_mr;
+	    // traccc::device_collection<track_state_t> d_ts(
+	    // 	{m_copy.to(vecmem::get_data(h_ts.items), dev_mr, vecmem::copy::type::host_to_device)});
 	    
 
-	    traccc::cuda::gain_matrix_updater<track_state_t> updater;
-	    updater(d_ts);
+	    // traccc::cuda::gain_matrix_updater<track_state_t> updater;
+	    // updater(d_ts);
 
-	    m_copy(d_ts, h_ts, vecmem::copy::type::device_to_host);
+	    // m_copy(d_ts, h_ts, vecmem::copy::type::device_to_host);
 
-	    for (size_t i = 0; i < state.size; i++) {
-		h_ts.items.at(i).surface_id = target_surface_id.at(i);
-		state.at(i).stepping = stepper.at(i).make_state(
-		    h_ts.at(i).filtered(),
-		    surfaces,
-		    state.at(i).stepping.nav_dir
-		    state.at(i).stepping.nav_dir,
-		    state.at(i).stepping.step_size,
-		    state.at(i).stepping.tolerance);
-	    }
+	    // for (size_t i = 0; i < state.size; i++) {
+	    // 	h_ts.items.at(i).surface_id = target_surface_id.at(i);
+	    // 	state.at(i).stepping = stepper.at(i).make_state(
+	    // 	    h_ts.at(i).filtered(),
+	    // 	    surfaces,
+	    // 	    state.at(i).stepping.nav_dir
+	    // 	    state.at(i).stepping.nav_dir,
+	    // 	    state.at(i).stepping.step_size,
+	    // 	    state.at(i).stepping.tolerance);
+	    // }
 	}
     };
 
