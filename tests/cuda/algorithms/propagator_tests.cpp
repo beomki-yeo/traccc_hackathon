@@ -158,6 +158,41 @@ TEST(algebra, propagator) {
         }
     }
 
+    // sorting the vector based on the theta
+    std::vector<int> indices(bound_track_parameters_per_event.headers.size());
+    std::iota(indices.begin(), indices.end(), 0);
+    std::sort(indices.begin(), indices.end(), [&](int A, int B) -> bool {
+        auto& A_btp_per_particle = bound_track_parameters_per_event.items[A];
+        auto& B_btp_per_particle = bound_track_parameters_per_event.items[B];
+        if (A_btp_per_particle.size() == 0) {
+            return true;
+        }
+        if (B_btp_per_particle.size() == 0) {
+            return false;
+        }
+
+        return A_btp_per_particle[0].vector()[Acts::eBoundTheta] <
+               B_btp_per_particle[0].vector()[Acts::eBoundTheta];
+    });
+
+    auto tmp_measurements = measurements_per_event;
+    auto tmp_spacepoints = spacepoints_per_event;
+    auto tmp_bound_params = bound_track_parameters_per_event;
+
+    for (int i = 0; i < indices.size(); i++) {
+        measurements_per_event.headers[i] =
+            tmp_measurements.headers[indices[i]];
+        measurements_per_event.items[i] = tmp_measurements.items[indices[i]];
+
+        spacepoints_per_event.headers[i] = tmp_spacepoints.headers[indices[i]];
+        spacepoints_per_event.items[i] = tmp_spacepoints.items[indices[i]];
+
+        bound_track_parameters_per_event.headers[i] =
+            tmp_bound_params.headers[indices[i]];
+        bound_track_parameters_per_event.items[i] =
+            tmp_bound_params.items[indices[i]];
+    }
+
     /*-------------------
       Do test from here
       -------------------*/
