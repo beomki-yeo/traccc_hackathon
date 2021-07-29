@@ -27,7 +27,6 @@
 // std
 #include <chrono>
 
-
 // This defines the local frame test suite
 TEST(algebra, gain_matrix) {
     const int batch_size = 5000;

@@ -11,9 +11,6 @@
 #include "Acts/Definitions/Common.hpp"
 #include "Acts/EventData/TrackParameters.hpp"
 
-// vecmem
-#include <vecmem/memory/cuda/managed_memory_resource.hpp>
-
 // std
 #include <limits>
 #include <propagator/eigen_stepper.hpp>
