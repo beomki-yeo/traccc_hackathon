@@ -93,7 +93,8 @@ TEST(algebra, rk4) {
     } else if (my_argc == 2) {
         dir = std::string(my_argv[1]);
         io_hits_file = dir + std::string("/event000000000-hits.csv");
-        io_particle_file = dir + std::string("/event000000000-particles_final.csv");
+        io_particle_file =
+            dir + std::string("/event000000000-particles_final.csv");
     }
     std::cout << "Hits: " << io_hits_file << std::endl;
     std::cout << "Particles: " << io_particle_file << std::endl;
@@ -232,7 +233,6 @@ TEST(algebra, rk4) {
 
     std::cout << "CPU propagation start..." << std::endl;
 
-
     // iterate over truth particles
     for (int i_h = 0; i_h < n_tracks; i_h++) {
 
@@ -314,7 +314,7 @@ TEST(algebra, rk4) {
     std::cout << "==> Elpased time ... " << std::endl;
     std::cout << "cpu time: " << cpu_elapse << std::endl;
     std::cout << "gpu time: " << gpu_elapse << std::endl;
-    std::cout << "speedup: " << cpu_elapse/gpu_elapse << std::endl;
+    std::cout << "speedup: " << cpu_elapse / gpu_elapse << std::endl;
 
     /*-----------------------------------------
       Check if CPU and GPU results are the same
@@ -326,14 +326,13 @@ TEST(algebra, rk4) {
 
     int tot_dim = 8;
     // loop over tracks and compare the stepper states for each track
-    for(int idx = 0; idx < cpu_prop_state.size(); idx++) {
+    for (int idx = 0; idx < cpu_prop_state.size(); idx++) {
         auto& states_in_cuda = cuda_prop_state.stepping.items[idx].pars;
         auto& states_in_cpu = cpu_prop_state[idx].stepping.pars;
-        for(int ipx = 0; ipx < tot_dim; ipx++) {
+        for (int ipx = 0; ipx < tot_dim; ipx++) {
             EXPECT_TRUE(abs(states_in_cuda[ipx] - states_in_cpu[ipx]) < 1e-8);
         }
     }
-
 }
 
 // Google Test can be run manually from the main() function
