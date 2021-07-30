@@ -22,23 +22,10 @@ namespace cuda {
 class direct_navigator {
 
     public:
-    using navigator_t = traccc::direct_navigator;
-    using state = typename navigator_t::state;
 
-    // Wrapper for status call
     template <typename propagator_state_t, typename surface_t>
-    static bool status(propagator_state_t& state,
-                       host_collection<surface_t>& surfaces,
-                       vecmem::memory_resource* resource) {
-        return status(state.navigation, state.stepping, surfaces, resource);
-    }
-
-    // status call declaration in direct navigator.cu
-    template <typename stepper_state_t, typename surface_t>
-    static bool status(host_collection<state>& state,
-                       host_collection<stepper_state_t>& stepper_state,
-                       host_collection<surface_t>& surfaces,
-                       vecmem::memory_resource* resource);
+    static void status(propagator_state_t& state,
+                       host_collection<surface_t>& surfaces);
 
     private:
 };

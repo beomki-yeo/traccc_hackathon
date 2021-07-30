@@ -44,8 +44,8 @@ class propagator final {
 	
     };
 
-    template <typename state_t, typename surface_t>
-    void propagate(state_t& state,
+    template <typename propagator_state_t, typename surface_t>
+    void propagate(propagator_state_t& state,
                    host_collection<surface_t>& surfaces,
                    vecmem::memory_resource* resource);
     private:

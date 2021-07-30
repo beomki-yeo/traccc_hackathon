@@ -21,12 +21,14 @@ __global__ void propagate_kernel(
     collection_view<state_t> states_view,
     collection_view<surface_t> surfaces_view);
 
+// explicit type instantiation    
 using truth_propagator = typename traccc::cuda::propagator<traccc::eigen_stepper, traccc::direct_navigator>;
-using void_propagator_options = typename traccc::propagator_options<void_actor, void_aborter>;    
+using void_propagator_options = typename traccc::propagator_options<void_actor, void_aborter>;
+using void_multi_state = typename truth_propagator::multi_state< void_propagator_options >;
     
 template void truth_propagator
-::propagate<truth_propagator::multi_state<void_propagator_options>, surface>(
-    truth_propagator::multi_state<void_propagator_options>& state,
+::propagate<void_multi_state, surface>(
+    void_multi_state& state,
     host_collection<surface>& surfaces,
     vecmem::memory_resource* resource);
 

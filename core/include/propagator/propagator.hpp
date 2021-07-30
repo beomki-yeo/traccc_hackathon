@@ -55,8 +55,7 @@ class propagator final {
         for (int i_s = 0; i_s < state.options.maxSteps; i_s++) {
 
             // do navigator
-            auto navi_res = m_navigator.status(state.navigation,
-					       state.stepping, surfaces);
+            auto navi_res = m_navigator.status(state, surfaces);
 
             if (!navi_res) {
                 // printf("Total RK steps: %d \n", i_s);
@@ -65,7 +64,7 @@ class propagator final {
             }
 
             // do RK 4th order
-            auto stepper_res = m_stepper.rk4(state.stepping);
+            auto stepper_res = m_stepper.rk4(state);
 
             if (!stepper_res) {
                 printf("stepper break \n");
@@ -73,7 +72,7 @@ class propagator final {
             }
 
             // do the covaraince transport
-            m_stepper.cov_transport(state.stepping, state.options.mass);
+            m_stepper.cov_transport(state);
 
             // do action for kalman filtering -- currently empty
             // state.options.action(state, m_stepper);
