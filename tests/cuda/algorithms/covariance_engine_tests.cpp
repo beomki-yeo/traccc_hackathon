@@ -216,18 +216,11 @@ TEST(algebra, convariace_engine_tests) {
     using cuda_stepper_t = traccc::cuda::eigen_stepper;
     using cuda_navigator_t = traccc::cuda::direct_navigator;
 
-    using cuda_propagator_t =
-        traccc::cuda::propagator<cuda_stepper_t, cuda_navigator_t>;
-
-    using cuda_propagator_state_t =
-        typename cuda_propagator_t::state<propagator_options_t>;
-
     // for timing measurement
     double cpu_elapse(0);
     double gpu_elapse(0);
 
     const int n_tracks = measurements_per_event.headers.size();
-    cuda_propagator_state_t cuda_prop_state(n_tracks, &mng_mr);
 
     std::vector<propagator_state_t> cpu_prop_state;
 
@@ -281,11 +274,6 @@ TEST(algebra, convariace_engine_tests) {
         // do the RK4
         auto res = stepper_t::rk4(prop_state);
         stepper_t::cov_transport(prop_state);
-
-        // fill gpu propagator state
-        cuda_prop_state.options.items[i_h] = prop_state.options;
-        cuda_prop_state.stepping.items[i_h] = prop_state.stepping;
-        cuda_prop_state.navigation.items[i_h] = prop_state.navigation;
 
         cpu_prop_state.push_back(prop_state);
     }

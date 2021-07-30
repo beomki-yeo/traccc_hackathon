@@ -6,88 +6,78 @@
  */
 
 #include <cuda/propagator/eigen_stepper.cuh>
+#include <cuda/propagator/propagator.cuh>
 #include <cuda/utils/definitions.hpp>
+#include <propagator/direct_navigator.hpp>
+#include <propagator/eigen_stepper.hpp>
 #include <propagator/propagator_options.hpp>
 
 namespace traccc {
 namespace cuda {
 
-using state = traccc::eigen_stepper::state;
-__global__ void stepper_kernel(
-    traccc::collection_view<state> stepper_state_view);
+// kernel declaration
+template <typename propagator_state_t>
+__global__ void rk4_kernel(collection_view<propagator_state_t> states_view);
 
-// Kernel for cov transport
-template <typename propagator_options_t>
+// kernel declaration
+template <typename propagator_state_t>
 __global__ void cov_transport_kernel(
-    collection_view<state> states_view,
-    collection_view<propagator_options_t> options_view);
+    collection_view<propagator_state_t> states_view);
 
-// Reserved to Xiangyang
+// explicit type instantiation
+using truth_propagator =
+    typename traccc::cuda::propagator<traccc::eigen_stepper,
+                                      traccc::direct_navigator>;
+using void_propagator_options =
+    typename traccc::propagator_options<void_actor, void_aborter>;
+using void_multi_state =
+    typename truth_propagator::multi_state<void_propagator_options>;
 
-bool traccc::cuda::eigen_stepper::rk4(host_collection<state>& states) {
-    auto stepper_state_view = get_data(states);
+template void traccc::cuda::eigen_stepper::rk4<void_multi_state>(
+    void_multi_state& state);
+
+template void traccc::cuda::eigen_stepper::cov_transport<void_multi_state>(
+    void_multi_state& state);
+
+template <typename propagator_state_t>
+void traccc::cuda::eigen_stepper::rk4(propagator_state_t& state) {
+
+    auto states_view = get_data(state.states);
 
     unsigned int num_threads = WARP_SIZE * 2;
-    unsigned int num_blocks = stepper_state_view.items.size() / num_threads + 1;
+    unsigned int num_blocks = states_view.items.size() / num_threads + 1;
 
-    stepper_kernel<<<num_blocks, num_threads>>>(stepper_state_view);
+    rk4_kernel<typename propagator_state_t::state_t>
+        <<<num_blocks, num_threads>>>(states_view);
 
     // cuda error check
     CUDA_ERROR_CHECK(cudaGetLastError());
     CUDA_ERROR_CHECK(cudaDeviceSynchronize());
-
-    return true;
 }
 
-__global__ void stepper_kernel(
-    traccc::collection_view<state> stepper_state_view) {
-    traccc::device_collection<state> stepper_states_device(
-        {stepper_state_view.items});
+template <typename propagator_state_t>
+void traccc::cuda::eigen_stepper::cov_transport(propagator_state_t& state) {
 
-    int gid = threadIdx.x + blockIdx.x * blockDim.x;
-
-    if (gid >= stepper_states_device.items.size()) {
-        return;
-    }
-
-    traccc::eigen_stepper::rk4(stepper_states_device.items.at(gid));
-}
-
-template void traccc::cuda::eigen_stepper::cov_transport<
-    propagator_options<void_actor, void_aborter>>(
-    host_collection<state>& state,
-    host_collection<propagator_options<void_actor, void_aborter>>& options);
-
-// Reserved to Johannes
-template <typename propagator_options_t>
-void traccc::cuda::eigen_stepper::cov_transport(
-    host_collection<state>& state,
-    host_collection<propagator_options_t>& options) {
-
-    auto state_view = get_data(state);
-    auto options_view = get_data(options);
+    auto states_view = get_data(state.states);
 
     unsigned int num_threads = WARP_SIZE * 2;
-    unsigned int num_blocks = state_view.items.size() / num_threads + 1;
+    unsigned int num_blocks = states_view.items.size() / num_threads + 1;
 
     // run the kernel
-    cov_transport_kernel<propagator_options_t>
-        <<<num_blocks, num_threads>>>(state_view, options_view);
+    cov_transport_kernel<typename propagator_state_t::state_t>
+        <<<num_blocks, num_threads>>>(states_view);
 
     // cuda error check
     CUDA_ERROR_CHECK(cudaGetLastError());
     CUDA_ERROR_CHECK(cudaDeviceSynchronize());
 }
 
-template <typename propagator_options_t>
-__global__ void traccc::cuda::cov_transport_kernel(
-    collection_view<state> states_view,
-    collection_view<propagator_options_t> options_view) {
+// kernel declaration
+template <typename propagator_state_t>
+__global__ void rk4_kernel(collection_view<propagator_state_t> states_view) {
 
-    // access collection
-    device_collection<state> states_device({states_view.items});
-    device_collection<propagator_options_t> options_device(
-        {options_view.items});
+    traccc::device_collection<propagator_state_t> states_device(
+        {states_view.items});
 
     int gid = threadIdx.x + blockIdx.x * blockDim.x;
 
@@ -95,9 +85,24 @@ __global__ void traccc::cuda::cov_transport_kernel(
         return;
     }
 
-    // run cov_transport function
-    traccc::eigen_stepper::cov_transport(states_device.items.at(gid),
-                                         options_device.items.at(gid).mass);
+    traccc::eigen_stepper::rk4(states_device.items.at(gid));
+}
+
+// kernel declaration
+template <typename propagator_state_t>
+__global__ void cov_transport_kernel(
+    collection_view<propagator_state_t> states_view) {
+
+    traccc::device_collection<propagator_state_t> states_device(
+        {states_view.items});
+
+    int gid = threadIdx.x + blockIdx.x * blockDim.x;
+
+    if (gid >= states_device.items.size()) {
+        return;
+    }
+
+    traccc::eigen_stepper::cov_transport(states_device.items.at(gid));
 }
 
 }  // namespace cuda

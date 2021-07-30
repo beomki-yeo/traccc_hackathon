@@ -6,74 +6,66 @@
  */
 
 #include <cuda/propagator/direct_navigator.cuh>
-#include <cuda/propagator/eigen_stepper.cuh>
+#include <cuda/propagator/propagator.cuh>
 #include <cuda/utils/definitions.hpp>
+#include <propagator/direct_navigator.hpp>
+#include <propagator/eigen_stepper.hpp>
+#include <propagator/propagator_options.hpp>
 
 namespace traccc {
 namespace cuda {
 
-template <typename navigator_state_t, typename stepper_state_t,
-          typename surface_t>
-__global__ void status_kernel(
-    collection_view<navigator_state_t> navigator_state_view,
-    collection_view<stepper_state_t> stepper_state_view,
-    collection_view<surface_t> surface_view);
+// kernel declaration
+template <typename propagator_state_t, typename surface_t>
+__global__ void status_kernel(collection_view<propagator_state_t> states_view,
+                              collection_view<surface_t> surfaces_view);
 
-// explicit instantiation
-template bool direct_navigator::status<typename eigen_stepper::state, surface>(
-    host_collection<state>& navigator_state,
-    host_collection<typename eigen_stepper::state>& stepper_state,
-    host_collection<surface>& surfaces, vecmem::memory_resource* resource);
+// explicit type instantiation
+using truth_propagator =
+    typename traccc::cuda::propagator<traccc::eigen_stepper,
+                                      traccc::direct_navigator>;
+using void_propagator_options =
+    typename traccc::propagator_options<void_actor, void_aborter>;
+using void_multi_state =
+    typename truth_propagator::multi_state<void_propagator_options>;
 
-// definition
-template <typename stepper_state_t, typename surface_t>
-bool direct_navigator::status(host_collection<state>& navigator_state,
-                              host_collection<stepper_state_t>& stepper_state,
-                              host_collection<surface_t>& surfaces,
-                              vecmem::memory_resource* resource) {
+template void traccc::cuda::direct_navigator::status<void_multi_state, surface>(
+    void_multi_state& state, host_collection<surface>& surfaces);
 
-    auto navigator_state_view = get_data(navigator_state, resource);
-    auto stepper_state_view = get_data(stepper_state, resource);
-    auto surfaces_view = get_data(surfaces, resource);
+template <typename propagator_state_t, typename surface_t>
+void traccc::cuda::direct_navigator::status(
+    propagator_state_t& state, host_collection<surface_t>& surfaces) {
+
+    auto states_view = get_data(state.states);
+    auto surfaces_view = get_data(surfaces);
 
     unsigned int num_threads = WARP_SIZE * 2;
-    unsigned int num_blocks =
-        navigator_state_view.items.size() / num_threads + 1;
+    unsigned int num_blocks = states_view.items.size() / num_threads + 1;
 
     // run the kernel
-    status_kernel<state, stepper_state_t, surface_t>
-        <<<num_blocks, num_threads>>>(navigator_state_view, stepper_state_view,
-                                      surfaces_view);
+    status_kernel<typename propagator_state_t::state_t, surface_t>
+        <<<num_blocks, num_threads>>>(states_view, surfaces_view);
 
     // cuda error check
     CUDA_ERROR_CHECK(cudaGetLastError());
     CUDA_ERROR_CHECK(cudaDeviceSynchronize());
-
-    return true;
 }
 
-template <typename navigator_state_t, typename stepper_state_t,
-          typename surface_t>
-__global__ void status_kernel(
-    collection_view<navigator_state_t> navigator_state_view,
-    collection_view<stepper_state_t> stepper_state_view,
-    collection_view<surface_t> surface_view) {
+template <typename propagator_state_t, typename surface_t>
+__global__ void status_kernel(collection_view<propagator_state_t> states_view,
+                              collection_view<surface_t> surfaces_view) {
 
-    device_collection<navigator_state_t> navigator_state_device(
-        {navigator_state_view.items});
-    device_collection<stepper_state_t> stepper_state_device(
-        {stepper_state_view.items});
-    device_collection<surface_t> surface_device({surface_view.items});
+    device_collection<propagator_state_t> states_device({states_view.items});
+    device_collection<surface_t> surfaces_device({surfaces_view.items});
 
     int gid = threadIdx.x + blockIdx.x * blockDim.x;
 
-    if (gid >= navigator_state_device.items.size()) {
+    if (gid >= states_device.items.size()) {
         return;
     }
 
-    traccc::direct_navigator::status(navigator_state_device.items.at(gid),
-                                     stepper_state_device.items.at(gid),
-                                     &surface_device.items.at(0));
+    traccc::direct_navigator::status(states_device.items.at(gid),
+                                     &surfaces_device.items.at(0));
 }
 
 }  // namespace cuda

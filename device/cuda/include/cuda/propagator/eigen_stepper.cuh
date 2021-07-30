@@ -13,7 +13,6 @@
 
 // std
 #include <limits>
-#include <propagator/eigen_stepper.hpp>
 
 namespace traccc {
 namespace cuda {
@@ -21,33 +20,16 @@ namespace cuda {
 class eigen_stepper {
 
     public:
-    using stepper_t = traccc::eigen_stepper;
-    using state = typename stepper_t::state;
-
     template <typename propagator_state_t>
     void step(propagator_state_t& state) {
         // left empty for the moment
     }
 
-    // Wrapper for rk4
     template <typename propagator_state_t>
-    static bool rk4(propagator_state_t& state) {
-        return rk4(state.stepping);
-    }
+    static void rk4(propagator_state_t& state);
 
-    // rk4 declaration in eigen_stepper.cu
-    static bool rk4(host_collection<state>& states);
-
-    // Wrapper for cov transport
     template <typename propagator_state_t>
-    static void cov_transport(propagator_state_t& state) {
-        cov_transport(state.stepping, state.options);
-    }
-
-    // cov transport declaration in eigen_stepper.cu
-    template <typename propagator_options_t>
-    static void cov_transport(host_collection<state>& state,
-                              host_collection<propagator_options_t>& options);
+    static void cov_transport(propagator_state_t& state);
 
     private:
 };

@@ -203,28 +203,29 @@ TEST(algebra, stepper) {
     using propagator_state_t =
         typename propagator_t::state<propagator_options_t>;
 
-    using cuda_stepper_t = traccc::cuda::eigen_stepper;
-    using cuda_navigator_t = traccc::cuda::direct_navigator;
-
+    // cuda propagator
     using cuda_propagator_t =
-        traccc::cuda::propagator<cuda_stepper_t, cuda_navigator_t>;
-
-    using cuda_propagator_state_t =
-        typename cuda_propagator_t::state<propagator_options_t>;
+        typename traccc::cuda::propagator<stepper_t, navigator_t>;
+    using cuda_propagator_multi_state_t =
+        typename cuda_propagator_t::multi_state<propagator_options_t>;
 
     // for timing measurement
     double cpu_elapse(0);
     double gpu_elapse(0);
 
     const int n_tracks = measurements_per_event.headers.size();
-    cuda_propagator_state_t cuda_prop_state(0, &mng_mr);
+    cuda_propagator_multi_state_t cuda_prop_multi_state(n_tracks, &mng_mr);
 
     std::vector<propagator_state_t> cpu_prop_state;
+
+    /*---------
+      For CPU
+      ---------*/
 
     std::cout << "CPU propagation start..." << std::endl;
 
     // iterate over truth particles
-    for (int i_h = 0; i_h < n_tracks; i_h++) {
+    for (int i_h = 0; i_h < measurements_per_event.headers.size(); i_h++) {
 
         // truth particle information
         auto& t_particle = measurements_per_event.headers[i_h];
@@ -242,9 +243,12 @@ TEST(algebra, stepper) {
         navigator_t navigator;
         propagator_t prop(stepper, navigator);
 
-        // steper state
-        stepper_state_t stepper_state(bound_track_parameters_per_particle[0],
-                                      surfaces);
+        stepper_state_t stepper_state;
+
+        if (bound_track_parameters_per_particle.size() > 0) {
+            stepper_state = stepper_state_t(
+                bound_track_parameters_per_particle[0], surfaces);
+        }
 
         // propagator state that takes stepper state as input
         propagator_options_t po;
@@ -271,38 +275,18 @@ TEST(algebra, stepper) {
         sd.B_last = Acts::Vector3(0, 0, 2 * Acts::UnitConstants::T);
 
         // fill gpu propagator state
-        cuda_prop_state.options.items.push_back(prop_state.options);
-        cuda_prop_state.stepping.items.push_back(prop_state.stepping);
-        cuda_prop_state.navigation.items.push_back(prop_state.navigation);
+        cuda_prop_multi_state.states.items[i_h] = prop_state;
 
         /*time*/ auto start_cpu = std::chrono::system_clock::now();
 
-        // do the eigen stepper
-        for (int i_s = 0; i_s < prop_state.options.maxSteps; i_s++) {
-            auto navi_res = navigator_t::status(prop_state, &surfaces.items[0]);
-
-            if (!navi_res) {
-                std::cout << "Total RK steps: " << i_s << std::endl;
-                std::cout << "all targets reached" << std::endl;
-                break;
-            }
-
-            auto& stepper_state = prop_state.stepping;
-
-            auto res = stepper_t::rk4(prop_state);
-
-            if (!res) {
-                std::cout << "stepping failed" << std::endl;
-                break;
-            }
-
-            // do the covaraince transport
-            stepper_t::cov_transport(prop_state);
-        }
+        // propagate for cpu
+        prop.propagate(prop_state, &surfaces.items[0]);
 
         /*time*/ auto end_cpu = std::chrono::system_clock::now();
         /*time*/ std::chrono::duration<double> time_cpu = end_cpu - start_cpu;
         /*time*/ cpu_elapse += time_cpu.count();
+
+        cpu_prop_state.push_back(prop_state);
     }
 
     /*---------
@@ -317,7 +301,7 @@ TEST(algebra, stepper) {
       Write more algorithms here for stepper
       -----------------------------------------*/
 
-    cuda_stepper_t::rk4(cuda_prop_state);
+    // cuda_stepper_t::rk4(cuda_prop_state);
 
     /*time*/ auto end_gpu = std::chrono::system_clock::now();
     /*time*/ std::chrono::duration<double> time_gpu = end_gpu - start_gpu;

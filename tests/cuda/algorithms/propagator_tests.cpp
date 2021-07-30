@@ -248,21 +248,18 @@ TEST(algebra, propagator) {
     using propagator_state_t =
         typename propagator_t::state<propagator_options_t>;
 
-    using cuda_stepper_t = traccc::cuda::eigen_stepper;
-    using cuda_navigator_t = traccc::cuda::direct_navigator;
-
+    // cuda propagator
     using cuda_propagator_t =
-        traccc::cuda::propagator<cuda_stepper_t, cuda_navigator_t>;
-
-    using cuda_propagator_state_t =
-        typename cuda_propagator_t::state<propagator_options_t>;
+        typename traccc::cuda::propagator<stepper_t, navigator_t>;
+    using cuda_propagator_multi_state_t =
+        typename cuda_propagator_t::multi_state<propagator_options_t>;
 
     // for timing measurement
     double cpu_elapse(0);
     double gpu_elapse(0);
 
     const int n_tracks = measurements_per_event.headers.size();
-    cuda_propagator_state_t cuda_prop_state(n_tracks, &mng_mr);
+    cuda_propagator_multi_state_t cuda_prop_multi_state(n_tracks, &mng_mr);
 
     std::vector<propagator_state_t> cpu_prop_state;
 
@@ -323,13 +320,7 @@ TEST(algebra, propagator) {
         sd.B_last = Acts::Vector3(0, 0, 2 * Acts::UnitConstants::T);
 
         // fill gpu propagator state
-        cuda_prop_state.options.items[i_h] = prop_state.options;
-        cuda_prop_state.stepping.items[i_h] = prop_state.stepping;
-        cuda_prop_state.navigation.items[i_h] = prop_state.navigation;
-
-        // cuda_prop_state.options.items.push_back(prop_state.options);
-        // cuda_prop_state.stepping.items.push_back(prop_state.stepping);
-        // cuda_prop_state.navigation.items.push_back(prop_state.navigation);
+        cuda_prop_multi_state.states.items[i_h] = prop_state;
 
         /*time*/ auto start_cpu = std::chrono::system_clock::now();
 
@@ -352,7 +343,7 @@ TEST(algebra, propagator) {
     /*time*/ auto start_gpu = std::chrono::system_clock::now();
 
     cuda_propagator_t cuda_prop;
-    cuda_prop.propagate(cuda_prop_state, surfaces, &mng_mr);
+    cuda_prop.propagate(cuda_prop_multi_state, surfaces, &mng_mr);
 
     /*time*/ auto end_gpu = std::chrono::system_clock::now();
     /*time*/ std::chrono::duration<double> time_gpu = end_gpu - start_gpu;
@@ -367,7 +358,7 @@ TEST(algebra, propagator) {
 
         // Check if the final states of cpu and cuda are the same
         auto& cpu_stepping = cpu_prop_state[i_t].stepping;
-        auto& cuda_stepping = cuda_prop_state.stepping.items[i_t];
+        auto& cuda_stepping = cuda_prop_multi_state.states.items[i_t].stepping;
 
         for (int i = 0; i < Acts::eFreeSize; i++) {
             EXPECT_TRUE(abs(cpu_stepping.pars(i) - cuda_stepping.pars(i)) <
@@ -376,7 +367,8 @@ TEST(algebra, propagator) {
 
         // Check if all targeted surfaces are passed
         auto& cpu_navigation = cpu_prop_state[i_t].navigation;
-        auto& cuda_navigation = cuda_prop_state.navigation.items[i_t];
+        auto& cuda_navigation =
+            cuda_prop_multi_state.states.items[i_t].navigation;
 
         EXPECT_TRUE(cpu_navigation.surface_sequence_size ==
                     cpu_navigation.surface_iterator_id);

@@ -42,45 +42,45 @@ class direct_navigator {
     };
 
     template <typename propagator_state_t, typename surface_t>
-    static bool status(propagator_state_t& state, surface_t* surfaces) {
-        return status(state.navigation, state.stepping, surfaces);
-    }
-
-    template <typename stepper_state_t, typename surface_t>
-    static __CUDA_HOST_DEVICE__ bool status(state& state,
-                                            stepper_state_t& stepper_state,
+    static __CUDA_HOST_DEVICE__ bool status(propagator_state_t& state,
                                             surface_t* surfaces) {
 
-        if (state.surface_iterator_id >= state.surface_sequence_size) {
+        if (state.navigation.surface_iterator_id >=
+            state.navigation.surface_sequence_size) {
             return false;
         }
 
         // check if we are on surface
-        if (state.surface_iterator_id < state.surface_sequence_size) {
+        if (state.navigation.surface_iterator_id <
+            state.navigation.surface_sequence_size) {
 
             // set first target surface id
-            if (state.surface_iterator_id == 0) {
-                state.target_surface_id = state.surface_sequence[0];
+            if (state.navigation.surface_iterator_id == 0) {
+                state.navigation.target_surface_id =
+                    state.navigation.surface_sequence[0];
             }
 
-            surface_t* target_surface = surfaces + state.target_surface_id;
+            surface_t* target_surface =
+                surfaces + state.navigation.target_surface_id;
 
             // establish the surface status
             auto surface_status = stepping_helper::update_surface_status(
-                stepper_state, target_surface);
+                state.stepping, target_surface);
 
             // if the stepper state is on surface
             if (surface_status == intersection::status::on_surface) {
 
-                // printf("on surface %u %u \n", state.surface_iterator_id,
-                // state.surface_sequence_size);
+                // printf("on surface %u %u \n",
+                // state.navigation.surface_iterator_id,
+                // state.navigation.surface_sequence_size);
 
                 // increase the iterator id
-                state.surface_iterator_id++;
+                state.navigation.surface_iterator_id++;
 
                 // update the target surface id
-                state.target_surface_id =
-                    state.surface_sequence[state.surface_iterator_id];
+                state.navigation.target_surface_id =
+                    state.navigation
+                        .surface_sequence[state.navigation.surface_iterator_id];
             }
         }
 

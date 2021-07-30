@@ -20,18 +20,18 @@ template <typename stepper_type, typename navigator_type>
 class propagator final {
 
     public:
-    using jacobian_t = Acts::BoundMatrix;
-    using stepper_t = stepper_type;
-    using stepper_state_t = typename stepper_type::state;
-    using navigator_t = navigator_type;
-    using navigator_state_t = typename navigator_type::state;
-
-    explicit __CUDA_HOST_DEVICE__ propagator(stepper_t stepper,
-                                             navigator_t navigator)
+    explicit __CUDA_HOST_DEVICE__ propagator(stepper_type stepper,
+                                             navigator_type navigator)
         : m_stepper(std::move(stepper)), m_navigator(std::move(navigator)) {}
 
     template <typename propagator_options_t>
     struct __CUDA_ALIGN__(16) state {
+
+        using jacobian_t = Acts::BoundMatrix;
+        using stepper_t = stepper_type;
+        using stepper_state_t = typename stepper_type::state;
+        using navigator_t = navigator_type;
+        using navigator_state_t = typename navigator_type::state;
 
         state() = default;
 
@@ -49,21 +49,12 @@ class propagator final {
     };
 
     template <typename state_t, typename surface_t>
-    void propagate(state_t& state, surface_t* surfaces) {
-        propagate(state.options, state.stepping, state.navigation, surfaces);
-    }
-
-    template <typename propagator_options_t, typename stepper_state_t,
-              typename navigation_state_t, typename surface_t>
-    __CUDA_HOST_DEVICE__ void propagate(propagator_options_t& options,
-                                        stepper_state_t& stepping,
-                                        navigation_state_t& navigation,
-                                        surface_t* surfaces) {
+    __CUDA_HOST_DEVICE__ void propagate(state_t& state, surface_t* surfaces) {
         // do the eigen stepper
-        for (int i_s = 0; i_s < options.maxSteps; i_s++) {
+        for (int i_s = 0; i_s < state.options.maxSteps; i_s++) {
 
             // do navigator
-            auto navi_res = navigator_t::status(navigation, stepping, surfaces);
+            auto navi_res = m_navigator.status(state, surfaces);
 
             if (!navi_res) {
                 // printf("Total RK steps: %d \n", i_s);
@@ -72,7 +63,7 @@ class propagator final {
             }
 
             // do RK 4th order
-            auto stepper_res = stepper_t::rk4(stepping);
+            auto stepper_res = m_stepper.rk4(state);
 
             if (!stepper_res) {
                 printf("stepper break \n");
@@ -80,7 +71,7 @@ class propagator final {
             }
 
             // do the covaraince transport
-            stepper_t::cov_transport(stepping, options.mass);
+            m_stepper.cov_transport(state);
 
             // do action for kalman filtering -- currently empty
             // state.options.action(state, m_stepper);
@@ -88,8 +79,8 @@ class propagator final {
     }
 
     private:
-    stepper_t m_stepper;
-    navigator_t m_navigator;
+    stepper_type m_stepper;
+    navigator_type m_navigator;
 };
 
 }  // namespace traccc
