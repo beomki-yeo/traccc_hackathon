@@ -206,7 +206,7 @@ class eigen_stepper {
 
             // printf("%f %f \n", state.stepping.step_size, step_size_scaling);
             //	    std::cout << state.stepping.step_size << "  " <<
-            //step_size_scaling <<
+            // step_size_scaling <<
             // std::endl;
 
             // Todo: adapted error handling on GPU?
