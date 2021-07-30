@@ -368,7 +368,7 @@ TEST(algebra, propagator) {
         // Check if all targeted surfaces are passed
         auto& cpu_navigation = cpu_prop_state[i_t].navigation;
         auto& cuda_navigation = cuda_prop_multi_state.states.items[i_t].navigation;
-
+	
         EXPECT_TRUE(cpu_navigation.surface_sequence_size ==
                     cpu_navigation.surface_iterator_id);
         EXPECT_TRUE(cuda_navigation.surface_sequence_size ==
