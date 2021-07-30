@@ -146,7 +146,7 @@ class eigen_stepper {
     }
 
     template <typename propagator_state_t>
-    static __CUDA_HOST_DEVICE__ bool rk4(propagator_state_t& state){
+    static __CUDA_HOST_DEVICE__ bool rk4(propagator_state_t& state) {
 
         auto& sd = state.stepping.step_data;
 
@@ -163,9 +163,11 @@ class eigen_stepper {
             // State the square and half of the step size
             const double h2 = h * h;
             const double half_h = h * 0.5;
-            const auto& pos = state.stepping.pars.template segment<3>(Acts::eFreePos0);
+            const auto& pos =
+                state.stepping.pars.template segment<3>(Acts::eFreePos0);
 
-            const auto& dir = state.stepping.pars.template segment<3>(Acts::eFreeDir0);
+            const auto& dir =
+                state.stepping.pars.template segment<3>(Acts::eFreeDir0);
 
             // Second Runge-Kutta point
             const Acts::Vector3 pos1 = pos + half_h * dir + h2 * 0.125 * sd.k1;
@@ -199,17 +201,20 @@ class eigen_stepper {
                                         0.25)),
                 4.);
 
-            state.stepping.step_size = state.stepping.step_size * step_size_scaling;
+            state.stepping.step_size =
+                state.stepping.step_size * step_size_scaling;
 
             // printf("%f %f \n", state.stepping.step_size, step_size_scaling);
-            //	    std::cout << state.stepping.step_size << "  " << step_size_scaling <<
+            //	    std::cout << state.stepping.step_size << "  " <<
+            //step_size_scaling <<
             // std::endl;
 
             // Todo: adapted error handling on GPU?
             // If step size becomes too small the particle remains at the
             // initial place
             if (state.stepping.step_size * state.stepping.step_size <
-                state.stepping.step_size_cutoff * state.stepping.step_size_cutoff) {
+                state.stepping.step_size_cutoff *
+                    state.stepping.step_size_cutoff) {
                 // Not moving due to too low momentum needs an aborter
                 printf("step size is too small. will break. \n");
                 state.stepping.success = false;
@@ -268,9 +273,10 @@ class eigen_stepper {
 
     template <typename propagator_state_t>
     static __CUDA_HOST_DEVICE__ void cov_transport(propagator_state_t& state) {
-	
+
         Acts::FreeMatrix D = Acts::FreeMatrix::Identity();
-        const auto& dir = state.stepping.pars.template segment<3>(Acts::eFreeDir0);
+        const auto& dir =
+            state.stepping.pars.template segment<3>(Acts::eFreeDir0);
         const auto& qop = state.stepping.pars[Acts::eFreeQOverP];
         Acts::ActsScalar p = abs(1 / qop);
 
@@ -343,7 +349,9 @@ class eigen_stepper {
         }
 
         // The dt/d(q/p)
-        D(3, 7) = h * state.options.mass * state.options.mass * state.stepping.q / (p * std::hypot(1., state.options.mass / p));
+        D(3, 7) = h * state.options.mass * state.options.mass *
+                  state.stepping.q /
+                  (p * std::hypot(1., state.options.mass / p));
 
         state.stepping.jac_transport = D * state.stepping.jac_transport;
     }

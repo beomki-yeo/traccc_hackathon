@@ -207,7 +207,7 @@ TEST(algebra, stepper) {
     using cuda_propagator_t =
         typename traccc::cuda::propagator<stepper_t, navigator_t>;
     using cuda_propagator_multi_state_t =
-	typename cuda_propagator_t::multi_state<propagator_options_t>;
+        typename cuda_propagator_t::multi_state<propagator_options_t>;
 
     // for timing measurement
     double cpu_elapse(0);
@@ -275,8 +275,8 @@ TEST(algebra, stepper) {
         sd.B_last = Acts::Vector3(0, 0, 2 * Acts::UnitConstants::T);
 
         // fill gpu propagator state
-	cuda_prop_multi_state.states.items[i_h] = prop_state;
- 
+        cuda_prop_multi_state.states.items[i_h] = prop_state;
+
         /*time*/ auto start_cpu = std::chrono::system_clock::now();
 
         // propagate for cpu
@@ -288,7 +288,6 @@ TEST(algebra, stepper) {
 
         cpu_prop_state.push_back(prop_state);
     }
-    
 
     /*---------
       For GPU
@@ -302,7 +301,7 @@ TEST(algebra, stepper) {
       Write more algorithms here for stepper
       -----------------------------------------*/
 
-    //cuda_stepper_t::rk4(cuda_prop_state);
+    // cuda_stepper_t::rk4(cuda_prop_state);
 
     /*time*/ auto end_gpu = std::chrono::system_clock::now();
     /*time*/ std::chrono::duration<double> time_gpu = end_gpu - start_gpu;

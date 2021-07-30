@@ -20,7 +20,6 @@ namespace cuda {
 class eigen_stepper {
 
     public:
-
     template <typename propagator_state_t>
     void step(propagator_state_t& state) {
         // left empty for the moment

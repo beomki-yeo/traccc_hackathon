@@ -20,7 +20,6 @@ template <typename stepper_type, typename navigator_type>
 class propagator final {
 
     public:
-
     explicit __CUDA_HOST_DEVICE__ propagator(stepper_type stepper,
                                              navigator_type navigator)
         : m_stepper(std::move(stepper)), m_navigator(std::move(navigator)) {}
@@ -28,12 +27,12 @@ class propagator final {
     template <typename propagator_options_t>
     struct __CUDA_ALIGN__(16) state {
 
-	using jacobian_t = Acts::BoundMatrix;
-	using stepper_t = stepper_type;
-	using stepper_state_t = typename stepper_type::state;
-	using navigator_t = navigator_type;
-	using navigator_state_t = typename navigator_type::state;
-	
+        using jacobian_t = Acts::BoundMatrix;
+        using stepper_t = stepper_type;
+        using stepper_state_t = typename stepper_type::state;
+        using navigator_t = navigator_type;
+        using navigator_state_t = typename navigator_type::state;
+
         state() = default;
 
         state(const propagator_options_t& tops, stepper_state_t stepping_in)

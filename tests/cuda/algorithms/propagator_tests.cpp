@@ -252,7 +252,7 @@ TEST(algebra, propagator) {
     using cuda_propagator_t =
         typename traccc::cuda::propagator<stepper_t, navigator_t>;
     using cuda_propagator_multi_state_t =
-	typename cuda_propagator_t::multi_state<propagator_options_t>;
+        typename cuda_propagator_t::multi_state<propagator_options_t>;
 
     // for timing measurement
     double cpu_elapse(0);
@@ -320,8 +320,8 @@ TEST(algebra, propagator) {
         sd.B_last = Acts::Vector3(0, 0, 2 * Acts::UnitConstants::T);
 
         // fill gpu propagator state
-	cuda_prop_multi_state.states.items[i_h] = prop_state;
- 
+        cuda_prop_multi_state.states.items[i_h] = prop_state;
+
         /*time*/ auto start_cpu = std::chrono::system_clock::now();
 
         // propagate for cpu
@@ -337,7 +337,7 @@ TEST(algebra, propagator) {
     /*---------
       For GPU
       ---------*/
-    
+
     std::cout << "CUDA propagation start..." << std::endl;
 
     /*time*/ auto start_gpu = std::chrono::system_clock::now();
@@ -352,7 +352,7 @@ TEST(algebra, propagator) {
     std::cout << "==> Elpased time ... " << std::endl;
     std::cout << "cpu time: " << cpu_elapse << std::endl;
     std::cout << "gpu time: " << gpu_elapse << std::endl;
-    
+
     // Check if CPU and GPU results are the same
     for (int i_t = 0; i_t < n_tracks; i_t++) {
 
@@ -367,8 +367,9 @@ TEST(algebra, propagator) {
 
         // Check if all targeted surfaces are passed
         auto& cpu_navigation = cpu_prop_state[i_t].navigation;
-        auto& cuda_navigation = cuda_prop_multi_state.states.items[i_t].navigation;
-	
+        auto& cuda_navigation =
+            cuda_prop_multi_state.states.items[i_t].navigation;
+
         EXPECT_TRUE(cpu_navigation.surface_sequence_size ==
                     cpu_navigation.surface_iterator_id);
         EXPECT_TRUE(cuda_navigation.surface_sequence_size ==
@@ -376,7 +377,6 @@ TEST(algebra, propagator) {
         EXPECT_TRUE(cpu_navigation.surface_iterator_id ==
                     cuda_navigation.surface_iterator_id);
     }
-    
 }
 
 // Google Test can be run manually from the main() function

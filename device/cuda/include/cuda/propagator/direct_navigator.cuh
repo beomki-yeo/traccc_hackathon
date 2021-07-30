@@ -22,7 +22,6 @@ namespace cuda {
 class direct_navigator {
 
     public:
-
     template <typename propagator_state_t, typename surface_t>
     static void status(propagator_state_t& state,
                        host_collection<surface_t>& surfaces);
