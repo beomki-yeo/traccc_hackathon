@@ -15,83 +15,41 @@
 #include <vecmem/memory/host_memory_resource.hpp>
 
 // traccc
-#include <cuda/propagator/direct_navigator.cuh>
-#include <cuda/propagator/eigen_stepper.cuh>
-#include <propagator/direct_navigator.hpp>
-#include <propagator/eigen_stepper.hpp>
 #include <propagator/propagator.hpp>
-#include <propagator/propagator_options.hpp>
-
 #include "edm/collection.hpp"
 
 namespace traccc {
 namespace cuda {
 
-template <typename cuda_stepper_t, typename cuda_navigator_t>
+template <typename stepper_type, typename navigator_type>
 class propagator final {
 
+       
     public:
     template <typename propagator_options_t>
-    struct state {
-
-        state(const int n_tracks, vecmem::memory_resource* mr)
-            : m_mr(mr),
-              options(
-                  {typename host_collection<propagator_options_t>::item_vector(
-                      n_tracks, mr)}),
-              stepping({typename host_collection<
-                  typename cuda_stepper_t::state>::item_vector(n_tracks, mr)}),
-              navigation({typename host_collection<
-                  typename cuda_navigator_t::state>::item_vector(n_tracks, mr)})
+    struct __CUDA_ALIGN__ (16) multi_state {
+	
+	using stepper_t = stepper_type;
+	using navigator_t = navigator_type;
+	using propagator_t = typename traccc::propagator< stepper_t, navigator_t >; 
+	using state_t = typename propagator_t::template state< propagator_options_t >;
+	
+        multi_state(const int n_tracks, vecmem::memory_resource* mr)
+            : states({typename host_collection< state_t >::item_vector(n_tracks, mr)})
 
         {}
 
-        /// These are the options - provided for each propagation step
-        host_collection<propagator_options_t> options;
-
-        /// Stepper state container - internal states of the Stepper
-        host_collection<typename cuda_stepper_t::state> stepping;
-
-        /// Navigator state container - internal states of the Navigator
-        host_collection<typename cuda_navigator_t::state> navigation;
-
-        vecmem::memory_resource* m_mr;
+	/// state vector
+	host_collection< state_t > states; 
+	
     };
 
-    template <typename propagator_state_t, typename surface_t>
-    void propagate(propagator_state_t& state,
+    template <typename state_t, typename surface_t>
+    void propagate(state_t& state,
                    host_collection<surface_t>& surfaces,
-                   vecmem::memory_resource* resource) {
-
-        return propagate(state.options, state.stepping, state.navigation,
-                         surfaces, resource);
-    }
-
-    template <typename propagator_options_t, typename surface_t>
-    void propagate(
-        host_collection<propagator_options_t>& options,
-        host_collection<typename cuda_stepper_t::state>& stepping,
-        host_collection<typename cuda_navigator_t::state>& navigation,
-        host_collection<surface_t>& surfaces,
-        vecmem::memory_resource* resource);
-
-    template <typename propagator_state_t, typename surface_t>
-    void propagate_sync(propagator_state_t& state,
-                        host_collection<surface_t>& surfaces,
-                        vecmem::memory_resource* resource) {
-
-        auto& options = state.options;
-        auto& stepping = state.stepping;
-        auto& navigation = state.navigation;
-
-        // start stepper
-        while (true) {
-        }
-    }
-
+                   vecmem::memory_resource* resource);
     private:
-    cuda_stepper_t m_stepper;
-    cuda_navigator_t m_navigator;
+
 };
 
 }  // namespace cuda
