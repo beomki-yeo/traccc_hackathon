@@ -35,6 +35,8 @@
 #include <cuda/propagator/eigen_stepper.cuh>
 #include <cuda/propagator/propagator.cuh>
 
+#include <cuda_profiler_api.h>
+
 // std
 #include <unistd.h>
 
@@ -149,6 +151,8 @@ TEST(algebra, propagator) {
 
         auto& spacepoints_per_particle = spacepoints_per_event.items[i_h];
 
+        measurements_per_particle.reserve( spacepoints_per_particle.size() );
+        bound_track_parameters_per_particle.reserve( spacepoints_per_particle.size() );
         for (auto sp : spacepoints_per_particle) {
             auto ms = sp.make_measurement(surfaces);
             auto params = sp.make_bound_track_parameters(surfaces, t_particle);
@@ -337,7 +341,7 @@ TEST(algebra, propagator) {
     /*---------
       For GPU
       ---------*/
-
+    cudaProfilerStart();
     std::cout << "CUDA propagation start..." << std::endl;
 
     /*time*/ auto start_gpu = std::chrono::system_clock::now();
