@@ -472,6 +472,11 @@ host_truth_spacepoint_container read_truth_hits(
 
     result.items.resize(result.headers.size());
 
+    // 15 is a reasonable size. most are less than this, a few are more.
+    for (size_t i=0; i<result.headers.size();++i) {
+      result.items[i].reserve(15);
+    }
+
     while (hreader.read(iohit)) {
         particle_id pid = iohit.particle_id;
 

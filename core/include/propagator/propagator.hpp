@@ -51,7 +51,7 @@ class propagator final {
     template <typename state_t, typename surface_t>
     __CUDA_HOST_DEVICE__ void propagate(state_t& state, surface_t* surfaces) {
         // do the eigen stepper
-        for (int i_s = 0; i_s < state.options.maxSteps; i_s++) {
+        for (unsigned int i_s = 0; i_s < state.options.maxSteps; i_s++) {
 
             // do navigator
             auto navi_res = m_navigator.status(state, surfaces);
