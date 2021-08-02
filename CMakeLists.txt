@@ -31,10 +31,7 @@ include( traccc-compiler-options )
 
 # Build the necessary externals.
 add_subdirectory(extern)
-include( traccc-vecmem )
- 
-# Add acts core
-find_package(Acts) 
+include(traccc-dependencies)
 
 # Set GPU-related options
 if( TRACCC_BUILD_CUDA )
