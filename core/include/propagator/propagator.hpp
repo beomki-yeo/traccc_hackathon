@@ -50,31 +50,38 @@ class propagator final {
 
     template <typename state_t, typename surface_t>
     __CUDA_HOST_DEVICE__ void propagate(state_t& state, surface_t* surfaces) {
-        // do the eigen stepper
+
+        // Pre-stepping
+
+        // navigator initialize state call
+        m_navigator.status(state, surfaces);
+
+        // do action for kalman filtering -- currently empty
+        // state.options.action(state, m_stepper);
+
+        if (!m_navigator.target(state, surfaces)) {
+            return;
+        }
+
         for (unsigned int i_s = 0; i_s < state.options.maxSteps; i_s++) {
 
-            // do navigator
-            auto navi_res = m_navigator.status(state, surfaces);
-
-            if (!navi_res) {
-                // printf("Total RK steps: %d \n", i_s);
-                // printf("all targets reached \n");
-                break;
-            }
-
-            // do RK 4th order
-            auto stepper_res = m_stepper.rk4(state);
+            auto stepper_res = m_stepper.step(state);
 
             if (!stepper_res) {
-                printf("stepper break \n");
                 break;
             }
 
-            // do the covaraince transport
-            m_stepper.cov_transport(state);
+            // Post-stepping
+            m_navigator.status(state, surfaces);
 
             // do action for kalman filtering -- currently empty
             // state.options.action(state, m_stepper);
+
+            auto navi_res = m_navigator.target(state, surfaces);
+
+            if (!navi_res) {
+                break;
+            }
         }
     }
 
