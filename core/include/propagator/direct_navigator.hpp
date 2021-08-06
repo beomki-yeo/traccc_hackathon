@@ -42,14 +42,14 @@ class direct_navigator {
     };
 
     template <typename propagator_state_t, typename surface_t>
-    static __CUDA_HOST_DEVICE__ bool status(propagator_state_t& state,
+    static __CUDA_HOST_DEVICE__ void status(propagator_state_t& state,
                                             surface_t* surfaces) {
-
+        /*
         if (state.navigation.surface_iterator_id >=
             state.navigation.surface_sequence_size) {
             return false;
         }
-
+        */
         // check if we are on surface
         if (state.navigation.surface_iterator_id <
             state.navigation.surface_sequence_size) {
@@ -70,10 +70,6 @@ class direct_navigator {
             // if the stepper state is on surface
             if (surface_status == intersection::status::on_surface) {
 
-                // printf("on surface %u %u \n",
-                // state.navigation.surface_iterator_id,
-                // state.navigation.surface_sequence_size);
-
                 // increase the iterator id
                 state.navigation.surface_iterator_id++;
 
@@ -84,7 +80,41 @@ class direct_navigator {
             }
         }
 
-        return true;
+        // return true;
+    }
+
+    template <typename propagator_state_t, typename surface_t>
+    __CUDA_HOST_DEVICE__ bool target(propagator_state_t& state,
+                                     surface_t* surfaces) {
+
+        // check if there is more surfaces to pass through
+        if (state.navigation.surface_iterator_id <
+            state.navigation.surface_sequence_size) {
+
+            surface_t* target_surface =
+                surfaces + state.navigation.target_surface_id;
+
+            // establish the surface status
+            auto surface_status = stepping_helper::update_surface_status(
+                state.stepping, target_surface);
+
+            if (surface_status == intersection::status::unreachable) {
+                state.navigation.surface_iterator_id++;
+
+                // update the target surface id
+                state.navigation.target_surface_id =
+                    state.navigation
+                        .surface_sequence[state.navigation.surface_iterator_id];
+            }
+            return true;
+        }
+        // otherwise break
+        else {
+            // current not used
+            state.navigation.navigation_break = true;
+            // currently just use boolean result
+            return false;
+        }
     }
 };
 

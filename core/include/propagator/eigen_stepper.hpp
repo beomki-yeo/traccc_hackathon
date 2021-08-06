@@ -60,12 +60,10 @@ class eigen_stepper {
         }
         /// Navigation direction, this is needed for searching
         Acts::NavigationDirection nav_dir;
-        // double nav_dir;
 
         /// Covariance matrix (and indicator)
         /// associated with the initial error on track parameters
         int covTransport = true;
-        // double covTransport = true;
 
         /// The charge as the free vector can be 1/p or q/p
         double q = 1.;
@@ -141,8 +139,13 @@ class eigen_stepper {
     }
 
     template <typename propagator_state_t>
-    static void step(propagator_state_t& state) {
-        // state.stepping -> eigen_stepper::state
+    bool step(propagator_state_t& state) {
+        auto result = rk4(state);
+        if (state.stepping.covTransport and result) {
+            cov_transport(state);
+        }
+
+        return result;
     }
 
     template <typename propagator_state_t>
@@ -203,11 +206,6 @@ class eigen_stepper {
 
             state.stepping.step_size =
                 state.stepping.step_size * step_size_scaling;
-
-            // printf("%f %f \n", state.stepping.step_size, step_size_scaling);
-            //	    std::cout << state.stepping.step_size << "  " <<
-            // step_size_scaling <<
-            // std::endl;
 
             // Todo: adapted error handling on GPU?
             // If step size becomes too small the particle remains at the
@@ -311,8 +309,6 @@ class eigen_stepper {
             dk2dT += half_h * dk1dT;
             dk2dT = qop * vector_helpers::cross(dk2dT, sd.B_middle);
         }
-
-        // std::cout << dk2dT << std::endl;
 
         Acts::ActsMatrix<3, 3> dk3dT = Acts::ActsMatrix<3, 3>::Identity();
         {
